@@ -1,0 +1,169 @@
+export type UserRole = 'student' | 'teacher' | 'peer' | 'admin' | 'researcher';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string;
+  className?: string;
+  assignedPeerRevieweeId?: string; // For peer review assignment
+}
+
+export type PoeticAxisId = 
+  | 'plot_situation'
+  | 'character_detail'
+  | 'narrator_pov'
+  | 'space_time'
+  | 'language_tone_symbol'
+  | 'form_argument';
+
+export interface PoeticAxis {
+  id: PoeticAxisId;
+  order: number;
+  title: string;
+  shortName: string;
+  description: string;
+  guidingQuestions: string[];
+  focusKeywords: string[];
+  iconName: string;
+}
+
+export interface LiteratureText {
+  id: string;
+  title: string;
+  author: string;
+  year: string;
+  genre: string;
+  synopsis: string;
+  excerpt: string;
+  fullContent: string;
+  historicalContext: string;
+  tags: string[];
+}
+
+export interface EvidenceQuote {
+  id: string;
+  text: string;
+  contextNote?: string;
+  pageOrParagraph?: string;
+}
+
+export interface PoeticAxisResponse {
+  axisId: PoeticAxisId;
+  analysisText: string;
+  evidenceQuotes: EvidenceQuote[];
+  studentNotes?: string;
+  conceptTags?: string[];
+}
+
+export interface PortfolioVersion {
+  id: string;
+  versionNumber: string; // e.g. "v1.0", "v1.1", "v2.0"
+  createdAt: string;
+  createdBy: string;
+  authorName: string;
+  changeSummary: string; // Lý do / điểm thay đổi
+  responses: Record<PoeticAxisId, PoeticAxisResponse>;
+  isFrozen: boolean;
+  isSubmitted: boolean;
+}
+
+export interface FeedbackItem {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  versionNumber: string;
+  axisId: PoeticAxisId;
+  selectedSnippet: string;
+  comment: string;
+  authorId: string;
+  authorName: string;
+  authorRole: 'teacher' | 'peer';
+  createdAt: string;
+  resolved: boolean;
+}
+
+export interface RubricLevel {
+  level: 1 | 2 | 3 | 4;
+  label: 'Chưa đạt' | 'Đạt' | 'Khá' | 'Xuất sắc';
+  score: number; // e.g. 1.0, 2.0, 3.0, 4.0
+  description: string;
+  observableIndicators: string[];
+}
+
+export interface RubricCriterion {
+  id: string;
+  axisId: PoeticAxisId;
+  title: string;
+  weight: number; // e.g. 1
+  levels: RubricLevel[];
+}
+
+export interface RubricMatrix {
+  id: string;
+  title: string;
+  criteria: RubricCriterion[];
+}
+
+export interface RubricAssessmentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  versionNumber: string;
+  evaluatorId: string;
+  evaluatorName: string;
+  evaluatorRole: 'student' | 'peer' | 'teacher';
+  criterionScores: Record<string, { level: number; score: number; note: string }>;
+  overallFeedback: string;
+  totalScore: number;
+  maxScore: number;
+  submittedAt: string;
+}
+
+export interface Assignment {
+  id: string;
+  title: string;
+  textId: string;
+  classId: string;
+  assignedDate: string;
+  deadline: string;
+  difficulty: 'Cơ bản' | 'Nâng cao' | 'Chuyên sâu';
+  targetAxes: PoeticAxisId[];
+  prompt: string;
+  guidingSteps: string[];
+  rubricId: string;
+  starterTemplate?: Partial<Record<PoeticAxisId, string>>;
+}
+
+export interface StudentPortfolio {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  studentName: string;
+  className: string;
+  currentDraft: Record<PoeticAxisId, PoeticAxisResponse>;
+  lastAutosavedAt: string;
+  versions: PortfolioVersion[];
+  currentActiveVersion: string;
+  status: 'drafting' | 'v1_submitted' | 'feedback_received' | 'v2_in_revision' | 'completed';
+}
+
+export interface TaskRecommendation {
+  nextAssignmentId: string;
+  assignmentTitle: string;
+  targetAxisId: PoeticAxisId;
+  targetAxisTitle: string;
+  rationale: string; // Lý do minh bạch: e.g. "Tiêu chí 4 (Không gian - thời gian) ở v2.0 đạt 2.0/4.0. Bài tập này sẽ giúp rèn luyện khả năng đối chiếu thời gian tâm lí."
+  expectedGain: string;
+}
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  actorName: string;
+  actorRole: UserRole;
+  action: string;
+  target: string;
+  ipAddress: string;
+}

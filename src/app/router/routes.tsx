@@ -1,0 +1,125 @@
+import type { UserRole } from '../../types';
+
+export interface RouteDefinition {
+  id: string;
+  path: string;
+  title: string;
+  allowedRoles?: UserRole[];
+  isGuestOnly?: boolean;
+}
+
+export const APP_ROUTES: Record<string, RouteDefinition> = {
+  // Guest Routes
+  login: {
+    id: 'login',
+    path: '/login',
+    title: 'Đăng nhập',
+    isGuestOnly: true
+  },
+
+  // Authenticated Common Routes
+  dashboard: {
+    id: 'dashboard',
+    path: '/',
+    title: 'Bàn làm việc',
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin']
+  },
+  'ui-kit': {
+    id: 'ui-kit',
+    path: '/ui-kit',
+    title: 'Design System & UI Kit',
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin']
+  },
+
+  // Assignment System & Portfolio List
+  'assignment-list': {
+    id: 'assignment-list',
+    path: '/assignments',
+    title: 'Nhiệm vụ đọc hiểu',
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin']
+  },
+  'student-dashboard': {
+    id: 'student-dashboard',
+    path: '/student/assignments',
+    title: 'Nhiệm vụ của tôi',
+    allowedRoles: ['student', 'teacher']
+  },
+  'portfolio-list': {
+    id: 'portfolio-list',
+    path: '/portfolios',
+    title: 'Danh sách hồ sơ đọc',
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin']
+  },
+  editor: {
+    id: 'editor',
+    path: '/student/editor',
+    title: 'Hồ sơ đọc đang viết',
+    allowedRoles: ['student', 'teacher', 'peer']
+  },
+  'version-diff': {
+    id: 'version-diff',
+    path: '/student/diff',
+    title: 'So sánh Visual Diff',
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher']
+  },
+  'student-analytics': {
+    id: 'student-analytics',
+    path: '/student/analytics',
+    title: 'Tiến bộ & Đề xuất',
+    allowedRoles: ['student', 'teacher']
+  },
+
+  // Teacher Routes
+  'teacher-dashboard': {
+    id: 'teacher-dashboard',
+    path: '/teacher/overview',
+    title: 'Bàn làm việc Giáo viên',
+    allowedRoles: ['teacher', 'admin']
+  },
+  'teacher-review': {
+    id: 'teacher-review',
+    path: '/teacher/review',
+    title: 'Chấm bài & Neo nhận xét',
+    allowedRoles: ['teacher', 'peer', 'admin']
+  },
+  'assignment-builder': {
+    id: 'assignment-builder',
+    path: '/teacher/assignment-builder',
+    title: 'Tạo nhiệm vụ & Rubric',
+    allowedRoles: ['teacher', 'admin']
+  },
+  'rubric-management': {
+    id: 'rubric-management',
+    path: '/teacher/rubrics',
+    title: 'Quản lý ma trận Rubric',
+    allowedRoles: ['teacher', 'admin', 'researcher']
+  },
+  'literature-texts': {
+    id: 'literature-texts',
+    path: '/teacher/literature-texts',
+    title: 'Kho tác phẩm văn học',
+    allowedRoles: ['teacher', 'admin', 'student', 'researcher']
+  },
+  'class-analytics': {
+    id: 'class-analytics',
+    path: '/teacher/class-analytics',
+    title: 'Thống kê toàn lớp',
+    allowedRoles: ['teacher', 'admin', 'researcher']
+  },
+
+  // Researcher / Judge Routes
+  'researcher-view': {
+    id: 'researcher-view',
+    path: '/research/blind-eval',
+    title: 'Dữ liệu Ẩn danh & Nghiên cứu',
+    allowedRoles: ['researcher', 'admin']
+  },
+
+  // Admin Routes
+  'admin-view': {
+    id: 'admin-view',
+    path: '/admin/audit',
+    title: 'Quản trị hệ thống & Audit',
+    allowedRoles: ['admin']
+  }
+};

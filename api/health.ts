@@ -1,0 +1,1 @@
+export default function handler(req: any, res: any) { res.status(200).json({ ok:true, service:"cvt-khkt2627-api", version:"backend-v1", aiFeedbackEnabled:false, timestamp:new Date().toISOString() }); }

@@ -86,6 +86,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           { id: 'ui-kit', label: 'Minh chứng kỹ thuật', icon: SparklesIcon }
         ];
 
+      case 'ai':
+        return [
+          { id: 'ai-workspace', label: 'Kho câu trả lời AI', icon: SparklesIcon },
+          { id: 'dashboard', label: 'Không gian chính', icon: HomeIcon }
+        ];
+
       case 'peer':
       default:
         return [

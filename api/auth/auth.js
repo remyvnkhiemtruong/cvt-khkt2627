@@ -79,8 +79,10 @@ export async function ensureSchema() {
     role text NOT NULL CHECK (role IN ('admin','teacher','student','researcher','ai')),
     password_hash text NOT NULL,
     must_change_password boolean NOT NULL DEFAULT true,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_login timestamptz
   )`);
+  await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS last_login timestamptz");
 
   const roleConstraint = await db.query(`
     SELECT pg_get_constraintdef(oid) AS definition
@@ -128,6 +130,7 @@ export async function login(email, password) {
   );
   const row = result.rows[0];
   if (!row || !passwordVerify(password, row.password_hash)) return null;
+  await db.query("UPDATE app_users SET last_login=now() WHERE id=$1", [row.id]);
   return sessionForUser({
     id: row.id,
     email: row.email,
@@ -141,8 +144,8 @@ export async function register(email, name, password) {
   await ensureSchema();
   const db = await pool();
   const result = await db.query(
-    `INSERT INTO app_users(email,name,role,password_hash,must_change_password)
-     VALUES(lower($1),$2,'student',$3,false)
+    `INSERT INTO app_users(email,name,role,password_hash,must_change_password,last_login)
+     VALUES(lower($1),$2,'student',$3,false,now())
      RETURNING id,email,name,role,must_change_password`,
     [email, name, passwordHash(password)]
   );
@@ -175,6 +178,17 @@ export async function changePassword(userId, newPassword) {
     role: row.role,
     mustChangePassword: row.must_change_password
   });
+}
+
+export async function listUsers() {
+  await ensureSchema();
+  const db = await pool();
+  const result = await db.query(`
+    SELECT id,email,name,role,must_change_password,created_at,last_login
+    FROM app_users
+    ORDER BY created_at DESC, email ASC
+  `);
+  return result.rows;
 }
 
 export function getUser(req) {

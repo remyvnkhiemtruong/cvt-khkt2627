@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import type { User, UserRole } from '../types';
-import { MOCK_USERS } from '../data/seedData';
+import { useAuthStore } from '../app/store/useAuthStore';
 
 interface AuthContextType {
   currentUser: User;
@@ -11,35 +11,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'poetic_current_user_id';
-
+/**
+ * Compatibility provider for components that still consume useAuth().
+ * The source of truth is the production Zustand auth store; mock users and
+ * client-side role switching are intentionally disabled.
+ */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User>(() => {
-    const savedId = localStorage.getItem(STORAGE_KEY);
-    const found = MOCK_USERS.find(u => u.id === savedId);
-    return found || MOCK_USERS[0]; // Default to Student Nguyễn Văn An
-  });
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, currentUser.id);
-  }, [currentUser]);
-
-  const switchUser = (userId: string) => {
-    const user = MOCK_USERS.find(u => u.id === userId);
-    if (user) {
-      setCurrentUser(user);
-    }
-  };
-
-  const switchRole = (role: UserRole) => {
-    const user = MOCK_USERS.find(u => u.role === role);
-    if (user) {
-      setCurrentUser(user);
-    }
-  };
+  const allUsers = isAuthenticated && currentUser.id ? [currentUser] : [];
+  const switchUser = () => undefined;
+  const switchRole = () => undefined;
 
   return (
-    <AuthContext.Provider value={{ currentUser, switchUser, switchRole, allUsers: MOCK_USERS }}>
+    <AuthContext.Provider value={{ currentUser, switchUser, switchRole, allUsers }}>
       {children}
     </AuthContext.Provider>
   );

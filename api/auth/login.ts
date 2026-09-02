@@ -1,4 +1,4 @@
-import { body, login, send } from "./auth";
+import { body, login, send } from "./auth.js";
 export default async function handler(req:any,res:any) {
   if (req.method!=="POST") return send(res,405,{code:"METHOD_NOT_ALLOWED"});
   try { const {email,password}=body(req); if(!email||!password) return send(res,400,{code:"VALIDATION_ERROR",message:"Email và mật khẩu là bắt buộc."});

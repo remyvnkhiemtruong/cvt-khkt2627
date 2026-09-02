@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual, createHmac } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 let poolPromise;
 
@@ -33,7 +33,13 @@ function b64(value) {
 }
 
 function jwtSecret() {
-  return process.env.JWT_SECRET || "change-this-secret-before-production";
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.DATABASE_URL) {
+    return createHash("sha256")
+      .update(`cvt-khkt2627:jwt:${process.env.DATABASE_URL}`)
+      .digest("hex");
+  }
+  throw new Error("JWT_SECRET or DATABASE_URL is required");
 }
 
 function sign(payload) {
@@ -48,15 +54,20 @@ function verify(token) {
     const [header, payload, signature] = String(token || "").split(".");
     if (!header || !payload || !signature) return null;
     const expected = createHmac("sha256", jwtSecret()).update(`${header}.${payload}`).digest("base64url");
-    const a = Buffer.from(signature);
-    const b = Buffer.from(expected);
-    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    const actualBytes = Buffer.from(signature);
+    const expectedBytes = Buffer.from(expected);
+    if (actualBytes.length !== expectedBytes.length || !timingSafeEqual(actualBytes, expectedBytes)) return null;
     const data = JSON.parse(Buffer.from(payload, "base64url").toString());
     if (!data?.user || Number(data.exp) < Date.now() / 1000) return null;
     return data.user;
   } catch {
     return null;
   }
+}
+
+function sessionForUser(user) {
+  const now = Math.floor(Date.now() / 1000);
+  return { user, token: sign({ user, iat: now, exp: now + 28800 }) };
 }
 
 export async function ensureSchema() {
@@ -71,9 +82,6 @@ export async function ensureSchema() {
     created_at timestamptz NOT NULL DEFAULT now()
   )`);
 
-  // Older production databases were created before the AI role existed.
-  // CREATE TABLE IF NOT EXISTS does not update an existing CHECK constraint,
-  // so migrate that constraint once when required.
   const roleConstraint = await db.query(`
     SELECT pg_get_constraintdef(oid) AS definition
     FROM pg_constraint
@@ -88,19 +96,26 @@ export async function ensureSchema() {
   }
 
   const seeds = [
-    ["admin@cvt.edu.vn", "Quản trị hệ thống", "admin", "Admin@2026!"],
-    ["giaovien@cvt.edu.vn", "Giáo viên CVT", "teacher", "Teacher@2026!"],
-    ["hocsinh@cvt.edu.vn", "Học sinh CVT", "student", "Student@2026!"],
-    ["ai@cvt.edu.vn", "AI", "ai", "AI@2026!"]
+    ["admin@cvt.edu.vn", "Quản trị hệ thống", "admin", process.env.BOOTSTRAP_ADMIN_PASSWORD],
+    ["giaovien@cvt.edu.vn", "Giáo viên CVT", "teacher", process.env.BOOTSTRAP_TEACHER_PASSWORD],
+    ["hocsinh@cvt.edu.vn", "Học sinh CVT", "student", process.env.BOOTSTRAP_STUDENT_PASSWORD],
+    ["ai@cvt.edu.vn", "AI", "ai", process.env.BOOTSTRAP_AI_PASSWORD]
   ];
 
   for (const [email, name, role, password] of seeds) {
-    await db.query(
-      `INSERT INTO app_users(email,name,role,password_hash,must_change_password)
-       VALUES($1,$2,$3,$4,$5)
-       ON CONFLICT(email) DO UPDATE SET name=EXCLUDED.name, role=EXCLUDED.role`,
-      [email, name, role, passwordHash(password), role !== "student"]
-    );
+    if (password) {
+      await db.query(
+        `INSERT INTO app_users(email,name,role,password_hash,must_change_password)
+         VALUES($1,$2,$3,$4,true)
+         ON CONFLICT(email) DO UPDATE SET name=EXCLUDED.name, role=EXCLUDED.role`,
+        [email, name, role, passwordHash(password)]
+      );
+    } else {
+      await db.query(
+        "UPDATE app_users SET name=$2, role=$3 WHERE lower(email)=lower($1)",
+        [email, name, role]
+      );
+    }
   }
 }
 
@@ -113,15 +128,13 @@ export async function login(email, password) {
   );
   const row = result.rows[0];
   if (!row || !passwordVerify(password, row.password_hash)) return null;
-  const user = {
+  return sessionForUser({
     id: row.id,
     email: row.email,
     name: row.name,
     role: row.role,
     mustChangePassword: row.must_change_password
-  };
-  const now = Math.floor(Date.now() / 1000);
-  return { user, token: sign({ user, iat: now, exp: now + 28800 }) };
+  });
 }
 
 export async function register(email, name, password) {
@@ -134,15 +147,34 @@ export async function register(email, name, password) {
     [email, name, passwordHash(password)]
   );
   const row = result.rows[0];
-  const user = {
+  return sessionForUser({
     id: row.id,
     email: row.email,
     name: row.name,
     role: row.role,
     mustChangePassword: row.must_change_password
-  };
-  const now = Math.floor(Date.now() / 1000);
-  return { user, token: sign({ user, iat: now, exp: now + 28800 }) };
+  });
+}
+
+export async function changePassword(userId, newPassword) {
+  await ensureSchema();
+  const db = await pool();
+  const result = await db.query(
+    `UPDATE app_users
+     SET password_hash=$2, must_change_password=false
+     WHERE id=$1
+     RETURNING id,email,name,role,must_change_password`,
+    [userId, passwordHash(newPassword)]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return sessionForUser({
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    mustChangePassword: row.must_change_password
+  });
 }
 
 export function getUser(req) {

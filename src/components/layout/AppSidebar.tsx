@@ -1,25 +1,20 @@
 import React from 'react';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import {
-  HomeIcon,
-  DocumentTextIcon,
-  ArrowsRightLeftIcon,
-  ChartBarIcon,
-  ClipboardDocumentCheckIcon,
-  PlusCircleIcon,
   AcademicCapIcon,
-  ShieldCheckIcon,
+  ArrowsRightLeftIcon,
   BookOpenIcon,
-  SparklesIcon,
-  SwatchIcon,
-  UsersIcon,
-  UserGroupIcon,
-  ServerStackIcon,
-  Cog6ToothIcon,
-  BellIcon,
+  ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  FolderIcon
+  ClipboardDocumentCheckIcon,
+  DocumentTextIcon,
+  FolderIcon,
+  HomeIcon,
+  PlusCircleIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  SwatchIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
 import { Tooltip } from '../ui/Tooltip';
@@ -32,6 +27,13 @@ interface AppSidebarProps {
   className?: string;
 }
 
+type NavItem = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  params?: Record<string, unknown>;
+};
+
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   currentView,
   onNavigate,
@@ -39,9 +41,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onToggleCollapse,
   className
 }) => {
-  const { currentUser } = useAuthStore();
+  const currentUser = useAuthStore((state) => state.currentUser);
 
-  const getNavItems = () => {
+  const getNavItems = (): NavItem[] => {
     switch (currentUser.role) {
       case 'student':
         return [
@@ -49,167 +51,117 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           { id: 'assignment-list', label: 'Nhiệm vụ đọc hiểu', icon: BookOpenIcon },
           { id: 'portfolio-list', label: 'Hồ sơ đọc số', icon: FolderIcon },
           { id: 'editor', label: 'Bài đang viết', icon: DocumentTextIcon, params: { assignmentId: 'assign-vo-nhat' } },
-          { id: 'student-analytics', label: 'Tiến bộ', icon: ChartBarIcon },
-          { id: 'teacher-review', label: 'Phản biện bạn học', icon: SparklesIcon, params: { studentId: 'user-std-2', assignmentId: 'assign-vo-nhat', isPeerMode: true } },
-          { id: 'notifications', label: 'Thông báo', icon: BellIcon }
+          { id: 'version-diff', label: 'So sánh phiên bản', icon: ArrowsRightLeftIcon, params: { assignmentId: 'assign-vo-nhat' } },
+          { id: 'student-analytics', label: 'Tiến bộ', icon: ChartBarIcon }
         ];
-
       case 'teacher':
         return [
           { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
-          { id: 'class-analytics', label: 'Lớp học', icon: UserGroupIcon },
-          { id: 'editor', label: 'Văn bản', icon: BookOpenIcon, params: { assignmentId: 'assign-vo-nhat' } },
-          { id: 'assignment-list', label: 'Nhiệm vụ', icon: PlusCircleIcon },
-          { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
           { id: 'teacher-review', label: 'Chấm bài & Neo nhận xét', icon: ClipboardDocumentCheckIcon, params: { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat' } },
-          { id: 'class-analytics', label: 'Phân tích toàn lớp', icon: ChartBarIcon },
+          { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
+          { id: 'rubric-management', label: 'Quản lý Rubric', icon: SparklesIcon },
+          { id: 'literature-texts', label: 'Kho tác phẩm', icon: BookOpenIcon },
+          { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
+          { id: 'class-analytics', label: 'Phân tích toàn lớp', icon: ChartBarIcon }
         ];
-
-      case 'admin':
-        return [
-          { id: 'admin-view', label: 'Tổng quan', icon: HomeIcon },
-          { id: 'users', label: 'Người dùng', icon: UsersIcon },
-          { id: 'classes', label: 'Lớp', icon: UserGroupIcon },
-          { id: 'rbac', label: 'Phân quyền', icon: ShieldCheckIcon },
-          { id: 'admin-view', label: 'Nhật ký (Audit)', icon: DocumentTextIcon },
-          { id: 'backup', label: 'Sao lưu', icon: ServerStackIcon },
-          { id: 'settings', label: 'Cấu hình', icon: Cog6ToothIcon }
-        ];
-
-      case 'researcher':
-        return [
-          { id: 'researcher-view', label: 'Tổng quan', icon: HomeIcon },
-          { id: 'researcher-view', label: 'Dữ liệu ẩn danh', icon: AcademicCapIcon },
-          { id: 'portfolio-list', label: 'Tất cả hồ sơ', icon: FolderIcon },
-          { id: 'version-diff', label: 'Tiến trình', icon: ArrowsRightLeftIcon, params: { assignmentId: 'assign-vo-nhat' } },
-          { id: 'researcher-view', label: 'Thống kê (Effect d)', icon: ChartBarIcon },
-          { id: 'ui-kit', label: 'Minh chứng kỹ thuật', icon: SparklesIcon }
-        ];
-
-      case 'ai':
-        return [
-          { id: 'ai-workspace', label: 'Kho câu trả lời AI', icon: SparklesIcon },
-          { id: 'dashboard', label: 'Không gian chính', icon: HomeIcon }
-        ];
-
       case 'peer':
-      default:
         return [
-          { id: 'dashboard', label: 'Tổng quan', icon: HomeIcon },
           { id: 'portfolio-list', label: 'Hồ sơ đọc', icon: FolderIcon },
-          { id: 'teacher-review', label: 'Đánh giá bạn học', icon: SparklesIcon, params: { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat', isPeerMode: true } },
+          { id: 'teacher-review', label: 'Đánh giá bạn học', icon: ClipboardDocumentCheckIcon, params: { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat', isPeerMode: true } },
           { id: 'version-diff', label: 'So sánh Diff', icon: ArrowsRightLeftIcon, params: { assignmentId: 'assign-vo-nhat' } }
         ];
+      case 'researcher':
+        return [
+          { id: 'researcher-view', label: 'Tổng quan nghiên cứu', icon: AcademicCapIcon },
+          { id: 'portfolio-list', label: 'Tất cả hồ sơ', icon: FolderIcon },
+          { id: 'version-diff', label: 'Tiến trình phiên bản', icon: ArrowsRightLeftIcon, params: { assignmentId: 'assign-vo-nhat' } },
+          { id: 'rubric-management', label: 'Rubric nghiên cứu', icon: SparklesIcon },
+          { id: 'class-analytics', label: 'Thống kê', icon: ChartBarIcon },
+          { id: 'literature-texts', label: 'Kho tác phẩm', icon: BookOpenIcon }
+        ];
+      case 'admin':
+        return [
+          { id: 'admin-view', label: 'Quản trị & Audit', icon: ShieldCheckIcon },
+          { id: 'teacher-dashboard', label: 'Không gian giáo viên', icon: HomeIcon },
+          { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon, params: { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat' } },
+          { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
+          { id: 'rubric-management', label: 'Quản lý Rubric', icon: SparklesIcon },
+          { id: 'literature-texts', label: 'Kho tác phẩm', icon: BookOpenIcon },
+          { id: 'class-analytics', label: 'Thống kê', icon: ChartBarIcon },
+          { id: 'researcher-view', label: 'Không gian nghiên cứu', icon: AcademicCapIcon }
+        ];
+      case 'ai':
+        return [{ id: 'ai-workspace', label: 'Kho câu trả lời AI', icon: SparklesIcon }];
+      default:
+        return [];
     }
   };
 
-  const navItems = getNavItems();
+  const navItems: NavItem[] = [
+    ...getNavItems(),
+    { id: 'ui-kit', label: 'Design System Kit', icon: SwatchIcon }
+  ];
 
   return (
     <aside
       aria-label="Sidebar navigation"
       className={cn(
-        "bg-white border-r border-slate-200 p-3 shrink-0 flex flex-col justify-between hidden md:flex transition-all duration-200 min-h-[calc(100vh-3.5rem)]",
-        isCollapsed ? "w-16" : "w-64",
+        'hidden min-h-[calc(100vh-3.5rem)] shrink-0 flex-col justify-between border-r border-slate-200 bg-white p-3 transition-all duration-200 md:flex',
+        isCollapsed ? 'w-16' : 'w-64',
         className
       )}
     >
       <div className="space-y-4">
-        {/* Role label & Collapse trigger */}
-        <div className="flex items-center justify-between px-2 pt-1 pb-1 border-b border-slate-100">
+        <div className="flex items-center justify-between border-b border-slate-100 px-2 pb-1 pt-1">
           {!isCollapsed && (
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Phân hệ {currentUser.role.toUpperCase()}
-            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phân hệ {currentUser.role}</span>
           )}
           {onToggleCollapse && (
             <button
+              type="button"
               onClick={onToggleCollapse}
-              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 mx-auto transition"
-              title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+              className="mx-auto rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              title={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
             >
-              {isCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronLeftIcon className="w-4 h-4" />}
+              {isCollapsed ? <ChevronRightIcon className="h-4 w-4" /> : <ChevronLeftIcon className="h-4 w-4" />}
             </button>
           )}
         </div>
 
-        {/* Navigation Items */}
         <nav className="space-y-1">
-          {navItems.map(item => {
+          {navItems.map((item) => {
             const isActive = currentView === item.id;
             const Icon = item.icon;
-
-            const buttonContent = (
+            const button = (
               <button
-                key={item.id}
+                key={`${item.id}-${item.label}`}
                 type="button"
                 onClick={() => onNavigate(item.id, item.params)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left",
-                  isActive
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                  isCollapsed && "justify-center px-2"
+                  'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors',
+                  isActive ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                  isCollapsed && 'justify-center px-2'
                 )}
               >
-                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-white" : "text-slate-400")} />
+                <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400')} />
                 {!isCollapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
 
-            if (isCollapsed) {
-              return (
-                <Tooltip key={item.id} content={item.label} position="right">
-                  {buttonContent}
-                </Tooltip>
-              );
-            }
-
-            return buttonContent;
+            return isCollapsed ? (
+              <Tooltip key={`${item.id}-${item.label}`} content={item.label} position="right">{button}</Tooltip>
+            ) : button;
           })}
         </nav>
-
-        {/* Design System kit link */}
-        <div className="pt-2 border-t border-slate-100">
-          {isCollapsed ? (
-            <Tooltip content="Design System & UI Kit" position="right">
-              <button
-                type="button"
-                onClick={() => onNavigate('ui-kit')}
-                className={cn(
-                  "w-full flex items-center justify-center p-2 rounded-xl text-xs transition",
-                  currentView === 'ui-kit' ? "bg-indigo-50 text-indigo-900 font-bold" : "text-indigo-700 hover:bg-indigo-50/50"
-                )}
-              >
-                <SwatchIcon className="w-4 h-4 text-indigo-600" />
-              </button>
-            </Tooltip>
-          ) : (
-            <button
-              type="button"
-              onClick={() => onNavigate('ui-kit')}
-              className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition text-left",
-                currentView === 'ui-kit'
-                  ? "bg-indigo-50 text-indigo-900 font-bold border border-indigo-200"
-                  : "text-indigo-700 hover:bg-indigo-50/50"
-              )}
-            >
-              <SwatchIcon className="w-4 h-4 text-indigo-600 shrink-0" />
-              <span>Design System Kit</span>
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* 6 Poetic Axes Mini Widget when expanded */}
-      {!isCollapsed && (
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 font-bold text-slate-800 text-[11px]">
-            <BookOpenIcon className="w-3.5 h-3.5 text-slate-600" />
+      {!isCollapsed && currentUser.role !== 'ai' && (
+        <div className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800">
+            <BookOpenIcon className="h-3.5 w-3.5 text-slate-600" />
             <span>6 Trục Thi Pháp THPT</span>
           </div>
-          <p className="text-[10px] text-slate-500 leading-normal">
+          <p className="text-[10px] leading-normal text-slate-500">
             1. Tình huống • 2. Nhân vật • 3. Điểm nhìn • 4. Không-thời gian • 5. Ngôn ngữ & Biểu tượng • 6. Tính chỉnh thể
           </p>
         </div>

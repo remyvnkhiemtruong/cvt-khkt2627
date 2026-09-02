@@ -41,7 +41,7 @@ Frontend chỉ hiển thị các phân hệ phù hợp với role hiện tại; 
 
 3. **Nghiên cứu / quản trị**
    - Dữ liệu và báo cáo nghiên cứu
-   - Audit / quản trị
+   - Danh sách tài khoản thật từ PostgreSQL ở phân hệ Admin
    - Các phân hệ học thuật được cấp quyền
 
 4. **AI thủ công**
@@ -60,8 +60,9 @@ Các endpoint production hiện có:
 - `POST /api/auth/logout` — đăng xuất
 - `GET /api/ai/notes` — đọc lịch sử AI
 - `POST /api/ai/notes` — lưu ghi chú AI
+- `GET /api/admin/users` — danh sách tài khoản thật, chỉ role `admin`
 
-Auth schema tự kiểm tra/migrate danh sách role để tương thích với database đã được tạo trước khi role `ai` xuất hiện.
+Auth schema tự kiểm tra/migrate danh sách role để tương thích với database đã được tạo trước khi role `ai` xuất hiện. Backend cũng bổ sung `last_login` theo migration idempotent để Admin hiển thị thời điểm đăng nhập thật.
 
 ## Biến môi trường
 
@@ -88,19 +89,21 @@ npm install
 npm run dev
 ```
 
-Build production:
+Build production luôn chạy test trước:
 
 ```bash
 npm run build
 ```
 
-Chạy test có sẵn trong repository:
+Chạy riêng bộ production invariant tests:
 
 ```bash
-npm run test
+npm test
 ```
 
-## Deploy Vercel
+## CI & Deploy Vercel
+
+Repository có GitHub Actions CI để chạy `npm test` và `npm run build` cho `main`/pull request. Ngoài ra, `npm run build` tự chạy test trước TypeScript/Vite nên chính Vercel deployment cũng bị chặn nếu core invariant test fail.
 
 Repository được kết nối Git Deployment với Vercel. Mỗi commit vào `main` tạo production deployment mới; chỉ deployment build thành công mới nhận production alias.
 
@@ -109,8 +112,10 @@ Cấu hình secrets tại **Vercel → Project Settings → Environment Variable
 ## Nguyên tắc phiên bản chính thức
 
 - Không dùng user switcher / role simulation trên production.
-- Không hiển thị trạng thái đồng bộ giả hoặc đường dẫn tới view chưa tồn tại.
+- Không hiển thị trạng thái đồng bộ, backup, audit hoặc số liệu vận hành giả.
+- Không để navigation dẫn tới view chưa tồn tại hoặc role không được phép.
 - Session lưu ở client phải được xác thực lại bằng `/api/auth/me` khi tải ứng dụng.
 - Đăng xuất xóa trạng thái local và cookie server.
 - Các route được kiểm tra theo role trước khi render.
+- Admin chỉ hiển thị dữ liệu vận hành có nguồn backend thật; chức năng chưa có API ghi an toàn được trình bày là read-only thay vì giả lập thành công.
 - AI API tự động vẫn tắt cho tới giai đoạn tích hợp API; workflow hiện tại là người dùng/giáo viên phản hồi trước, sau đó mới tích hợp AI tự động.

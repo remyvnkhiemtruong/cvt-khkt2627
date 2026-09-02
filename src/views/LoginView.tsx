@@ -6,24 +6,70 @@ import { BookOpenIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outl
 export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const { setAuthenticatedUser } = useAuthStore();
   const [mode,setMode] = useState<'login'|'register'>('login');
-  const [email,setEmail]=useState(''); const [name,setName]=useState(''); const [password,setPassword]=useState('');
-  const [loading,setLoading]=useState(false); const [error,setError]=useState<string|null>(null);
-  const submit=async(e:React.FormEvent)=>{ e.preventDefault(); setLoading(true); setError(null);
-    try { const res=await fetch(mode==='login'?'/api/auth/login':'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(mode==='login'?{email,password}:{email,name,password})});
-      const data=await res.json(); if(!res.ok) throw new Error(data.message||'Không thể xác thực tài khoản');
-      localStorage.setItem('cvt_auth_token',data.token); setAuthenticatedUser({id:data.user.id,name:data.user.name,email:data.user.email,role:data.user.role}); onLoginSuccess();
-    } catch(err:any){ setError(err.message||'Lỗi kết nối máy chủ'); } finally { setLoading(false); }
+  const [email,setEmail]=useState('');
+  const [name,setName]=useState('');
+  const [password,setPassword]=useState('');
+  const [newPassword,setNewPassword]=useState('');
+  const [mustChange,setMustChange]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+
+  const acceptUser=(user:any)=>setAuthenticatedUser({
+    id:user.id,name:user.name,email:user.email,role:user.role,
+    mustChangePassword:Boolean(user.mustChangePassword)
+  });
+
+  const submit=async(e:React.FormEvent)=>{
+    e.preventDefault(); setLoading(true); setError(null);
+    try {
+      const res=await fetch(mode==='login'?'/api/auth/login':'/api/auth/register',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+        body:JSON.stringify(mode==='login'?{email,password}:{email,name,password})
+      });
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.message||'Không thể xác thực tài khoản');
+      acceptUser(data.user);
+      if(data.user?.mustChangePassword){ setMustChange(true); return; }
+      onLoginSuccess();
+    } catch(err:any){ setError(err.message||'Lỗi kết nối máy chủ'); }
+    finally { setLoading(false); }
   };
+
+  const rotatePassword=async(e:React.FormEvent)=>{
+    e.preventDefault(); setLoading(true); setError(null);
+    try {
+      const res=await fetch('/api/auth/change-password',{
+        method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+        body:JSON.stringify({newPassword})
+      });
+      const data=await res.json();
+      if(!res.ok) throw new Error(data.message||'Không thể đổi mật khẩu');
+      acceptUser(data.user); onLoginSuccess();
+    } catch(err:any){ setError(err.message||'Không thể đổi mật khẩu'); }
+    finally { setLoading(false); }
+  };
+
   return <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
-    <div className="mx-auto w-full max-w-md text-center space-y-3"><div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto"><BookOpenIcon className="w-7 h-7"/></div><h1 className="text-[clamp(1.35rem,5vw,1.5rem)] font-bold text-slate-900">Hồ Sơ Đọc Số THPT</h1><p className="text-sm text-slate-500">Đăng nhập để tiếp tục vào không gian học tập</p></div>
+    <div className="mx-auto w-full max-w-md text-center space-y-3">
+      <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto"><BookOpenIcon className="w-7 h-7"/></div>
+      <h1 className="text-[clamp(1.35rem,5vw,1.5rem)] font-bold text-slate-900">Hồ Sơ Đọc Số THPT</h1>
+      <p className="text-sm text-slate-500">{mustChange?'Thiết lập mật khẩu riêng trước khi tiếp tục':'Đăng nhập để tiếp tục vào không gian học tập'}</p>
+    </div>
     <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md"><div className="bg-white py-6 px-4 shadow-card border border-slate-200 rounded-3xl sm:py-8 sm:px-10">
-      {error&&<Alert type="error" title={mode==='login'?'Đăng nhập không thành công':'Đăng ký không thành công'}>{error}</Alert>}
-      <form onSubmit={submit} className="space-y-4">{mode==='register'&&<Input label="Họ và tên" required value={name} onChange={e=>setName(e.target.value)} placeholder="Nguyễn Văn An" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>}
-        <Input label="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@thpt.edu.vn" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>
-        <Input label="Mật khẩu" type="password" required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Tối thiểu 8 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>}/>
-        <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">{mode==='login'?'Đăng nhập':'Tạo tài khoản học sinh'}</Button>
-      </form>
-      <div className="mt-6 text-center text-sm text-slate-500">{mode==='login'?'Chưa có tài khoản?':'Đã có tài khoản?'} <button type="button" className="font-semibold text-indigo-700 hover:underline" onClick={()=>{setMode(mode==='login'?'register':'login');setError(null)}}>{mode==='login'?'Đăng ký':'Đăng nhập'}</button></div>
-    </div><p className="text-center text-xs text-slate-400 mt-6">Tài khoản giáo viên, quản trị viên và AI được cấp trong phiên bản chính thức 1.0.</p></div>
+      {error&&<Alert type="error" title={mustChange?'Đổi mật khẩu không thành công':mode==='login'?'Đăng nhập không thành công':'Đăng ký không thành công'}>{error}</Alert>}
+      {mustChange ? <form onSubmit={rotatePassword} className="space-y-4">
+        <Alert type="info" title="Bảo mật tài khoản">Tài khoản cấp sẵn cần đổi mật khẩu trước lần sử dụng chính thức.</Alert>
+        <Input label="Mật khẩu mới" type="password" required minLength={10} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="Ít nhất 10 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>}/>
+        <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">Đổi mật khẩu & tiếp tục</Button>
+      </form> : <>
+        <form onSubmit={submit} className="space-y-4">
+          {mode==='register'&&<Input label="Họ và tên" required value={name} onChange={e=>setName(e.target.value)} placeholder="Nguyễn Văn An" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>}
+          <Input label="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@thpt.edu.vn" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>
+          <Input label="Mật khẩu" type="password" required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Tối thiểu 8 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>}/>
+          <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">{mode==='login'?'Đăng nhập':'Tạo tài khoản học sinh'}</Button>
+        </form>
+        <div className="mt-6 text-center text-sm text-slate-500">{mode==='login'?'Chưa có tài khoản?':'Đã có tài khoản?'} <button type="button" className="font-semibold text-indigo-700 hover:underline" onClick={()=>{setMode(mode==='login'?'register':'login');setError(null)}}>{mode==='login'?'Đăng ký':'Đăng nhập'}</button></div>
+      </>}
+    </div><p className="text-center text-xs text-slate-400 mt-6">Phiên đăng nhập được bảo vệ bằng cookie HttpOnly; trình duyệt không lưu JWT.</p></div>
   </div>;
 };

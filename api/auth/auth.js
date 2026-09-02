@@ -53,7 +53,7 @@ export async function ensureSchema() {
   const db=await pool();
   await db.query(`CREATE TABLE IF NOT EXISTS app_users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(), email text UNIQUE NOT NULL, name text NOT NULL,
-    role text NOT NULL CHECK (role IN ('admin','teacher','student','researcher','ai')), password_hash text NOT NULL,
+    role text NOT NULL CHECK (role IN ('admin','teacher','student','peer','researcher','ai')), password_hash text NOT NULL,
     must_change_password boolean NOT NULL DEFAULT true, account_status text NOT NULL DEFAULT 'active',
     created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), last_login timestamptz)`);
   await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS last_login timestamptz");
@@ -63,9 +63,10 @@ export async function ensureSchema() {
   await db.query("CREATE INDEX IF NOT EXISTS idx_auth_rate_events_key_time ON auth_rate_events(event_key,created_at DESC)");
 
   const roleConstraint=await db.query(`SELECT pg_get_constraintdef(oid) definition FROM pg_constraint WHERE conrelid='app_users'::regclass AND conname='app_users_role_check' LIMIT 1`);
-  if(!String(roleConstraint.rows[0]?.definition||"").includes("'ai'")){
+  const roleDefinition=String(roleConstraint.rows[0]?.definition||"");
+  if(!roleDefinition.includes("'peer'")){
     await db.query("ALTER TABLE app_users DROP CONSTRAINT IF EXISTS app_users_role_check");
-    await db.query("ALTER TABLE app_users ADD CONSTRAINT app_users_role_check CHECK (role IN ('admin','teacher','student','researcher','ai'))");
+    await db.query("ALTER TABLE app_users ADD CONSTRAINT app_users_role_check CHECK (role IN ('admin','teacher','student','peer','researcher','ai'))");
   }
   const seeds=[
     ["admin@cvt.edu.vn","Quản trị hệ thống","admin",process.env.BOOTSTRAP_ADMIN_PASSWORD],

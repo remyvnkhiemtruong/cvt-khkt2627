@@ -14,9 +14,9 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
       localStorage.setItem('cvt_auth_token',data.token); setAuthenticatedUser({id:data.user.id,name:data.user.name,email:data.user.email,role:data.user.role}); onLoginSuccess();
     } catch(err:any){ setError(err.message||'Lỗi kết nối máy chủ'); } finally { setLoading(false); }
   };
-  return <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4">
-    <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3"><div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto"><BookOpenIcon className="w-7 h-7"/></div><h1 className="text-2xl font-bold text-slate-900">Hồ Sơ Đọc Số THPT</h1><p className="text-sm text-slate-500">Đăng nhập để tiếp tục vào không gian học tập</p></div>
-    <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"><div className="bg-white py-8 px-6 shadow-card border border-slate-200 rounded-3xl sm:px-10">
+  return <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
+    <div className="mx-auto w-full max-w-md text-center space-y-3"><div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto"><BookOpenIcon className="w-7 h-7"/></div><h1 className="text-[clamp(1.35rem,5vw,1.5rem)] font-bold text-slate-900">Hồ Sơ Đọc Số THPT</h1><p className="text-sm text-slate-500">Đăng nhập để tiếp tục vào không gian học tập</p></div>
+    <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md"><div className="bg-white py-6 px-4 shadow-card border border-slate-200 rounded-3xl sm:py-8 sm:px-10">
       {error&&<Alert type="error" title={mode==='login'?'Đăng nhập không thành công':'Đăng ký không thành công'}>{error}</Alert>}
       <form onSubmit={submit} className="space-y-4">{mode==='register'&&<Input label="Họ và tên" required value={name} onChange={e=>setName(e.target.value)} placeholder="Nguyễn Văn An" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>}
         <Input label="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@thpt.edu.vn" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>}/>
@@ -24,6 +24,6 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
         <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">{mode==='login'?'Đăng nhập':'Tạo tài khoản học sinh'}</Button>
       </form>
       <div className="mt-6 text-center text-sm text-slate-500">{mode==='login'?'Chưa có tài khoản?':'Đã có tài khoản?'} <button type="button" className="font-semibold text-indigo-700 hover:underline" onClick={()=>{setMode(mode==='login'?'register':'login');setError(null)}}>{mode==='login'?'Đăng ký':'Đăng nhập'}</button></div>
-    </div><p className="text-center text-xs text-slate-400 mt-6">Tài khoản giáo viên và quản trị viên được cấp bởi nhà trường.</p></div>
+    </div><p className="text-center text-xs text-slate-400 mt-6">Tài khoản giáo viên, quản trị viên và AI được cấp trong phiên bản chính thức 1.0.</p></div>
   </div>;
 };

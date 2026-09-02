@@ -1,76 +1,116 @@
-# Hệ Thống Hồ Sơ Đọc Số Có Lưu Phiên Bản Theo Trục Thi Pháp
-### *Phát triển năng lực đọc hiểu truyện ngắn hiện đại cho học sinh THPT (Chương trình GDPT 2018)*
+# Hồ Sơ Đọc Số THPT
 
----
+Nền tảng hỗ trợ phát triển năng lực đọc hiểu truyện ngắn hiện đại theo 6 trục thi pháp, lưu tiến trình phiên bản, phản hồi neo ngữ cảnh, rubric và phân tích học tập.
 
-## 🌟 Giới Thiệu Đề Tài
-Dự án Nghiên cứu Khoa học Kỹ thuật Sư phạm Ứng dụng: **Xây dựng không gian tài liệu học thuật cộng tác (Collaborative Academic Document Workspace)** hỗ trợ học sinh THPT đọc hiểu truyện ngắn hiện đại qua **6 trục thi pháp**, đóng băng snapshot phiên bản bất biến ($v1.0 \rightarrow v2.0 \rightarrow v3.0$), tiếp thu phản hồi neo ngữ cảnh và đánh giá định lượng qua ma trận Rubric 4 mức độ.
+## Trạng thái
 
----
+- **Phiên bản:** chính thức
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS
+- **Backend:** Vercel Functions + PostgreSQL/Neon
+- **Xác thực:** tài khoản thật, cookie HttpOnly + JWT, phân quyền theo vai trò
+- **AI giai đoạn hiện tại:** chưa gọi API AI tự động; tài khoản AI dùng để lưu thủ công câu hỏi/câu trả lời AI theo đúng kế hoạch triển khai hiện tại
+- **Production:** https://cvt-khkt2627.vercel.app
 
-## 🚀 6 Tính Năng Cốt Lõi (Signature Features)
+## Vai trò hệ thống
 
-1. **Portfolio Editor (Không Gian Soạn Thảo 3 Cột / Full-Bleed)**:
-   - Điều hướng 6 trục thi pháp: *Tình huống, Nhân vật, Điểm nhìn, Không - Thời gian, Ngôn ngữ & Biểu tượng, Luận đề & Lập luận*.
-   - Khung khối giàn giáo (Scaffolding): `TextBlock`, `EvidenceBlock` (2 vùng Dẫn chứng & Lí giải), `TableBlock`, `TimelineBlock`.
-   - Lưu nháp tự động ngầm (`Autosave != Create Version`).
+- `student` — Học sinh
+- `teacher` — Giáo viên
+- `peer` — Người phản biện bạn học
+- `researcher` — Giám khảo / nghiên cứu
+- `admin` — Quản trị hệ thống
+- `ai` — Kho phản hồi AI thủ công
 
-2. **Immutable Version Snapshots (Lưu Phiên Bản Bất Biến)**:
-   - Đóng băng mốc snapshot $v1.0, v2.0, v3.0$ kèm mốc thời gian server và nhãn lí do sư phạm (*Bổ sung dẫn chứng, Lí giải sâu hơn...*).
-   - Thống kê delta thời gian thực: `+126 từ, -32 từ, ~4 đoạn sửa`.
+Frontend chỉ hiển thị các phân hệ phù hợp với role hiện tại; không còn chức năng chuyển vai trò mô phỏng trong giao diện production.
 
-3. **Signature Visual Diff Viewer (Trình So Sánh Phiên Bản)**:
-   - 2 chế độ hiển thị: *Unified Diff Stream* (chuẩn cho Mobile) và *Side-by-Side* (Desktop).
-   - Ký hiệu ngữ nghĩa không phụ thuộc màu sắc: `+` (Thêm), `−` (Xóa), `✎` (Sửa đổi lập luận).
+## Các phân hệ chính
 
-4. **Contextual Anchored Feedback (Phản Hồi Neo Ngữ Cảnh)**:
-   - Bôi đen câu văn bất kỳ $\rightarrow$ Floating Toolbar `[+ Phản hồi câu đã chọn]`.
-   - Nhận xét neo chặt vào phiên bản hiện hành, không bị trôi lệch khi học sinh tạo bản mới.
-   - Tiếp thu phản hồi: Đánh dấu `✓ Đã xử lý trong v2.0` (bảo toàn 100% lịch sử nhận xét).
+1. **Học sinh**
+   - Nhiệm vụ đọc hiểu
+   - Hồ sơ đọc số
+   - Soạn thảo theo 6 trục thi pháp
+   - Lưu phiên bản và Visual Diff
+   - Báo cáo tiến bộ
 
-5. **Traceable Learning Analytics (Tiến Bộ Có Giải Trình)**:
-   - Biểu đồ tiến độ đường 6 trục, bảng số liệu thay thế (Accessible Table), khuyến nghị bài tập có giải trình logic, không dùng AI thần bí (Black-box).
+2. **Giáo viên**
+   - Bàn làm việc giáo viên
+   - Chấm bài và neo nhận xét
+   - Tạo nhiệm vụ
+   - Quản lý Rubric
+   - Kho tác phẩm
+   - Phân tích lớp
 
-6. **Classroom Heatmap & 3-Pane Continuous Review**:
-   - Bản đồ nhiệt $36 \times 6$ trục có click xem dẫn chứng câu chữ thực tế (*Deep-link Evidence*).
-   - Phòng chấm bài 3-Pane liên tục với phím tắt `Alt + Left/Right` chuyển học sinh siêu tốc.
+3. **Nghiên cứu / quản trị**
+   - Dữ liệu và báo cáo nghiên cứu
+   - Audit / quản trị
+   - Các phân hệ học thuật được cấp quyền
 
----
+4. **AI thủ công**
+   - Lưu câu hỏi/prompt đã tra cứu
+   - Dán và lưu câu trả lời AI
+   - Xem lại lịch sử đã lưu theo tài khoản
 
-## 🛠️ Công Nghệ & Tiêu Chuẩn
+## Backend API
 
-- **Frontend Core**: React 19, TypeScript, Tailwind CSS, Vite.
-- **Biểu Đồ & Trực Quan Hóa**: Chart.js, React-ChartJS-2.
-- **Tiêu Chuẩn Tiếp Cận**: Đạt chuẩn **WCAG 2.1/2.2 AA** (Skip-link, Landmarks, Aria-live, Touch targets $\ge 44\text{px}$).
-- **Độ Tin Cậy Ngoại Tuyến**: Máy trạng thái **PWA / Offline Resilience** 4 pha (*Online, Offline, Syncing, Conflict*).
-- **Kiểm Thử Tự Động**: 16/16 Test cases đạt chuẩn 100% PASS (`npm run test`).
+Các endpoint production hiện có:
 
----
+- `GET /api/health` — trạng thái backend
+- `POST /api/auth/login` — đăng nhập
+- `POST /api/auth/register` — đăng ký tài khoản học sinh
+- `GET /api/auth/me` — kiểm tra phiên đăng nhập
+- `POST /api/auth/logout` — đăng xuất
+- `GET /api/ai/notes` — đọc lịch sử AI
+- `POST /api/ai/notes` — lưu ghi chú AI
 
-## 📦 Cài Đặt & Chạy Thử Nghiệm
+Auth schema tự kiểm tra/migrate danh sách role để tương thích với database đã được tạo trước khi role `ai` xuất hiện.
+
+## Biến môi trường
+
+Sao chép `.env.example` thành `.env.local` khi chạy local và điền giá trị thật. Không commit secret vào Git.
+
+Biến bắt buộc cho backend:
+
+- `DATABASE_URL`
+- `JWT_SECRET` — khuyến nghị thiết lập riêng trên Vercel; nếu chưa có, backend tạo khóa dẫn xuất server-side từ `DATABASE_URL` thay vì dùng secret công khai trong source
+
+Biến bootstrap tùy chọn cho database mới:
+
+- `BOOTSTRAP_ADMIN_PASSWORD`
+- `BOOTSTRAP_TEACHER_PASSWORD`
+- `BOOTSTRAP_STUDENT_PASSWORD`
+- `BOOTSTRAP_AI_PASSWORD`
+
+Các biến bootstrap chỉ dùng để tạo tài khoản còn thiếu trên database mới; không ghi đè mật khẩu của tài khoản đã tồn tại.
+
+## Chạy local
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/remyvnkhiemtruong/cvt-khkt2627.git
-cd cvt-khkt2627
-
-# 2. Cài đặt dependencies
 npm install
-
-# 3. Chạy môi trường phát triển (Local Dev Server)
 npm run dev
+```
 
-# 4. Chạy bộ kiểm thử tự động
-npm run test
+Build production:
 
-# 5. Build bản phát hành (Production Build)
+```bash
 npm run build
 ```
 
----
+Chạy test có sẵn trong repository:
 
-## 👥 Tài Khoản & Kịch Bản Trình Diễn Mẫu (Demo Sandbox)
+```bash
+npm run test
+```
 
-- **Học sinh demo**: `HS-DEMO-01` (*Nguyễn Minh - Lớp 10A2 - Demo*)
-- **Tác phẩm mẫu**: *Người ở bến sông Châu* (Sương Nguyệt Minh)
-- **Chuỗi phiên bản**: $v1.0$ (Sơ thảo) $\rightarrow$ Phản hồi của cô Mai $\rightarrow$ $v2.0$ (Lí giải sâu hơn) $\rightarrow$ $v3.0$ (Bổ sung dẫn chứng).
+## Deploy Vercel
+
+Repository được kết nối Git Deployment với Vercel. Mỗi commit vào `main` tạo production deployment mới; chỉ deployment build thành công mới nhận production alias.
+
+Cấu hình secrets tại **Vercel → Project Settings → Environment Variables**. Không đưa secret vào `.env`, README hoặc source code.
+
+## Nguyên tắc phiên bản chính thức
+
+- Không dùng user switcher / role simulation trên production.
+- Không hiển thị trạng thái đồng bộ giả hoặc đường dẫn tới view chưa tồn tại.
+- Session lưu ở client phải được xác thực lại bằng `/api/auth/me` khi tải ứng dụng.
+- Đăng xuất xóa trạng thái local và cookie server.
+- Các route được kiểm tra theo role trước khi render.
+- AI API tự động vẫn tắt cho tới giai đoạn tích hợp API; workflow hiện tại là người dùng/giáo viên phản hồi trước, sau đó mới tích hợp AI tự động.

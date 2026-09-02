@@ -68,6 +68,23 @@ export async function ensureSchema() {
     await db.query("ALTER TABLE app_users DROP CONSTRAINT IF EXISTS app_users_role_check");
     await db.query("ALTER TABLE app_users ADD CONSTRAINT app_users_role_check CHECK (role IN ('admin','teacher','student','peer','researcher','ai'))");
   }
+
+  const classMembersExists=await db.query("SELECT to_regclass('public.class_members') AS table_name");
+  if(classMembersExists.rows[0]?.table_name){
+    await db.query(`CREATE OR REPLACE FUNCTION guard_seeded_class_membership() RETURNS trigger LANGUAGE plpgsql AS $$
+      DECLARE member_email text; target_class_code text;
+      BEGIN
+        IF current_setting('app.class_member_write', true) = 'admin' THEN RETURN NEW; END IF;
+        IF NEW.member_role <> 'student' THEN RETURN NEW; END IF;
+        SELECT lower(email) INTO member_email FROM app_users WHERE id=NEW.user_id;
+        SELECT code INTO target_class_code FROM classes WHERE id=NEW.class_id;
+        IF target_class_code='11A1' AND member_email <> 'hocsinh@cvt.edu.vn' THEN RETURN NULL; END IF;
+        RETURN NEW;
+      END $$`);
+    await db.query("DROP TRIGGER IF EXISTS class_members_seed_guard ON class_members");
+    await db.query("CREATE TRIGGER class_members_seed_guard BEFORE INSERT ON class_members FOR EACH ROW EXECUTE FUNCTION guard_seeded_class_membership()");
+  }
+
   const seeds=[
     ["admin@cvt.edu.vn","Quản trị hệ thống","admin",process.env.BOOTSTRAP_ADMIN_PASSWORD],
     ["giaovien@cvt.edu.vn","Giáo viên CVT","teacher",process.env.BOOTSTRAP_TEACHER_PASSWORD],

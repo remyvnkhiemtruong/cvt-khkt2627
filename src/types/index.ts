@@ -8,6 +8,9 @@ export interface User {
   avatar?: string;
   className?: string;
   assignedPeerRevieweeId?: string;
+  mustChangePassword?: boolean;
+  accountStatus?: 'active' | 'locked';
+  lastLogin?: string | null;
 }
 
 export type PoeticAxisId = 
@@ -79,7 +82,7 @@ export interface FeedbackItem {
   comment: string;
   authorId: string;
   authorName: string;
-  authorRole: 'teacher' | 'peer';
+  authorRole: 'teacher' | 'peer' | 'ai';
   createdAt: string;
   resolved: boolean;
 }
@@ -138,6 +141,7 @@ export interface Assignment {
 
 export interface StudentPortfolio {
   id: string;
+  dbId?: string;
   assignmentId: string;
   studentId: string;
   studentName: string;
@@ -147,6 +151,42 @@ export interface StudentPortfolio {
   versions: PortfolioVersion[];
   currentActiveVersion: string;
   status: 'drafting' | 'v1_submitted' | 'feedback_received' | 'v2_in_revision' | 'completed';
+}
+
+export interface AiReviewRequest {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  student_name: string;
+  version_number: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  prompt: string;
+  response: string;
+  teacher_review_status: 'pending' | 'approved' | 'revised' | 'rejected';
+  teacher_note: string;
+  created_at: string;
+  completed_at?: string | null;
+}
+
+export interface AcademicClass {
+  id: string;
+  code: string;
+  name: string;
+  school_year: string;
+  student_count?: number;
+}
+
+export interface AcademicSnapshot {
+  assignments: Assignment[];
+  literatureTexts: LiteratureText[];
+  rubric: RubricMatrix;
+  portfolios: Record<string, StudentPortfolio>;
+  feedbacks: FeedbackItem[];
+  rubricSubmissions: RubricAssessmentSubmission[];
+  auditLogs: AuditLog[];
+  classes?: AcademicClass[];
+  users?: User[];
+  aiReviews?: AiReviewRequest[];
 }
 
 export interface TaskRecommendation {

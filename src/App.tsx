@@ -17,6 +17,7 @@ import { ResearcherJudgeView } from './views/ResearcherJudgeView';
 import { AdminAuditView } from './views/AdminAuditView';
 import { DesignSystemKitView } from './views/DesignSystemKitView';
 import { LoginView } from './views/LoginView';
+import { AiWorkspaceView } from './views/AiWorkspaceView';
 import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
@@ -25,15 +26,16 @@ import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 const AppContent: React.FC = () => {
-  const { currentUser } = useAuthStore();
+  const { currentUser, isAuthenticated: authStoreAuthenticated } = useAuthStore();
   
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('poetic_is_authenticated') !== 'false';
+    return authStoreAuthenticated;
   });
 
   // View navigation state
   const [currentView, setCurrentView] = useState<string>(() => {
+    if (currentUser.role === 'ai') return 'ai-workspace';
     if (currentUser.role === 'teacher') return 'teacher-dashboard';
     if (currentUser.role === 'researcher') return 'researcher-view';
     if (currentUser.role === 'admin') return 'admin-view';
@@ -48,15 +50,18 @@ const AppContent: React.FC = () => {
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
     localStorage.setItem('poetic_is_authenticated', 'true');
-    if (currentUser.role === 'teacher') setCurrentView('teacher-dashboard');
-    else if (currentUser.role === 'researcher') setCurrentView('researcher-view');
-    else if (currentUser.role === 'admin') setCurrentView('admin-view');
+    const role = useAuthStore.getState().currentUser.role;
+    if (role === 'ai') setCurrentView('ai-workspace');
+    else if (role === 'teacher') setCurrentView('teacher-dashboard');
+    else if (role === 'researcher') setCurrentView('researcher-view');
+    else if (role === 'admin') setCurrentView('admin-view');
     else setCurrentView('dashboard');
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.setItem('poetic_is_authenticated', 'false');
+    useAuthStore.getState().logout();
     setCurrentView('login');
   };
 
@@ -155,6 +160,9 @@ const AppContent: React.FC = () => {
 
       case 'admin-view':
         return <AdminAuditView onNavigate={handleNavigate} />;
+
+      case 'ai-workspace':
+        return <AiWorkspaceView />;
 
       case 'ui-kit':
       case 'design-system':

@@ -9,7 +9,6 @@ export interface RouteDefinition {
 }
 
 export const APP_ROUTES: Record<string, RouteDefinition> = {
-  // Guest Routes
   login: {
     id: 'login',
     path: '/login',
@@ -17,7 +16,6 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
     isGuestOnly: true
   },
 
-  // Authenticated Common Routes
   dashboard: {
     id: 'dashboard',
     path: '/',
@@ -28,10 +26,9 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
     id: 'ui-kit',
     path: '/ui-kit',
     title: 'Design System & UI Kit',
-    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin']
+    allowedRoles: ['student', 'teacher', 'peer', 'researcher', 'admin', 'ai']
   },
 
-  // Assignment System & Portfolio List
   'assignment-list': {
     id: 'assignment-list',
     path: '/assignments',
@@ -69,7 +66,6 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
     allowedRoles: ['student', 'teacher']
   },
 
-  // Teacher Routes
   'teacher-dashboard': {
     id: 'teacher-dashboard',
     path: '/teacher/overview',
@@ -107,7 +103,6 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
     allowedRoles: ['teacher', 'admin', 'researcher']
   },
 
-  // Researcher / Judge Routes
   'researcher-view': {
     id: 'researcher-view',
     path: '/research/blind-eval',
@@ -115,11 +110,17 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
     allowedRoles: ['researcher', 'admin']
   },
 
-  // Admin Routes
   'admin-view': {
     id: 'admin-view',
     path: '/admin/audit',
     title: 'Quản trị hệ thống & Audit',
     allowedRoles: ['admin']
+  },
+
+  'ai-workspace': {
+    id: 'ai-workspace',
+    path: '/ai/workspace',
+    title: 'Kho phản hồi AI',
+    allowedRoles: ['ai', 'teacher', 'admin']
   }
 };

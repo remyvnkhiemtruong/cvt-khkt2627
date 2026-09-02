@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import type { User, UserRole } from '../../types';
-import { MOCK_USERS } from '../../data/seedData';
 
 interface AuthState {
   currentUser: User;
   allUsers: User[];
+  isAuthenticated: boolean;
+  setAuthenticatedUser: (user: User) => void;
+  logout: () => void;
   switchUser: (userId: string) => void;
   switchRole: (role: UserRole) => void;
   canEditPortfolio: () => boolean;
@@ -12,34 +14,16 @@ interface AuthState {
   canManageSystem: () => boolean;
   isResearcher: () => boolean;
 }
-
-const STORAGE_KEY = 'poetic_auth_user_id';
-
+const guest: User = { id: '', name: '', email: '', role: 'student' };
+const saved = (() => { try { return JSON.parse(localStorage.getItem('cvt_auth_user') || 'null'); } catch { return null; } })();
 export const useAuthStore = create<AuthState>((set, get) => ({
-  currentUser: (() => {
-    const savedId = localStorage.getItem(STORAGE_KEY);
-    const user = MOCK_USERS.find(u => u.id === savedId);
-    return user || MOCK_USERS[0]; // Default to Student Nguyễn Văn An
-  })(),
-
-  allUsers: MOCK_USERS,
-
-  switchUser: (userId: string) => {
-    const found = MOCK_USERS.find(u => u.id === userId);
-    if (found) {
-      localStorage.setItem(STORAGE_KEY, found.id);
-      set({ currentUser: found });
-    }
-  },
-
-  switchRole: (role: UserRole) => {
-    const found = MOCK_USERS.find(u => u.role === role);
-    if (found) {
-      localStorage.setItem(STORAGE_KEY, found.id);
-      set({ currentUser: found });
-    }
-  },
-
+  currentUser: saved || guest,
+  allUsers: saved ? [saved] : [],
+  isAuthenticated: Boolean(saved && localStorage.getItem('cvt_auth_token')),
+  setAuthenticatedUser: (user) => { localStorage.setItem('cvt_auth_user', JSON.stringify(user)); set({ currentUser:user, allUsers:[user], isAuthenticated:true }); },
+  logout: () => { localStorage.removeItem('cvt_auth_user'); localStorage.removeItem('cvt_auth_token'); set({ currentUser:guest, allUsers:[], isAuthenticated:false }); },
+  switchUser: () => {},
+  switchRole: () => {},
   canEditPortfolio: () => get().currentUser.role === 'student',
   canGradeRubric: () => ['teacher', 'peer', 'student'].includes(get().currentUser.role),
   canManageSystem: () => get().currentUser.role === 'admin',

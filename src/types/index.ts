@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'peer' | 'admin' | 'researcher';
+export type UserRole = 'student' | 'teacher' | 'peer' | 'admin' | 'researcher' | 'ai';
 
 export interface User {
   id: string;
@@ -7,7 +7,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   className?: string;
-  assignedPeerRevieweeId?: string; // For peer review assignment
+  assignedPeerRevieweeId?: string;
 }
 
 export type PoeticAxisId = 
@@ -59,11 +59,11 @@ export interface PoeticAxisResponse {
 
 export interface PortfolioVersion {
   id: string;
-  versionNumber: string; // e.g. "v1.0", "v1.1", "v2.0"
+  versionNumber: string;
   createdAt: string;
   createdBy: string;
   authorName: string;
-  changeSummary: string; // Lý do / điểm thay đổi
+  changeSummary: string;
   responses: Record<PoeticAxisId, PoeticAxisResponse>;
   isFrozen: boolean;
   isSubmitted: boolean;
@@ -87,7 +87,7 @@ export interface FeedbackItem {
 export interface RubricLevel {
   level: 1 | 2 | 3 | 4;
   label: 'Chưa đạt' | 'Đạt' | 'Khá' | 'Xuất sắc';
-  score: number; // e.g. 1.0, 2.0, 3.0, 4.0
+  score: number;
   description: string;
   observableIndicators: string[];
 }
@@ -96,7 +96,7 @@ export interface RubricCriterion {
   id: string;
   axisId: PoeticAxisId;
   title: string;
-  weight: number; // e.g. 1
+  weight: number;
   levels: RubricLevel[];
 }
 
@@ -154,7 +154,7 @@ export interface TaskRecommendation {
   assignmentTitle: string;
   targetAxisId: PoeticAxisId;
   targetAxisTitle: string;
-  rationale: string; // Lý do minh bạch: e.g. "Tiêu chí 4 (Không gian - thời gian) ở v2.0 đạt 2.0/4.0. Bài tập này sẽ giúp rèn luyện khả năng đối chiếu thời gian tâm lí."
+  rationale: string;
   expectedGain: string;
 }
 

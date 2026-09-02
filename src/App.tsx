@@ -1,23 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProviders } from './app/providers/AppProviders';
 import { MainLayout } from './components/layout/MainLayout';
-import { StudentDashboardView } from './views/StudentDashboardView';
-import { AssignmentListView } from './views/AssignmentListView';
-import { PortfolioListView } from './views/PortfolioListView';
-import { PortfolioEditorView } from './views/PortfolioEditorView';
-import { VersionDiffView } from './views/VersionDiffView';
-import { StudentAnalyticsView } from './views/StudentAnalyticsView';
-import { TeacherDashboardView } from './views/TeacherDashboardView';
-import { TeacherReviewView } from './views/TeacherReviewView';
-import { AssignmentBuilderView } from './views/AssignmentBuilderView';
-import { RubricManagementView } from './views/RubricManagementView';
-import { LiteratureTextsView } from './views/LiteratureTextsView';
-import { ClassAnalyticsView } from './views/ClassAnalyticsView';
-import { ResearcherJudgeView } from './views/ResearcherJudgeView';
-import { AdminAuditView } from './views/AdminAuditView';
-import { DesignSystemKitView } from './views/DesignSystemKitView';
 import { LoginView } from './views/LoginView';
-import { AiWorkspaceView } from './views/AiWorkspaceView';
 import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
@@ -25,6 +9,23 @@ import { APP_ROUTES } from './app/router/routes';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
+
+const StudentDashboardView = lazy(() => import('./views/StudentDashboardView').then((module) => ({ default: module.StudentDashboardView })));
+const AssignmentListView = lazy(() => import('./views/AssignmentListView').then((module) => ({ default: module.AssignmentListView })));
+const PortfolioListView = lazy(() => import('./views/PortfolioListView').then((module) => ({ default: module.PortfolioListView })));
+const PortfolioEditorView = lazy(() => import('./views/PortfolioEditorView').then((module) => ({ default: module.PortfolioEditorView })));
+const VersionDiffView = lazy(() => import('./views/VersionDiffView').then((module) => ({ default: module.VersionDiffView })));
+const StudentAnalyticsView = lazy(() => import('./views/StudentAnalyticsView').then((module) => ({ default: module.StudentAnalyticsView })));
+const TeacherDashboardView = lazy(() => import('./views/TeacherDashboardView').then((module) => ({ default: module.TeacherDashboardView })));
+const TeacherReviewView = lazy(() => import('./views/TeacherReviewView').then((module) => ({ default: module.TeacherReviewView })));
+const AssignmentBuilderView = lazy(() => import('./views/AssignmentBuilderView').then((module) => ({ default: module.AssignmentBuilderView })));
+const RubricManagementView = lazy(() => import('./views/RubricManagementView').then((module) => ({ default: module.RubricManagementView })));
+const LiteratureTextsView = lazy(() => import('./views/LiteratureTextsView').then((module) => ({ default: module.LiteratureTextsView })));
+const ClassAnalyticsView = lazy(() => import('./views/ClassAnalyticsView').then((module) => ({ default: module.ClassAnalyticsView })));
+const ResearcherJudgeView = lazy(() => import('./views/ResearcherJudgeView').then((module) => ({ default: module.ResearcherJudgeView })));
+const AdminAuditView = lazy(() => import('./views/AdminAuditView').then((module) => ({ default: module.AdminAuditView })));
+const DesignSystemKitView = lazy(() => import('./views/DesignSystemKitView').then((module) => ({ default: module.DesignSystemKitView })));
+const AiWorkspaceView = lazy(() => import('./views/AiWorkspaceView').then((module) => ({ default: module.AiWorkspaceView })));
 
 const homeViewForRole = (role: UserRole) => {
   if (role === 'ai') return 'ai-workspace';
@@ -34,6 +35,15 @@ const homeViewForRole = (role: UserRole) => {
   if (role === 'peer') return 'portfolio-list';
   return 'dashboard';
 };
+
+const ViewLoading = () => (
+  <div className="flex min-h-64 items-center justify-center px-4">
+    <div className="text-center">
+      <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+      <p className="text-sm font-semibold text-slate-600">Đang tải phân hệ…</p>
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -200,7 +210,7 @@ const AppContent: React.FC = () => {
 
   return (
     <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}>
-      {renderView()}
+      <Suspense fallback={<ViewLoading />}>{renderView()}</Suspense>
     </MainLayout>
   );
 };

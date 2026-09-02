@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProviders } from './app/providers/AppProviders';
 import { MainLayout } from './components/layout/MainLayout';
 import { StudentDashboardView } from './views/StudentDashboardView';
@@ -24,69 +24,115 @@ import { useAuthStore } from './app/store/useAuthStore';
 import { APP_ROUTES } from './app/router/routes';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
+import type { UserRole } from './types';
+
+const homeViewForRole = (role: UserRole) => {
+  if (role === 'ai') return 'ai-workspace';
+  if (role === 'teacher') return 'teacher-dashboard';
+  if (role === 'researcher') return 'researcher-view';
+  if (role === 'admin') return 'admin-view';
+  if (role === 'peer') return 'portfolio-list';
+  return 'dashboard';
+};
 
 const AppContent: React.FC = () => {
-  const { currentUser, isAuthenticated: authStoreAuthenticated } = useAuthStore();
-  
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return authStoreAuthenticated;
-  });
-
-  // View navigation state
-  const [currentView, setCurrentView] = useState<string>(() => {
-    if (currentUser.role === 'ai') return 'ai-workspace';
-    if (currentUser.role === 'teacher') return 'teacher-dashboard';
-    if (currentUser.role === 'researcher') return 'researcher-view';
-    if (currentUser.role === 'admin') return 'admin-view';
-    return 'dashboard';
-  });
-
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
+  const clearAuth = useAuthStore((state) => state.logout);
+  const [sessionChecking, setSessionChecking] = useState(() => useAuthStore.getState().isAuthenticated);
+  const [currentView, setCurrentView] = useState<string>(() => homeViewForRole(currentUser.role));
   const [navParams, setNavParams] = useState<any>({
     assignmentId: 'assign-vo-nhat',
     studentId: 'user-std-1'
   });
 
+  useEffect(() => {
+    let active = true;
+    const storedAuth = useAuthStore.getState().isAuthenticated;
+    if (!storedAuth) {
+      setSessionChecking(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    const verifySession = async () => {
+      try {
+        const token = localStorage.getItem('cvt_auth_token');
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
+        if (!response.ok) throw new Error('SESSION_INVALID');
+        const data = await response.json();
+        if (!data?.user?.id || !data?.user?.role) throw new Error('SESSION_INVALID');
+        if (!active) return;
+        setAuthenticatedUser({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role
+        });
+        setCurrentView(homeViewForRole(data.user.role));
+      } catch {
+        if (!active) return;
+        clearAuth();
+        setCurrentView('login');
+      } finally {
+        if (active) setSessionChecking(false);
+      }
+    };
+
+    void verifySession();
+    return () => {
+      active = false;
+    };
+  }, [clearAuth, setAuthenticatedUser]);
+
   const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-    localStorage.setItem('poetic_is_authenticated', 'true');
     const role = useAuthStore.getState().currentUser.role;
-    if (role === 'ai') setCurrentView('ai-workspace');
-    else if (role === 'teacher') setCurrentView('teacher-dashboard');
-    else if (role === 'researcher') setCurrentView('researcher-view');
-    else if (role === 'admin') setCurrentView('admin-view');
-    else setCurrentView('dashboard');
+    setCurrentView(homeViewForRole(role));
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.setItem('poetic_is_authenticated', 'false');
-    useAuthStore.getState().logout();
-    setCurrentView('login');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // Local sign-out must still complete when the network is unavailable.
+    } finally {
+      clearAuth();
+      setCurrentView('login');
+    }
   };
 
   const handleNavigate = (view: string, extraParams?: any) => {
     setCurrentView(view);
-    if (extraParams) {
-      setNavParams((prev: any) => ({ ...prev, ...extraParams }));
-    }
+    if (extraParams) setNavParams((previous: any) => ({ ...previous, ...extraParams }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If not authenticated, render Login View
+  if (sessionChecking) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4">
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-center shadow-sm">
+          <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+          <p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated || currentView === 'login') {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Route Guard Check
   const routeConfig = APP_ROUTES[currentView];
-  if (routeConfig && routeConfig.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) {
+  if (routeConfig?.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) {
     return (
       <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}>
-        <ForbiddenView
-          onNavigate={handleNavigate}
-          requiredRole={routeConfig.allowedRoles.join(', ')}
-        />
+        <ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig.allowedRoles.join(', ')} />
       </MainLayout>
     );
   }
@@ -95,22 +141,13 @@ const AppContent: React.FC = () => {
     switch (currentView) {
       case 'dashboard':
         return <StudentDashboardView onNavigate={handleNavigate} />;
-
       case 'assignment-list':
       case 'student-dashboard':
         return <AssignmentListView onNavigate={handleNavigate} />;
-
       case 'portfolio-list':
         return <PortfolioListView onNavigate={handleNavigate} />;
-
       case 'editor':
-        return (
-          <PortfolioEditorView
-            assignmentId={navParams.assignmentId || 'assign-vo-nhat'}
-            onNavigate={handleNavigate}
-          />
-        );
-
+        return <PortfolioEditorView assignmentId={navParams.assignmentId || 'assign-vo-nhat'} onNavigate={handleNavigate} />;
       case 'version-diff':
         return (
           <VersionDiffView
@@ -120,7 +157,6 @@ const AppContent: React.FC = () => {
             onNavigate={handleNavigate}
           />
         );
-
       case 'student-analytics':
         return (
           <StudentAnalyticsView
@@ -129,10 +165,8 @@ const AppContent: React.FC = () => {
             onNavigate={handleNavigate}
           />
         );
-
       case 'teacher-dashboard':
         return <TeacherDashboardView onNavigate={handleNavigate} />;
-
       case 'teacher-review':
         return (
           <TeacherReviewView
@@ -142,43 +176,30 @@ const AppContent: React.FC = () => {
             onNavigate={handleNavigate}
           />
         );
-
       case 'assignment-builder':
         return <AssignmentBuilderView onNavigate={handleNavigate} />;
-
       case 'rubric-management':
         return <RubricManagementView onNavigate={handleNavigate} />;
-
       case 'literature-texts':
         return <LiteratureTextsView onNavigate={handleNavigate} />;
-
       case 'class-analytics':
         return <ClassAnalyticsView onNavigate={handleNavigate} />;
-
       case 'researcher-view':
         return <ResearcherJudgeView onNavigate={handleNavigate} />;
-
       case 'admin-view':
         return <AdminAuditView onNavigate={handleNavigate} />;
-
       case 'ai-workspace':
         return <AiWorkspaceView />;
-
       case 'ui-kit':
       case 'design-system':
         return <DesignSystemKitView />;
-
       default:
         return <NotFoundView onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <MainLayout
-      currentView={currentView}
-      onNavigate={handleNavigate}
-      onLogout={handleLogout}
-    >
+    <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}>
       {renderView()}
     </MainLayout>
   );
@@ -195,4 +216,5 @@ export function App() {
     </AuthProvider>
   );
 }
+
 export default App;

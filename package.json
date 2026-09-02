@@ -15,7 +15,6 @@
     "@hookform/resolvers": "^5.9.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@tanstack/react-query": "^5.101.4",
-    "@types/pg": "^8.15.5",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "diff": "^9.0.0",
@@ -31,6 +30,11 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/node": "^24.13.3",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "autoprefixer": "^10.5.4",
     "oxlint": "^1.75.0",

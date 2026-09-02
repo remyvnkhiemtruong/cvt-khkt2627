@@ -1,15 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePortfolio } from '../../contexts/PortfolioContext';
-import { 
-  BookOpen, 
-  Users, 
-  ShieldCheck, 
-  Compass, 
-  RotateCcw,
+import {
   Bell,
+  BookOpen,
+  Bot,
+  Compass,
+  GraduationCap,
+  ShieldCheck,
   Sparkles,
-  GraduationCap
+  Users
 } from 'lucide-react';
 import type { UserRole } from '../../types';
 
@@ -18,217 +18,90 @@ interface NavbarProps {
   onNavigate: (view: string, extraParams?: any) => void;
 }
 
+const ROLE_META: Record<UserRole, { label: string; icon: React.ElementType }> = {
+  student: { label: 'Học sinh', icon: GraduationCap },
+  teacher: { label: 'Giáo viên', icon: Users },
+  peer: { label: 'Bạn học phản biện', icon: Compass },
+  researcher: { label: 'Giám khảo / Nghiên cứu', icon: Sparkles },
+  admin: { label: 'Quản trị viên', icon: ShieldCheck },
+  ai: { label: 'AI', icon: Bot }
+};
+
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
-  const { currentUser, switchUser, allUsers } = useAuth();
-  const { autosaveStatus, lastSavedTime, feedbacks, resetAllData } = usePortfolio();
+  const { currentUser } = useAuth();
+  const { autosaveStatus, lastSavedTime, feedbacks } = usePortfolio();
+  const unresolvedFeedbacksCount = feedbacks.filter(
+    (feedback) => !feedback.resolved && feedback.studentId === currentUser.id
+  ).length;
+  const roleMeta = ROLE_META[currentUser.role];
+  const RoleIcon = roleMeta.icon;
 
-  const unresolvedFeedbacksCount = feedbacks.filter(f => !f.resolved && f.studentId === currentUser.id).length;
-
-  const roleLabels: Record<UserRole, { label: string; color: string; icon: any }> = {
-    student: { label: 'Học sinh', color: 'bg-sky-100 text-sky-800 border-sky-300', icon: GraduationCap },
-    teacher: { label: 'Giáo viên', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: Users },
-    peer: { label: 'Bạn học phản biện', color: 'bg-amber-100 text-amber-800 border-amber-300', icon: Compass },
-    researcher: { label: 'Giám khảo / Nghiên cứu', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: Sparkles },
-    admin: { label: 'Quản trị viên', color: 'bg-slate-200 text-slate-800 border-slate-400', icon: ShieldCheck }
+  const navigateHome = () => {
+    if (currentUser.role === 'teacher') return onNavigate('teacher-dashboard');
+    if (currentUser.role === 'researcher') return onNavigate('researcher-view');
+    if (currentUser.role === 'admin') return onNavigate('admin-view');
+    if (currentUser.role === 'ai') return onNavigate('ai-workspace');
+    return onNavigate('student-dashboard');
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Main Title */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('student-dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-700 flex items-center justify-center text-white shadow-md">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 tracking-tight text-lg">Hồ Sơ Đọc Số THPT</span>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                  Trục Thi Pháp
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 hidden sm:block">
-                Lưu phiên bản • So sánh Diff • Đánh giá Rubric • Phát triển năng lực
-              </p>
-            </div>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-3">
+          <button type="button" className="flex min-w-0 items-center gap-3 text-left" onClick={navigateHome}>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-700 text-white shadow-md">
+              <BookOpen className="h-6 w-6" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold tracking-tight text-slate-900 sm:text-lg">Hồ Sơ Đọc Số THPT</span>
+              <span className="hidden text-xs text-slate-500 sm:block">Phiên bản chính thức • Hồ sơ đọc hiểu theo trục thi pháp</span>
+            </span>
+          </button>
 
-          {/* Navigation Links based on role */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden items-center gap-1 md:flex">
             {currentUser.role === 'student' && (
               <>
-                <button
-                  onClick={() => onNavigate('student-dashboard')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'student-dashboard' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Nhiệm vụ của tôi
-                </button>
-                <button
-                  onClick={() => onNavigate('editor', { assignmentId: 'assign-vo-nhat' })}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'editor' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Hồ sơ đang viết
-                </button>
-                <button
-                  onClick={() => onNavigate('version-diff', { assignmentId: 'assign-vo-nhat' })}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'version-diff' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  So sánh Diff (v1/v2)
-                </button>
-                <button
-                  onClick={() => onNavigate('student-analytics')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'student-analytics' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Tiến bộ & Gợi ý
-                </button>
+                <button type="button" onClick={() => onNavigate('student-dashboard')} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${currentView === 'student-dashboard' ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100'}`}>Nhiệm vụ</button>
+                <button type="button" onClick={() => onNavigate('student-analytics')} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${currentView === 'student-analytics' ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-100'}`}>Tiến bộ</button>
               </>
             )}
-
             {currentUser.role === 'teacher' && (
-              <>
-                <button
-                  onClick={() => onNavigate('teacher-dashboard')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'teacher-dashboard' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Bàn làm việc Giáo viên
-                </button>
-                <button
-                  onClick={() => onNavigate('teacher-review', { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat' })}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'teacher-review' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Chấm bài & Neo nhận xét
-                </button>
-                <button
-                  onClick={() => onNavigate('assignment-builder')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'assignment-builder' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Tạo nhiệm vụ & Rubric
-                </button>
-                <button
-                  onClick={() => onNavigate('class-analytics')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    currentView === 'class-analytics' ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Thống kê toàn lớp
-                </button>
-              </>
+              <button type="button" onClick={() => onNavigate('teacher-dashboard')} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800">Bàn giáo viên</button>
             )}
-
             {currentUser.role === 'peer' && (
-              <button
-                onClick={() => onNavigate('teacher-review', { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat', isPeerMode: true })}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-50 text-amber-800 hover:bg-amber-100"
-              >
-                Nhận xét bạn học (Nguyễn Văn An)
-              </button>
+              <button type="button" onClick={() => onNavigate('teacher-review', { isPeerMode: true })} className="rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800">Phản biện</button>
             )}
-
             {currentUser.role === 'researcher' && (
-              <button
-                onClick={() => onNavigate('researcher-view')}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-50 text-purple-800 hover:bg-purple-100"
-              >
-                Dữ liệu Ẩn danh & Báo cáo Giám khảo
-              </button>
+              <button type="button" onClick={() => onNavigate('researcher-view')} className="rounded-lg bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-800">Giám khảo</button>
             )}
-
             {currentUser.role === 'admin' && (
-              <button
-                onClick={() => onNavigate('admin-view')}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800 hover:bg-slate-200"
-              >
-                Quản trị & Nhật ký (Audit Logs)
-              </button>
+              <button type="button" onClick={() => onNavigate('admin-view')} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800">Quản trị</button>
+            )}
+            {currentUser.role === 'ai' && (
+              <button type="button" onClick={() => onNavigate('ai-workspace')} className="rounded-lg bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-800">Kho AI</button>
             )}
           </nav>
 
-          {/* Right Area: Save Status + Role Switcher Selector */}
-          <div className="flex items-center gap-3">
-            {/* Autosave Pill for Student */}
+          <div className="flex shrink-0 items-center gap-2">
             {currentUser.role === 'student' && (
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs text-slate-600 border border-slate-200">
-                <span className={`w-2 h-2 rounded-full ${
-                  autosaveStatus === 'saving' ? 'bg-amber-400 animate-ping' :
-                  autosaveStatus === 'dirty' ? 'bg-amber-500' : 'bg-emerald-500'
-                }`} />
-                <span>
-                  {autosaveStatus === 'saving' ? 'Đang lưu nháp...' :
-                   autosaveStatus === 'dirty' ? 'Có thay đổi chưa lưu' :
-                   `Tự động lưu (${lastSavedTime})`}
-                </span>
+              <div className="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 lg:flex">
+                <span className={`h-2 w-2 rounded-full ${autosaveStatus === 'saving' ? 'bg-amber-400' : autosaveStatus === 'dirty' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                <span>{autosaveStatus === 'saving' ? 'Đang lưu...' : autosaveStatus === 'dirty' ? 'Chưa lưu' : `Đã lưu (${lastSavedTime})`}</span>
               </div>
             )}
-
-            {/* Notification indicator */}
             {currentUser.role === 'student' && unresolvedFeedbacksCount > 0 && (
-              <button
-                onClick={() => onNavigate('editor', { assignmentId: 'assign-vo-nhat' })}
-                title="Có phản hồi mới từ giáo viên/bạn học"
-                className="relative p-1.5 text-slate-500 hover:text-sky-600 hover:bg-slate-100 rounded-lg"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-0 right-0 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce">
-                  {unresolvedFeedbacksCount}
-                </span>
+              <button type="button" onClick={() => onNavigate('editor')} className="relative rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" title="Phản hồi mới">
+                <Bell className="h-5 w-5" />
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{unresolvedFeedbacksCount}</span>
               </button>
             )}
-
-            {/* Role / User Selector Dropdown */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <label htmlFor="user-select" className="text-xs text-slate-500 hidden sm:inline font-medium">
-                Mô phỏng vai trò:
-              </label>
-              <select
-                id="user-select"
-                value={currentUser.id}
-                onChange={(e) => {
-                  switchUser(e.target.value);
-                  const u = allUsers.find(user => user.id === e.target.value);
-                  if (u?.role === 'student') onNavigate('student-dashboard');
-                  else if (u?.role === 'teacher') onNavigate('teacher-dashboard');
-                  else if (u?.role === 'peer') onNavigate('teacher-review', { studentId: 'user-std-1', assignmentId: 'assign-vo-nhat', isPeerMode: true });
-                  else if (u?.role === 'researcher') onNavigate('researcher-view');
-                  else if (u?.role === 'admin') onNavigate('admin-view');
-                }}
-                className="text-xs font-semibold bg-slate-50 border border-slate-300 rounded-lg py-1.5 px-2.5 text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none cursor-pointer hover:bg-white transition-colors"
-              >
-                {allUsers.map(u => (
-                  <option key={u.id} value={u.id}>
-                    [{roleLabels[u.role].label}] {u.name}
-                  </option>
-                ))}
-              </select>
+            <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex">
+              <RoleIcon className="h-4 w-4 text-slate-500" />
+              <div className="max-w-40 text-right">
+                <div className="truncate text-xs font-semibold text-slate-800">{currentUser.name}</div>
+                <div className="truncate text-[10px] text-slate-500">{roleMeta.label}</div>
+              </div>
             </div>
-
-            {/* Reset Seed Data Button */}
-            <button
-              onClick={() => {
-                if (window.confirm('Khôi phục toàn bộ dữ liệu mẫu ban đầu?')) {
-                  resetAllData();
-                  alert('Đã khôi phục dữ liệu mẫu thành công.');
-                }
-              }}
-              title="Khôi phục dữ liệu mẫu ban đầu"
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

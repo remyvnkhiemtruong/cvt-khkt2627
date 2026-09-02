@@ -1,4 +1,4 @@
-import { body, register, send } from "./auth";
+import { body, register, send } from "./auth.js";
 export default async function handler(req:any,res:any) {
   if (req.method!=="POST") return send(res,405,{code:"METHOD_NOT_ALLOWED"});
   try { const {email,name,password}=body(req); if(!email||!name||!password||String(password).length<8) return send(res,400,{code:"VALIDATION_ERROR",message:"Cần email, họ tên và mật khẩu tối thiểu 8 ký tự."});

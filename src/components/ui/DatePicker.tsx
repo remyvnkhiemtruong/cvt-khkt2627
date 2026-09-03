@@ -36,6 +36,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(({
           id={dateId}
           type="date"
           disabled={disabled}
+          autoComplete="off"
           className={cn(
             "w-full bg-white border border-slate-300 rounded-lg text-xs py-2 pl-9 pr-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all disabled:bg-slate-50 disabled:text-slate-400 cursor-pointer",
             error && "border-rose-500 focus:ring-rose-500",

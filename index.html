@@ -13,6 +13,53 @@
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased font-sans min-h-screen selection:bg-slate-200 selection:text-slate-900">
     <div id="root"></div>
+    <script>
+      (function() {
+        function neuterAutofill(root) {
+          try {
+            var forms = (root || document).querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+              forms[i].setAttribute('autocomplete', 'off');
+            }
+            var inputs = (root || document).querySelectorAll('input, textarea');
+            for (var j = 0; j < inputs.length; j++) {
+              var el = inputs[j];
+              if (!el.getAttribute('autocomplete')) {
+                el.setAttribute('autocomplete', el.type === 'password' ? 'new-password' : 'one-time-code');
+              }
+              el.setAttribute('data-lpignore', 'true');
+              el.setAttribute('data-1p-ignore', 'true');
+              el.setAttribute('data-form-type', 'other');
+              el.setAttribute('autocorrect', 'off');
+              el.setAttribute('autocapitalize', 'off');
+              el.setAttribute('spellcheck', 'false');
+            }
+          } catch(e) {}
+        }
+        if (typeof document !== 'undefined') {
+          document.addEventListener('DOMContentLoaded', function() {
+            neuterAutofill();
+            if (window.MutationObserver) {
+              new MutationObserver(function(mutations) {
+                for (var m = 0; m < mutations.length; m++) {
+                  var added = mutations[m].addedNodes;
+                  for (var k = 0; k < added.length; k++) {
+                    var node = added[k];
+                    if (node && node.nodeType === 1) {
+                      if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA' || node.tagName === 'FORM') {
+                        neuterAutofill(node.parentElement || document);
+                      } else if (node.querySelectorAll) {
+                        neuterAutofill(node);
+                      }
+                    }
+                  }
+                }
+              }).observe(document.documentElement, { childList: true, subtree: true });
+            }
+          });
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

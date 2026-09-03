@@ -7,6 +7,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   error?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  disableAutofill?: boolean;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
@@ -18,11 +19,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
   className,
   id,
   disabled,
-  autoComplete = "off",
+  autoComplete,
+  disableAutofill = true,
+  type = 'text',
   ...props
 }, ref) => {
   const generatedId = React.useId();
   const inputId = id || generatedId;
+
+  const resolvedAutoComplete = autoComplete
+    ? autoComplete
+    : disableAutofill
+      ? (type === 'password' ? 'new-password' : 'one-time-code')
+      : undefined;
 
   return (
     <div className="w-full space-y-1">
@@ -40,8 +49,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
         <input
           ref={ref}
           id={inputId}
+          type={type}
           disabled={disabled}
-          autoComplete={autoComplete}
+          autoComplete={resolvedAutoComplete}
+          data-lpignore={disableAutofill ? "true" : undefined}
+          data-1p-ignore={disableAutofill ? "true" : undefined}
+          data-form-type={disableAutofill ? "other" : undefined}
+          autoCorrect={disableAutofill ? "off" : undefined}
+          autoCapitalize={disableAutofill ? "off" : undefined}
+          spellCheck={disableAutofill ? false : undefined}
           className={cn(
             "w-full bg-white border border-slate-300 rounded-lg text-xs py-2 px-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all disabled:bg-slate-50 disabled:text-slate-400",
             leftIcon && "pl-9",

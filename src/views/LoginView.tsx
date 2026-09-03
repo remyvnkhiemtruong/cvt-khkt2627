@@ -65,14 +65,20 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
     <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md"><div className="bg-white py-6 px-4 shadow-card border border-slate-200 rounded-3xl sm:py-8 sm:px-10">
       {error&&<Alert type="error" title={mustChange?'Đổi mật khẩu không thành công':mode==='login'?'Đăng nhập không thành công':'Đăng ký không thành công'}>{error}</Alert>}
       {mustChange ? <form onSubmit={rotatePassword} className="space-y-4" autoComplete="off">
+        {/* Anti-autofill trap for aggressive browser heuristics */}
+        <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+        <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
         <Alert type="info" title="Bảo mật tài khoản">Tài khoản cấp sẵn cần đổi mật khẩu trước lần sử dụng chính thức.</Alert>
         <Input label="Mật khẩu mới" type="password" required minLength={10} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="Ít nhất 10 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>} name="new_password" autoComplete="new-password" data-lpignore="true"/>
         <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">Đổi mật khẩu & tiếp tục</Button>
       </form> : <>
         <form onSubmit={submit} className="space-y-4" autoComplete="off">
-          {mode==='register'&&<Input label="Họ và tên" required value={name} onChange={e=>setName(e.target.value)} placeholder="Nguyễn Văn An" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>} name="student_name" autoComplete="off" data-lpignore="true" spellCheck={false}/>}
-          <Input label="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@thpt.edu.vn" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>} name="user_email" autoComplete="off" data-lpignore="true" spellCheck={false}/>
-          <Input label="Mật khẩu" type="password" required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Tối thiểu 8 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>} name="user_password" autoComplete={mode==='register'?'new-password':'current-password'} data-lpignore="true"/>
+          {/* Anti-autofill trap for aggressive browser heuristics */}
+          <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+          <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+          {mode==='register'&&<Input label="Họ và tên" required value={name} onChange={e=>setName(e.target.value)} placeholder="Nguyễn Văn An" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>} name="student_name" autoComplete="one-time-code" data-lpignore="true" spellCheck={false}/>}
+          <Input label="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@thpt.edu.vn" leftIcon={<UserIcon className="w-4 h-4 text-slate-400"/>} name="user_email" autoComplete="one-time-code" data-lpignore="true" spellCheck={false}/>
+          <Input label="Mật khẩu" type="password" required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Tối thiểu 8 ký tự" leftIcon={<LockClosedIcon className="w-4 h-4 text-slate-400"/>} name="user_password" autoComplete="new-password" data-lpignore="true"/>
           <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">{mode==='login'?'Đăng nhập':'Tạo tài khoản học sinh'}</Button>
         </form>
         <div className="mt-6 text-center text-sm text-slate-500">{mode==='login'?'Chưa có tài khoản?':'Đã có tài khoản?'} <button type="button" className="font-semibold text-indigo-700 hover:underline" onClick={()=>{setMode(mode==='login'?'register':'login');setError(null)}}>{mode==='login'?'Đăng ký':'Đăng nhập'}</button></div>

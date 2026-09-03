@@ -34,6 +34,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               value={searchQuery}
               onChange={e => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
               className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs py-1.5 pl-9 pr-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:bg-white transition"
             />
             {searchQuery && (

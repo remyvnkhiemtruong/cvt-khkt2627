@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync } from 'node:crypto';
-import { assertSameOrigin, body, getUser, send, setTemporaryPassword } from '../auth/auth.js';
+import { assertSameOrigin, authenticate, body, send, setTemporaryPassword } from '../auth/auth.js';
 import { ensureAcademicSchema } from '../_lib/academic.js';
 
 let poolPromise:any;
@@ -11,7 +11,7 @@ async function audit(p:any,user:any,action:string,targetType:string,targetId:str
 export default async function handler(req:any,res:any){
   if(req.method!=='POST')return send(res,405,{code:'METHOD_NOT_ALLOWED'});
   try{
-    assertSameOrigin(req);const user=getUser(req);if(!user)return send(res,401,{code:'UNAUTHENTICATED'});if(user.role!=='admin')return send(res,403,{code:'FORBIDDEN'});
+    assertSameOrigin(req);const user=await authenticate(req);if(!user)return send(res,401,{code:'UNAUTHENTICATED'});if(user.role!=='admin')return send(res,403,{code:'FORBIDDEN'});
     await ensureAcademicSchema();const p=await db(),input=body(req),action=String(input.action||'');
 
     if(action==='create_user'){

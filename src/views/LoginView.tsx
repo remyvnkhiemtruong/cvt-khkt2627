@@ -15,8 +15,15 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
   const [error,setError]=useState<string|null>(null);
 
   const acceptUser=(user:any)=>setAuthenticatedUser({
-    id:user.id,name:user.name,email:user.email,role:user.role,
-    mustChangePassword:Boolean(user.mustChangePassword)
+    id:user.id,
+    name:user.name,
+    email:user.email,
+    role:user.role,
+    mustChangePassword:Boolean(user.mustChangePassword),
+    accountStatus:user.accountStatus,
+    lastLogin:user.lastLogin || null,
+    className:user.className || '',
+    profile:user.profile || {}
   });
 
   const submit=async(e:React.FormEvent)=>{
@@ -52,8 +59,8 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
   return <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
     <div className="mx-auto w-full max-w-md text-center space-y-3">
       <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto"><BookOpenIcon className="w-7 h-7"/></div>
-      <h1 className="text-[clamp(1.35rem,5vw,1.5rem)] font-bold text-slate-900">Hồ Sơ Đọc Số THPT</h1>
-      <p className="text-sm text-slate-500">{mustChange?'Thiết lập mật khẩu riêng trước khi tiếp tục':'Đăng nhập để tiếp tục vào không gian học tập'}</p>
+      <h1 className="text-[clamp(1.35rem,5vw,1.5rem)] font-bold text-slate-900">Học tốt Ngữ Văn</h1>
+      <p className="text-sm text-slate-500">{mustChange?'Thiết lập mật khẩu riêng trước khi tiếp tục':'Đăng nhập để học, viết, nhận phản hồi và theo dõi tiến bộ môn Ngữ văn'}</p>
     </div>
     <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md"><div className="bg-white py-6 px-4 shadow-card border border-slate-200 rounded-3xl sm:py-8 sm:px-10">
       {error&&<Alert type="error" title={mustChange?'Đổi mật khẩu không thành công':mode==='login'?'Đăng nhập không thành công':'Đăng ký không thành công'}>{error}</Alert>}
@@ -70,6 +77,6 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
         </form>
         <div className="mt-6 text-center text-sm text-slate-500">{mode==='login'?'Chưa có tài khoản?':'Đã có tài khoản?'} <button type="button" className="font-semibold text-indigo-700 hover:underline" onClick={()=>{setMode(mode==='login'?'register':'login');setError(null)}}>{mode==='login'?'Đăng ký':'Đăng nhập'}</button></div>
       </>}
-    </div><p className="text-center text-xs text-slate-400 mt-6">Phiên đăng nhập được bảo vệ bằng cookie HttpOnly; trình duyệt không lưu JWT.</p></div>
+    </div><p className="text-center text-xs text-slate-400 mt-6">Học tốt Ngữ Văn • Phiên đăng nhập được bảo vệ bằng cookie HttpOnly.</p></div>
   </div>;
 };

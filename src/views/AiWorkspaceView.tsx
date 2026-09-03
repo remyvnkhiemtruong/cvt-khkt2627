@@ -1,13 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, PageHeader, Card } from '../components/ui';
+import { Alert, Button } from '../components/ui';
 import type { AcademicSnapshot, AiReviewRequest, PoeticAxisId } from '../types';
-import {
-  ArrowPathIcon,
-  BookOpenIcon,
-  ChatBubbleLeftRightIcon,
-  DocumentTextIcon,
-  SparklesIcon
-} from '@heroicons/react/24/outline';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 const axes: { id: PoeticAxisId; label: string }[] = [
   { id: 'plot_situation', label: 'Tình huống – Cốt truyện' },
@@ -65,12 +59,9 @@ export const AiWorkspaceView: React.FC = () => {
   const currentVersion = currentPortfolio?.versions?.find(v => v.versionNumber === selected?.version_number);
   const assignment = snapshot?.assignments?.find(a => a.id === selected?.assignment_id);
   const literatureText = snapshot?.literatureTexts?.find(t => t.id === assignment?.textId);
-  const priorFeedbacks = useMemo(() => {
-    if (!snapshot || !selected) return [];
-    return (snapshot.feedbacks || []).filter(
-      f => f.studentId === selected.student_id && f.assignmentId === selected.assignment_id
-    );
-  }, [snapshot, selected]);
+
+  const pendingCount = reviews.filter(x => x.status !== 'completed').length;
+  const completedCount = reviews.filter(x => x.status === 'completed').length;
 
   const saveAiProposal = async () => {
     if (!selected) return;
@@ -96,240 +87,194 @@ export const AiWorkspaceView: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <PageHeader
-        title="Hàng đợi phản hồi AI"
-        description="Đề xuất phản hồi học thuật theo 6 trục thi pháp. Đề xuất sẽ chuyển đến giáo viên kiểm duyệt trước khi hiển thị cho học sinh."
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="amber">Chờ AI xử lý: {reviews.filter(x => x.status !== 'completed').length}</Badge>
-            <Badge variant="emerald">Đã lưu đề xuất: {reviews.filter(x => x.status === 'completed').length}</Badge>
-          </div>
-        }
-      />
+    <div className="max-w-7xl space-y-5 pb-16">
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Hàng đợi AI</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Soạn đề xuất phản hồi học thuật. Đề xuất sẽ được giáo viên duyệt trước khi gửi học sinh.
+          </p>
+        </div>
+        <div className="text-xs text-slate-600">
+          {pendingCount} chờ xử lý · {completedCount} đã đề xuất
+        </div>
+      </div>
 
       {message && (
-        <Alert type={message.type} title={message.type === 'success' ? 'Thành công' : 'Có lỗi xảy ra'}>
+        <Alert type={message.type} title={message.type === 'success' ? 'Thành công' : 'Có lỗi'}>
           {message.text}
         </Alert>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Left list */}
-        <aside className="rounded-lg border border-slate-200 bg-white p-3">
-          <div className="mb-2 flex items-center justify-between px-1">
-            <span className="text-xs font-semibold text-slate-700">Hàng đợi bài nộp</span>
+      {/* Review Inbox Layout */}
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)_340px]">
+        {/* Left: Queue Rows */}
+        <aside className="border border-slate-200 rounded-md bg-white overflow-hidden flex flex-col h-[78vh]">
+          <div className="p-3 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-700">Danh sách bài nộp</span>
             <button
               onClick={() => void refresh()}
-              className="rounded p-1 hover:bg-slate-100 text-slate-500"
+              className="rounded p-1 hover:bg-slate-200 text-slate-500"
               title="Tải lại"
             >
               <ArrowPathIcon className="h-3.5 w-3.5" />
             </button>
           </div>
-          <div className="max-h-[72vh] space-y-1.5 overflow-y-auto">
+
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
             {reviews.length === 0 ? (
-              <p className="rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-                Chưa có bài nộp nào trong hàng đợi.
-              </p>
+              <p className="p-4 text-xs text-slate-500">Chưa có bài nộp trong hàng đợi.</p>
             ) : (
-              reviews.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedId(item.id);
-                    setResponse(item.response || '');
-                  }}
-                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${
-                    selected?.id === item.id
-                      ? 'border-indigo-400 bg-indigo-50/50'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex justify-between items-center gap-2">
-                    <b className="text-xs font-semibold text-slate-900 truncate">{item.student_name}</b>
-                    <Badge variant={item.status === 'completed' ? 'emerald' : 'amber'} size="sm">
-                      {item.status === 'completed' ? 'Đã đề xuất' : 'Chờ AI'}
-                    </Badge>
-                  </div>
-                  <div className="mt-1 text-[11px] text-slate-500">
-                    {item.assignment_id} • {item.version_number}
-                  </div>
-                  {item.teacher_review_status && item.teacher_review_status !== 'pending' && (
-                    <div className="mt-1 text-[11px] font-medium text-indigo-700">
-                      GV đã duyệt: {item.teacher_review_status}
+              reviews.map(item => {
+                const isSelected = selected?.id === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      setResponse(item.response || '');
+                    }}
+                    className={`w-full p-3 text-left transition-colors ${
+                      isSelected ? 'bg-slate-100 font-medium' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-slate-900 truncate">{item.student_name}</span>
+                      <span className="text-xs text-slate-500 shrink-0">
+                        {item.status === 'completed' ? 'Đã đề xuất' : 'Chờ xử lý'}
+                      </span>
                     </div>
-                  )}
-                </button>
-              ))
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {item.version_number} · {item.assignment_id}
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </aside>
 
-        {/* Right workspace: Full Context + Proposal Composer */}
-        <main className="space-y-4">
+        {/* Center: Student Submission Content */}
+        <main className="border border-slate-200 rounded-md bg-white p-5 overflow-y-auto h-[78vh] space-y-5">
           {!selected ? (
-            <Card padding="lg">
-              <div className="py-20 text-center text-xs text-slate-500">
-                Chọn một bài trong hàng đợi bên trái để xem ngữ cảnh và soạn đề xuất.
-              </div>
-            </Card>
+            <div className="py-24 text-center text-sm text-slate-500">
+              Chọn một bài từ hàng đợi bên trái để xem nội dung.
+            </div>
           ) : (
-            <div className="space-y-4">
-              {/* Context Panel */}
-              <Card padding="md">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900">
-                      Học sinh: {selected.student_name} — Phiên bản: {selected.version_number}
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Nhiệm vụ: {assignment?.title || selected.assignment_id}
-                    </p>
-                  </div>
-                  <Badge variant="indigo">
+            <>
+              <div className="border-b border-slate-200 pb-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {selected.student_name} — {selected.version_number}
+                  </h2>
+                  <span className="text-xs text-slate-500">
                     {currentVersion?.stage === 'prediction'
                       ? 'Dự đoán trước đọc'
                       : currentVersion?.stage === 'initial'
-                      ? 'Bản đầu tiên'
-                      : 'Bản sửa đổi (Revision)'}
-                  </Badge>
-                </div>
-
-                {/* Assignment & Literature Excerpt */}
-                <div className="mt-3 grid gap-3 md:grid-cols-2 text-xs">
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3 leading-5">
-                    <span className="font-semibold text-slate-700 flex items-center gap-1.5 mb-1">
-                      <BookOpenIcon className="h-3.5 w-3.5 text-slate-500" />
-                      Yêu cầu nhiệm vụ:
-                    </span>
-                    <p className="text-slate-600">{selected.prompt || assignment?.prompt}</p>
-                  </div>
-
-                  {literatureText && (
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 leading-5">
-                      <span className="font-semibold text-slate-700 flex items-center gap-1.5 mb-1">
-                        <DocumentTextIcon className="h-3.5 w-3.5 text-slate-500" />
-                        Tác phẩm: {literatureText.title} ({literatureText.author})
-                      </span>
-                      <p className="text-slate-600 line-clamp-3 italic">
-                        {literatureText.synopsis || literatureText.excerpt}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Student Responses across 6 axes */}
-                <div className="mt-4 border-t border-slate-100 pt-3">
-                  <span className="text-xs font-semibold text-slate-800 block mb-2">
-                    Bài viết của học sinh ({selected.version_number}):
+                      ? 'Bản đầu'
+                      : 'Bản chỉnh sửa'}
                   </span>
-                  <div className="grid gap-2 sm:grid-cols-2 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-slate-50/50 p-2 text-xs">
-                    {axes.map(axis => {
-                      const resp = currentVersion?.responses?.[axis.id] || currentPortfolio?.currentDraft?.[axis.id];
-                      const text = resp?.analysisText?.trim();
-                      const quotes = resp?.evidenceQuotes || [];
-                      return (
-                        <div key={axis.id} className="rounded border border-slate-200 bg-white p-2.5">
-                          <span className="font-semibold text-indigo-900 block mb-1">{axis.label}</span>
-                          {text ? (
-                            <p className="text-slate-700 whitespace-pre-wrap leading-5">{text}</p>
-                          ) : (
-                            <span className="italic text-slate-400">Chưa viết nội dung</span>
-                          )}
-                          {quotes.length > 0 && (
-                            <div className="mt-1.5 border-t border-slate-100 pt-1 text-[11px] text-slate-500 italic">
-                              Dẫn chứng: {quotes.map(q => `"${q.text}"`).join('; ')}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
+                <div className="text-xs text-slate-600 mt-1">
+                  Nhiệm vụ: {assignment?.title || selected.assignment_id}
+                  {literatureText && ` · Tác phẩm: ${literatureText.title} (${literatureText.author})`}
+                </div>
+              </div>
 
-                {/* Prior feedbacks if any */}
-                {priorFeedbacks.length > 0 && (
-                  <div className="mt-3 border-t border-slate-100 pt-3">
-                    <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5 mb-1.5">
-                      <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 text-slate-500" />
-                      Lịch sử phản hồi trước đó ({priorFeedbacks.length} nhận xét):
-                    </span>
-                    <div className="space-y-1.5 max-h-28 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-2 text-xs">
-                      {priorFeedbacks.map(f => (
-                        <div key={f.id} className="text-slate-700">
-                          <span className="font-semibold text-slate-800">
-                            {f.authorRole === 'teacher' ? 'Giáo viên' : (f.authorRole === 'peer' ? 'Bạn học' : 'AI')}:
-                          </span>{' '}
-                          {f.comment}
+              {/* Assignment Prompt */}
+              {selected.prompt && (
+                <div className="bg-slate-50 border-l-2 border-slate-400 p-3 rounded-r text-xs text-slate-700 leading-relaxed">
+                  <strong>Yêu cầu:</strong> {selected.prompt}
+                </div>
+              )}
+
+              {/* Student Responses by Axis */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-slate-800">Bài viết của học sinh theo các trục:</h3>
+                {axes.map(axis => {
+                  const resp = currentVersion?.responses?.[axis.id] || currentPortfolio?.currentDraft?.[axis.id];
+                  const text = resp?.analysisText?.trim();
+                  const quotes = resp?.evidenceQuotes || [];
+
+                  return (
+                    <div key={axis.id} className="border-t border-slate-100 pt-3 space-y-1">
+                      <div className="text-xs font-medium text-slate-900">{axis.label}</div>
+                      {text ? (
+                        <p className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                          {text}
+                        </p>
+                      ) : (
+                        <span className="text-xs italic text-slate-400">Chưa viết nội dung ở trục này.</span>
+                      )}
+                      {quotes.length > 0 && (
+                        <div className="pt-1 space-y-0.5">
+                          {quotes.map(q => (
+                            <blockquote key={q.id} className="border-l-2 border-slate-300 pl-2 text-xs italic text-slate-500">
+                              {q.text}
+                            </blockquote>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
-              </Card>
-
-              {/* Proposal Composer */}
-              <Card padding="md">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                    <SparklesIcon className="h-4 w-4 text-indigo-600" />
-                    Soạn đề xuất phản hồi AI
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Nội dung lưu tại đây sẽ hiển thị trong danh sách chờ duyệt của giáo viên phụ trách.
-                  </p>
-                </div>
-
-                <div className="mt-3 space-y-3">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Trọng tâm nhận xét (Trục thi pháp chính):
-                    <select
-                      className="mt-1.5 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500"
-                      value={axisId}
-                      onChange={e => setAxisId(e.target.value as PoeticAxisId)}
-                    >
-                      {axes.map(x => (
-                        <option key={x.id} value={x.id}>
-                          {x.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Nội dung đề xuất phản hồi:
-                    <textarea
-                      className="mt-1.5 w-full rounded-md border border-slate-300 p-3 text-xs leading-5 text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                      rows={8}
-                      value={response}
-                      onChange={e => setResponse(e.target.value)}
-                      placeholder="Nhập đề xuất phản hồi sư phạm: chỉ ra điểm làm tốt, điểm cần bổ sung dẫn chứng, gợi ý bước tiếp theo..."
-                    />
-                  </label>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-slate-500">
-                      {selected.teacher_review_status === 'pending'
-                        ? 'Trạng thái: Đang chờ giáo viên duyệt'
-                        : `Trạng thái giáo viên: ${selected.teacher_review_status}`}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={saveAiProposal}
-                      isLoading={loading}
-                      disabled={!response.trim()}
-                      leftIcon={<SparklesIcon className="h-4 w-4" />}
-                    >
-                      Lưu đề xuất AI
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </main>
+
+        {/* Right: Proposal Composer */}
+        <aside className="border border-slate-200 rounded-md bg-white p-4 h-[78vh] flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="border-b border-slate-200 pb-2">
+              <h2 className="text-sm font-semibold text-slate-900">Soạn đề xuất AI</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Nhận xét gợi ý giúp giáo viên tham khảo khi chấm bài.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Trọng tâm phản hồi</label>
+              <select
+                value={axisId}
+                onChange={e => setAxisId(e.target.value as PoeticAxisId)}
+                className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+              >
+                {axes.map(a => (
+                  <option key={a.id} value={a.id}>{a.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Nội dung đề xuất</label>
+              <textarea
+                rows={12}
+                value={response}
+                onChange={e => setResponse(e.target.value)}
+                placeholder="Gợi ý nhận xét cụ thể: điểm tốt, chỗ cần đào sâu và hướng sửa đổi..."
+                className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-500"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-200">
+            <Button
+              variant="primary"
+              size="sm"
+              className="w-full"
+              isLoading={loading}
+              disabled={!selected || !response.trim()}
+              onClick={saveAiProposal}
+            >
+              Lưu đề xuất
+            </Button>
+            <p className="text-xs text-slate-400 text-center mt-2">
+              Đề xuất sẽ được chuyển tới giáo viên phê duyệt.
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );

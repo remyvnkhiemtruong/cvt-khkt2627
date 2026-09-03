@@ -4,18 +4,11 @@ import { useNotificationStore } from '../app/store/useNotificationStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
 import type { PoeticAxisId } from '../types';
-import { Avatar, Badge, Button } from '../components/ui';
+import { Button } from '../components/ui';
 import {
-  AcademicCapIcon,
   ArrowLeftIcon,
-  ChatBubbleLeftRightIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-  SparklesIcon,
-  CheckIcon,
-  PencilSquareIcon,
-  XMarkIcon
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 interface TeacherReviewViewProps {
@@ -32,18 +25,16 @@ const StatePanel: React.FC<{
   onAction?: () => void;
   loading?: boolean;
 }> = ({ title, message, actionLabel, onAction, loading }) => (
-  <div className="mx-auto mt-10 max-w-xl rounded-lg border border-slate-200 bg-white p-8 text-center">
-    {loading ? (
-      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
-    ) : (
-      <ExclamationTriangleIcon className="mx-auto mb-4 h-9 w-9 text-slate-400" />
+  <div className="mx-auto mt-16 max-w-md p-6 text-center space-y-3">
+    {loading && (
+      <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
     )}
-    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-    <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
+    <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+    <p className="text-sm text-slate-500 leading-relaxed">{message}</p>
     {actionLabel && onAction && (
-      <Button className="mt-5" variant="primary" onClick={onAction}>
-        {actionLabel}
-      </Button>
+      <div className="pt-2">
+        <Button variant="primary" onClick={onAction}>{actionLabel}</Button>
+      </div>
     )}
   </div>
 );
@@ -113,7 +104,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
   const evaluatorRole = currentUser.role === 'peer' || isPeerMode ? 'peer' : 'teacher';
 
-  // RESET RUBRIC SCORES on portfolio/student/version change (Prevents rubric score leakage)
+  // RESET RUBRIC SCORES on portfolio/student/version change (Prevents rubric score leakage - TC18, TC19)
   useEffect(() => {
     if (!currentPortfolio || !assignment || !selectedVersion) {
       setRubricScores({});
@@ -161,7 +152,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   // Find AI Review Proposal for current version
   const pendingAiProposal = useMemo(() => {
     if (!currentPortfolio || !selectedVersion) return null;
-    return aiReviews.find(r =>
+    return (aiReviews || []).find(r =>
       r.student_id === currentPortfolio.studentId &&
       r.version_number === selectedVersion &&
       r.status === 'completed' &&
@@ -186,16 +177,16 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   );
 
   if (isLoading && queue.length === 0) {
-    return <StatePanel loading title="Đang tải bài nộp" message="Hệ thống đang lấy danh sách hồ sơ nộp bài." />;
+    return <StatePanel loading title="Đang mở bài chấm" message="Đang tải danh sách bài làm..." />;
   }
   if (dataError && queue.length === 0) {
     return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshAcademicData()} />;
   }
   if (queue.length === 0) {
-    return <StatePanel title="Chưa có bài để chấm" message="Không tìm thấy hồ sơ học sinh phù hợp. Hãy kiểm tra lớp, nhiệm vụ hoặc trạng thái nộp bài." actionLabel="Về bàn giáo viên" onAction={() => onNavigate('teacher-dashboard')} />;
+    return <StatePanel title="Chưa có bài để chấm" message="Chưa tìm thấy bài nộp nào phù hợp." actionLabel="Về bàn giáo viên" onAction={() => onNavigate('teacher-dashboard')} />;
   }
   if (!currentPortfolio || !assignment) {
-    return <StatePanel title="Dữ liệu bài nộp không đầy đủ" message="Hồ sơ không còn liên kết với nhiệm vụ hợp lệ. Hãy tải lại dữ liệu." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
+    return <StatePanel title="Dữ liệu chưa hoàn chỉnh" message="Hồ sơ không còn liên kết với nhiệm vụ hợp lệ." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
   }
 
   const createFeedback = async () => {
@@ -205,7 +196,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       return;
     }
     if (!selectedVersion) {
-      addToast({ type: 'warning', title: 'Học sinh chưa nộp phiên bản', message: 'Chỉ phản hồi sau khi học sinh đã tạo bản nộp.' });
+      addToast({ type: 'warning', title: 'Học sinh chưa nộp phiên bản', message: 'Chỉ phản hồi sau khi học sinh đã nộp bài.' });
       return;
     }
     setIsSubmittingFeedback(true);
@@ -223,7 +214,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       });
       setFeedbackText('');
       setSelectedText('');
-      addToast({ type: 'success', title: 'Đã gửi phản hồi', message: 'Nhận xét đã được lưu vào hồ sơ học sinh.' });
+      addToast({ type: 'success', title: 'Đã lưu phản hồi', message: 'Nhận xét đã được gửi cho học sinh.' });
     } catch {
       addToast({ type: 'error', title: 'Lỗi gửi phản hồi', message: 'Không thể lưu nhận xét. Vui lòng thử lại.' });
     } finally {
@@ -237,7 +228,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       return;
     }
     if ((rubric.criteria || []).some(criterion => (rubricScores[criterion.id] || 0) < 1)) {
-      addToast({ type: 'warning', title: 'Rubric chưa hoàn tất', message: 'Hãy chọn mức 1–4 cho tất cả tiêu chí.' });
+      addToast({ type: 'warning', title: 'Rubric chưa hoàn tất', message: 'Hãy chọn mức điểm cho tất cả tiêu chí.' });
       return;
     }
     setIsSubmittingRubric(true);
@@ -260,9 +251,9 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         totalScore,
         maxScore
       });
-      addToast({ type: 'success', title: 'Đã gửi đánh giá rubric', message: `Điểm ${totalScore}/${maxScore} đã được lưu thành công.` });
+      addToast({ type: 'success', title: 'Đã lưu điểm rubric', message: `Điểm ${totalScore}/${maxScore} đã được lưu thành công.` });
     } catch {
-      addToast({ type: 'error', title: 'Lỗi lưu rubric', message: 'Không thể lưu kết quả rubric. Vui lòng thử lại.' });
+      addToast({ type: 'error', title: 'Lỗi lưu rubric', message: 'Không thể lưu kết quả rubric.' });
     } finally {
       setIsSubmittingRubric(false);
     }
@@ -290,8 +281,8 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       await refreshAcademicData();
       addToast({
         type: 'success',
-        title: decision === 'rejected' ? 'Đã bỏ qua đề xuất AI' : 'Đã duyệt nhận xét',
-        message: decision === 'rejected' ? 'Bạn có thể tự viết nhận xét bên dưới.' : 'Nhận xét đã trở thành phản hồi chính thức của giáo viên gửi học sinh.'
+        title: decision === 'rejected' ? 'Đã bỏ qua đề xuất AI' : 'Đã duyệt phản hồi',
+        message: decision === 'rejected' ? 'Bạn có thể tự viết nhận xét bên dưới.' : 'Nhận xét đã trở thành phản hồi chính thức của giáo viên.'
       });
     } catch {
       addToast({ type: 'error', title: 'Không thể xử lý đề xuất AI', message: 'Vui lòng thử lại.' });
@@ -311,24 +302,32 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50">
-      <header className="border-b border-slate-200 bg-white p-3 sm:px-5 sm:py-3">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 lg:flex-row lg:items-center">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-white flex flex-col">
+      {/* Workspace Header */}
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-2.5">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
               Quay lại
             </Button>
             <div>
-              <div className="text-xs font-medium text-indigo-700">{evaluatorRole === 'peer' ? 'Phản biện đồng đẳng' : 'Đánh giá của giáo viên'}</div>
-              <h1 className="text-base font-semibold text-slate-900">{assignment.title}</h1>
-              <p className="text-xs text-slate-500">{literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu chưa khả dụng'}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-900">{currentPortfolio.studentName}</span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-slate-600">Lớp {currentPortfolio.className || '—'}</span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-slate-600">
+                  {assignment.title}{literatureText ? ` (${literatureText.title})` : ''}
+                </span>
+              </div>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" disabled={currentIndex === 0} onClick={() => changeStudent(-1)} leftIcon={<ChevronLeftIcon className="h-4 w-4" />}>
               Trước
             </Button>
-            <span className="text-xs font-medium text-slate-600">
+            <span className="text-xs text-slate-500 px-1">
               {currentIndex + 1}/{queue.length}
             </span>
             <Button size="sm" variant="outline" disabled={currentIndex >= queue.length - 1} onClick={() => changeStudent(1)}>
@@ -338,92 +337,97 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 xl:grid-cols-[240px_minmax(0,1fr)_340px]">
-        <aside className="space-y-3">
-          <section className="rounded-lg border border-slate-200 bg-white p-3.5">
-            <div className="flex items-center gap-2.5">
-              <Avatar name={currentPortfolio.studentName} size="sm" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-semibold text-slate-900">{currentPortfolio.studentName}</div>
-                <div className="text-xs text-slate-500">{currentPortfolio.className || 'Chưa gán lớp'}</div>
-              </div>
-            </div>
-            <div className="mt-3">
-              <label className="text-xs font-medium text-slate-600">Phiên bản đang xem</label>
-              <select
-                value={selectedVersion}
-                onChange={e => setSelectedVersion(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium outline-none focus:border-indigo-500"
-              >
-                <option value="">Bản nháp hiện tại</option>
-                {currentPortfolio.versions.map(version => (
-                  <option key={version.id} value={version.versionNumber}>
-                    {version.versionNumber} ({version.stage === 'prediction' ? 'Dự đoán' : version.stage === 'initial' ? 'Khởi đầu' : 'Chỉnh sửa'})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </section>
+      {/* 3-Column Desk Layout */}
+      <div className="mx-auto flex-1 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_340px]">
+        {/* Left: Student Queue */}
+        <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/50 p-3 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">Phiên bản chấm</label>
+            <select
+              value={selectedVersion}
+              onChange={e => setSelectedVersion(e.target.value)}
+              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-slate-500"
+            >
+              <option value="">Bản nháp</option>
+              {currentPortfolio.versions.map(version => (
+                <option key={version.id} value={version.versionNumber}>
+                  {version.versionNumber} ({version.stage === 'prediction' ? 'Dự đoán' : version.stage === 'initial' ? 'Bản đầu' : 'Sửa đổi'})
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-3">
-            <div className="mb-2 text-xs font-semibold text-slate-500">Học sinh trong danh sách</div>
-            <div className="max-h-[55vh] space-y-1 overflow-y-auto">
+          <div className="border-t border-slate-200 pt-3">
+            <div className="text-xs font-medium text-slate-500 mb-1.5 px-1">Danh sách học sinh</div>
+            <div className="max-h-[60vh] space-y-0.5 overflow-y-auto">
               {queue.map((item, index) => (
                 <button
                   key={item.id}
                   onClick={() => setCurrentIndex(index)}
-                  className={`w-full rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-                    index === currentIndex ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                  className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                    index === currentIndex
+                      ? 'bg-white text-slate-900 font-medium border border-slate-200 shadow-xs'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   <div className="truncate">{item.studentName}</div>
-                  <div className={`mt-0.5 text-xs ${index === currentIndex ? 'text-slate-600' : 'text-slate-400'}`}>
-                    {item.className || '—'} • {item.versions.length ? item.versions[item.versions.length - 1].versionNumber : 'Chưa nộp'}
+                  <div className="text-xs text-slate-500 truncate">
+                    {item.className || '—'} · {item.versions.length ? item.versions[item.versions.length - 1].versionNumber : 'Chưa nộp'}
                   </div>
                 </button>
               ))}
             </div>
-          </section>
+          </div>
         </aside>
 
-        <main className="space-y-4">
-          {dataError && <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-900">Dữ liệu có thể chưa mới nhất: {dataError}</div>}
+        {/* Center: Submission Content */}
+        <main className="p-4 sm:p-6 space-y-5">
+          {/* Axis Navigation Tabs */}
+          <div className="border-b border-slate-200 flex gap-1 overflow-x-auto pb-px">
+            {POETIC_AXES.map(axis => (
+              <button
+                key={axis.id}
+                onClick={() => setActiveAxisId(axis.id)}
+                className={`py-2 px-3 text-sm border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                  activeAxisId === axis.id
+                    ? 'border-slate-900 text-slate-900 font-medium'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {axis.shortName}
+              </button>
+            ))}
+          </div>
 
-          {/* AI PROPOSAL PANEL (When AI proposal is awaiting teacher review) */}
+          {/* AI Proposal Review (Quiet section, NO Sparkles, NO giant tinted box) */}
           {pendingAiProposal && evaluatorRole === 'teacher' && (
-            <section className="rounded-lg border border-indigo-300 bg-indigo-50/50 p-4">
-              <div className="flex items-center justify-between gap-2 border-b border-indigo-200 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <SparklesIcon className="h-4 w-4 text-indigo-700" />
-                  <span className="text-xs font-bold text-indigo-900">Đề xuất phản hồi từ AI (Chờ giáo viên duyệt)</span>
-                </div>
-                <Badge variant="indigo">Đề xuất AI</Badge>
+            <section className="border border-slate-300 rounded-md bg-slate-50/70 p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <h3 className="text-xs font-medium text-slate-800">Đề xuất phản hồi AI</h3>
+                <span className="text-xs text-slate-500">Chờ giáo viên duyệt</span>
               </div>
 
-              <div className="mt-3">
-                {isEditingAiProposal ? (
-                  <textarea
-                    rows={4}
-                    value={editedAiText}
-                    onChange={e => setEditedAiText(e.target.value)}
-                    className="w-full rounded-md border border-indigo-300 bg-white p-2.5 text-xs text-slate-900 outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                ) : (
-                  <p className="whitespace-pre-wrap text-xs leading-5 text-slate-800 bg-white rounded-md border border-indigo-100 p-3">
-                    {pendingAiProposal.response}
-                  </p>
-                )}
-              </div>
+              {isEditingAiProposal ? (
+                <textarea
+                  rows={3}
+                  value={editedAiText}
+                  onChange={e => setEditedAiText(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+                />
+              ) : (
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {pendingAiProposal.response}
+                </p>
+              )}
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 <Button
                   size="sm"
                   variant="primary"
                   isLoading={isSubmittingAiReview}
                   onClick={() => handleTeacherAiDecision(isEditingAiProposal ? 'revised' : 'approved')}
-                  leftIcon={<CheckIcon className="h-3.5 w-3.5" />}
                 >
-                  {isEditingAiProposal ? 'Lưu bản sửa & Gửi HS' : 'Duyệt nguyên văn'}
+                  {isEditingAiProposal ? 'Lưu bản sửa & Gửi' : 'Duyệt'}
                 </Button>
 
                 {!isEditingAiProposal ? (
@@ -431,9 +435,8 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setIsEditingAiProposal(true)}
-                    leftIcon={<PencilSquareIcon className="h-3.5 w-3.5" />}
                   >
-                    Chỉnh sửa trước khi gửi
+                    Sửa rồi gửi
                   </Button>
                 ) : (
                   <Button
@@ -444,147 +447,139 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
                       setIsEditingAiProposal(false);
                     }}
                   >
-                    Hủy chỉnh sửa
+                    Hủy sửa
                   </Button>
                 )}
 
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-rose-700 hover:bg-rose-50"
+                  className="text-slate-600 hover:text-rose-700"
                   isLoading={isSubmittingAiReview}
                   onClick={() => handleTeacherAiDecision('rejected')}
-                  leftIcon={<XMarkIcon className="h-3.5 w-3.5" />}
                 >
-                  Không dùng AI
+                  Bỏ qua
                 </Button>
               </div>
             </section>
           )}
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {POETIC_AXES.map(axis => (
-                <button
-                  key={axis.id}
-                  onClick={() => setActiveAxisId(axis.id)}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                    activeAxisId === axis.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {axis.shortName}
-                </button>
-              ))}
+          {/* Student Content */}
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between border-b border-slate-100 pb-2">
+              <h2 className="text-base font-medium text-slate-900">
+                {POETIC_AXES.find(axis => axis.id === activeAxisId)?.title}
+              </h2>
+              <span className="text-xs text-slate-500">
+                {selectedVersion || 'Bản nháp'}
+              </span>
             </div>
-            <div className="border-t border-slate-100 pt-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-slate-900">{POETIC_AXES.find(axis => axis.id === activeAxisId)?.title}</h2>
-                <Badge variant={selectedVersion ? 'blue' : 'slate'} size="sm">
-                  {selectedVersion || 'Bản nháp'}
-                </Badge>
-              </div>
-              <div
-                onMouseUp={captureSelection}
-                className="min-h-64 whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50/70 p-4 font-sans text-xs leading-6 text-slate-800"
-              >
-                {activeResponse?.analysisText?.trim() || <span className="italic text-slate-400">Học sinh chưa viết nội dung ở trục này.</span>}
-              </div>
-              {activeResponse?.evidenceQuotes && activeResponse.evidenceQuotes.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  <div className="text-xs font-semibold text-slate-700">Dẫn chứng</div>
-                  {activeResponse.evidenceQuotes.map(item => (
-                    <blockquote key={item.id} className="rounded border-l-2 border-indigo-300 bg-indigo-50/40 px-2.5 py-1.5 text-xs italic text-slate-600">
-                      {item.text}
-                    </blockquote>
-                  ))}
-                </div>
+
+            <div
+              onMouseUp={captureSelection}
+              className="min-h-56 font-sans text-sm leading-7 text-slate-800 whitespace-pre-wrap select-text"
+            >
+              {activeResponse?.analysisText?.trim() || (
+                <span className="italic text-slate-400">Học sinh chưa viết bài ở trục này.</span>
               )}
             </div>
-          </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-2">
-              <ChatBubbleLeftRightIcon className="h-4 w-4 text-slate-600" />
-              <h2 className="text-xs font-semibold text-slate-900">
-                Phản hồi đã có {selectedVersion ? `(Phiên bản ${selectedVersion})` : ''}
-              </h2>
-            </div>
-            {currentFeedbacks.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">Chưa có phản hồi ở trục này cho phiên bản đang chọn.</p>
-            ) : (
-              <div className="mt-2.5 space-y-2">
-                {currentFeedbacks.map(item => (
-                  <div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <strong className="text-slate-800">
-                        {item.authorName} ({item.authorRole === 'teacher' ? 'Giáo viên' : (item.authorRole === 'peer' ? 'Bạn học' : 'AI')})
-                      </strong>
-                      <span className="text-slate-400">{item.versionNumber}</span>
-                    </div>
-                    {item.selectedSnippet && (
-                      <div className="mt-1 border-l-2 border-indigo-300 pl-2 italic text-slate-500">{item.selectedSnippet}</div>
-                    )}
-                    <p className="mt-1 leading-5 text-slate-700">{item.comment}</p>
-                  </div>
+            {activeResponse?.evidenceQuotes && activeResponse.evidenceQuotes.length > 0 && (
+              <div className="pt-3 border-t border-slate-100 space-y-1">
+                <div className="text-xs font-medium text-slate-600">Dẫn chứng:</div>
+                {activeResponse.evidenceQuotes.map(item => (
+                  <blockquote key={item.id} className="border-l-2 border-slate-300 pl-3 py-0.5 text-xs text-slate-600 italic">
+                    {item.text}
+                  </blockquote>
                 ))}
               </div>
             )}
-          </section>
+          </div>
+
+          {/* Existing Feedbacks for this axis & version */}
+          {currentFeedbacks.length > 0 && (
+            <section className="pt-4 border-t border-slate-200 space-y-2">
+              <h3 className="text-xs font-medium text-slate-600">
+                Phản hồi đã gửi ở trục này ({currentFeedbacks.length}):
+              </h3>
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-md bg-slate-50/50">
+                {currentFeedbacks.map(item => (
+                  <div key={item.id} className="p-2.5 text-xs space-y-1">
+                    <div className="flex items-center justify-between text-slate-700">
+                      <span className="font-medium">{item.authorName} ({item.authorRole === 'teacher' ? 'GV' : 'Bạn học'})</span>
+                      <span className="text-slate-400">{item.versionNumber}</span>
+                    </div>
+                    {item.selectedSnippet && (
+                      <div className="border-l-2 border-slate-300 pl-2 text-slate-500 italic">
+                        “{item.selectedSnippet}”
+                      </div>
+                    )}
+                    <p className="text-slate-800">{item.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
-        <aside className="space-y-4">
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-              <ChatBubbleLeftRightIcon className="h-4 w-4 text-slate-600" />Gửi phản hồi trực tiếp
-            </h2>
+        {/* Right: Review Inspector (Feedback & Rubric) */}
+        <aside className="border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50/40 p-4 space-y-6">
+          {/* Section: Direct Feedback */}
+          <section className="space-y-2">
+            <h2 className="text-xs font-semibold text-slate-800">Nhận xét trực tiếp</h2>
             {selectedText && (
-              <div className="mt-2.5 rounded border-l-2 border-indigo-400 bg-indigo-50 px-2.5 py-1.5 text-xs italic text-slate-600">
+              <div className="border-l-2 border-slate-400 bg-white p-2 text-xs italic text-slate-600 rounded">
                 “{selectedText}”
               </div>
             )}
             <textarea
-              rows={4}
+              rows={3}
               value={feedbackText}
               onChange={e => setFeedbackText(e.target.value)}
-              placeholder="Nêu điểm mạnh, chỗ cần sửa và gợi ý cụ thể…"
-              className="mt-2.5 w-full rounded-md border border-slate-300 p-2.5 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              placeholder="Nhập nhận xét cụ thể cho học sinh..."
+              className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
             />
             <Button
-              className="mt-2 w-full"
+              className="w-full"
               variant="primary"
               size="sm"
               isLoading={isSubmittingFeedback}
               disabled={!selectedVersion}
               onClick={createFeedback}
             >
-              Gửi phản hồi
+              Gửi nhận xét
             </Button>
-            {!selectedVersion && <p className="mt-1.5 text-[11px] text-amber-700">Học sinh chưa có phiên bản đã nộp.</p>}
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-              <AcademicCapIcon className="h-4 w-4 text-slate-600" />Đánh giá Rubric
-            </h2>
+          {/* Section: Rubric Matrix */}
+          <section className="space-y-3 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-slate-800">Đánh giá Rubric</h2>
+              <span className="text-xs text-slate-600">
+                Tổng: <strong>{totalScore}/{maxScore}</strong>
+              </span>
+            </div>
+
             {rubric.criteria.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">Chưa có rubric hoạt động.</p>
+              <p className="text-xs text-slate-500">Chưa có rubric.</p>
             ) : (
-              <div className="mt-2.5 space-y-2.5">
+              <div className="space-y-2 text-xs">
                 {rubric.criteria.map(criterion => (
-                  <div key={criterion.id}>
-                    <div className="mb-1 text-xs font-medium text-slate-700">{criterion.title}</div>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[1, 2, 3, 4].map(level => (
+                  <div key={criterion.id} className="flex items-center justify-between gap-2 py-1 border-b border-slate-100">
+                    <span className="truncate text-slate-700 max-w-[150px]">{criterion.title}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {[1, 2, 3, 4].map(lvl => (
                         <button
-                          key={level}
-                          onClick={() => setRubricScores(prev => ({ ...prev, [criterion.id]: level }))}
-                          className={`rounded-md border py-1 text-xs font-semibold ${
-                            rubricScores[criterion.id] === level
-                              ? 'border-emerald-700 bg-emerald-700 text-white'
-                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                          key={lvl}
+                          type="button"
+                          onClick={() => setRubricScores(prev => ({ ...prev, [criterion.id]: lvl }))}
+                          className={`w-6 h-6 rounded text-xs transition ${
+                            rubricScores[criterion.id] === lvl
+                              ? 'bg-slate-900 text-white font-semibold'
+                              : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
                           }`}
                         >
-                          {level}
+                          {lvl}
                         </button>
                       ))}
                     </div>
@@ -592,28 +587,24 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
                 ))}
               </div>
             )}
+
             <textarea
               rows={2}
               value={overallFeedback}
               onChange={e => setOverallFeedback(e.target.value)}
-              placeholder="Nhận xét tổng thể…"
-              className="mt-2.5 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500"
+              placeholder="Nhận xét tổng thể..."
+              className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-800 outline-none focus:border-slate-500"
             />
-            <div className="mt-2.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500">Tổng điểm</span>
-              <strong className="text-sm font-semibold text-slate-900">
-                {totalScore}/{maxScore}
-              </strong>
-            </div>
+
             <Button
-              className="mt-2 w-full"
-              variant="academic"
+              className="w-full"
+              variant="outline"
               size="sm"
               isLoading={isSubmittingRubric}
               disabled={!selectedVersion || rubric.criteria.length === 0}
               onClick={saveRubric}
             >
-              Gửi đánh giá rubric
+              Lưu điểm Rubric
             </Button>
           </section>
         </aside>

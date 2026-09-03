@@ -412,6 +412,57 @@ test('TC27: SPA fallback không rewrite /api', () => {
   assert(!spaRule.source.includes('^/api'), 'SPA rule không được match /api');
 });
 
+test('TC28: Không còn StatCard trong tất cả các view production', () => {
+  const viewFiles = fs.readdirSync(path.join(process.cwd(), 'src/views'))
+    .filter(f => f.endsWith('.tsx') && !f.includes('Kit'));
+  for (const f of viewFiles) {
+    const content = fs.readFileSync(path.join(process.cwd(), 'src/views', f), 'utf8');
+    assert(!content.includes('<StatCard'), `File src/views/${f} vẫn còn dùng <StatCard`);
+  }
+});
+
+test('TC29: Không còn rounded-2xl hoặc rounded-3xl trong src', () => {
+  function scan(dir) {
+    for (const item of fs.readdirSync(dir)) {
+      const full = path.join(dir, item);
+      if (fs.statSync(full).isDirectory()) scan(full);
+      else if (full.endsWith('.tsx') || full.endsWith('.ts')) {
+        const c = fs.readFileSync(full, 'utf8');
+        assert(!c.includes('rounded-2xl'), `${full} còn rounded-2xl`);
+        assert(!c.includes('rounded-3xl'), `${full} còn rounded-3xl`);
+      }
+    }
+  }
+  scan(path.join(process.cwd(), 'src'));
+});
+
+test('TC30: Không còn gradient trang trí trong các view chính', () => {
+  const viewFiles = fs.readdirSync(path.join(process.cwd(), 'src/views'))
+    .filter(f => f.endsWith('.tsx') && !f.includes('Kit'));
+  for (const f of viewFiles) {
+    const content = fs.readFileSync(path.join(process.cwd(), 'src/views', f), 'utf8');
+    assert(!content.includes('bg-gradient-'), `File src/views/${f} còn bg-gradient-`);
+    assert(!content.includes('from-indigo-'), `File src/views/${f} còn from-indigo-`);
+    assert(!content.includes('from-purple-'), `File src/views/${f} còn from-purple-`);
+  }
+});
+
+test('TC31: Không còn text-[10px] hoặc text-[11px] trong các view chính', () => {
+  const viewFiles = fs.readdirSync(path.join(process.cwd(), 'src/views'))
+    .filter(f => f.endsWith('.tsx') && !f.includes('Kit'));
+  for (const f of viewFiles) {
+    const content = fs.readFileSync(path.join(process.cwd(), 'src/views', f), 'utf8');
+    assert(!content.includes('text-[10px]'), `File src/views/${f} còn text-[10px]`);
+    assert(!content.includes('text-[11px]'), `File src/views/${f} còn text-[11px]`);
+  }
+});
+
+test('TC32: Shell đăng nhập không còn slogan quảng cáo', () => {
+  const layout = read('src/components/layout/MainLayout.tsx');
+  assert(!layout.includes('Hệ thống học tập và nghiên cứu năng lực đọc hiểu ngữ văn'), 'MainLayout còn footer slogan');
+  assert(!layout.includes('Trường THPT Chuyên Vị Thanh'), 'MainLayout còn footer school');
+});
+
 // -------------------------------------------------------------
 // Results Reporter
 // -------------------------------------------------------------

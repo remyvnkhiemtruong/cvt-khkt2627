@@ -3,123 +3,302 @@ import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolioStore } from '../app/store/usePortfolioStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
-import { StatCard, Button, Badge, Card, Progress, Skeleton, EmptyState, PageHeader } from '../components/ui';
-import {
-  BookOpenIcon,
-  ClockIcon,
-  ArrowRightIcon,
-  ChatBubbleLeftRightIcon,
-  CheckCircleIcon,
-  DocumentTextIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
+import { Button, EmptyState } from '../components/ui';
+import { BookOpenIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
-interface StudentDashboardViewProps { onNavigate:(view:string,extraParams?:any)=>void; }
+interface StudentDashboardViewProps {
+  onNavigate: (view: string, extraParams?: any) => void;
+}
 
-export const StudentDashboardView:React.FC<StudentDashboardViewProps>=({onNavigate})=>{
-  const currentUser=useAuthStore(state=>state.currentUser);
-  const {autosaveStatus,lastSavedTime}=usePortfolioStore();
-  const {assignments,literatureTexts,portfolios,feedbacks,rubricSubmissions,rubric,isLoading,dataError,refreshAcademicData}=usePortfolio();
+export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({ onNavigate }) => {
+  const currentUser = useAuthStore(state => state.currentUser);
+  const { autosaveStatus, lastSavedTime } = usePortfolioStore();
+  const {
+    assignments,
+    literatureTexts,
+    portfolios,
+    feedbacks,
+    rubricSubmissions,
+    rubric,
+    isLoading,
+    dataError,
+    refreshAcademicData
+  } = usePortfolio();
 
-  const myPortfolios=useMemo(()=>Object.values(portfolios).filter(portfolio=>portfolio.studentId===currentUser.id),[portfolios,currentUser.id]);
-  const myFeedbacks=useMemo(()=>feedbacks.filter(item=>item.studentId===currentUser.id),[feedbacks,currentUser.id]);
-  const unresolvedFeedbacks=myFeedbacks.filter(item=>!item.resolved);
-  const myRubrics=useMemo(()=>rubricSubmissions.filter(item=>item.studentId===currentUser.id),[rubricSubmissions,currentUser.id]);
+  const myFeedbacks = useMemo(
+    () => feedbacks.filter(item => item.studentId === currentUser.id),
+    [feedbacks, currentUser.id]
+  );
+  const unresolvedFeedbacks = useMemo(
+    () => myFeedbacks.filter(item => !item.resolved),
+    [myFeedbacks]
+  );
+  const myRubrics = useMemo(
+    () => rubricSubmissions.filter(item => item.studentId === currentUser.id),
+    [rubricSubmissions, currentUser.id]
+  );
 
+  // Active assignment selection based on business priorities
   const activeAssignment = useMemo(() => {
-    // Priority 1: Has feedback received or is in revision
     const revising = assignments.find(assignment => {
       const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
       return port && (port.status === 'feedback_received' || port.status === 'revising' || port.status === 'v2_in_revision');
     });
     if (revising) return revising;
 
-    // Priority 2: Pending unfinished draft
     const unfinished = assignments.find(assignment => {
       const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
       return port && port.status !== 'completed' && !myRubrics.some(r => r.assignmentId === assignment.id && r.evaluatorRole === 'teacher');
     });
     if (unfinished) return unfinished;
 
-    // Priority 3: Not yet started, closest deadline first
     const unstarted = assignments.filter(a => !portfolios[`port-${currentUser.id}-${a.id}`]);
     if (unstarted.length > 0) {
       return [...unstarted].sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime())[0];
     }
 
-    // Priority 4: If all are completed, return null rather than falling back to assignments[0]
     return null;
   }, [assignments, portfolios, currentUser.id, myRubrics]);
-  const activePortfolio=activeAssignment?portfolios[`port-${currentUser.id}-${activeAssignment.id}`]:undefined;
-  const activeText=activeAssignment?literatureTexts.find(text=>text.id===activeAssignment.textId):undefined;
-  const activeVersion=activePortfolio?.currentActiveVersion||'v1.0 (nháp)';
 
-  const completedAssignments=assignments.filter(assignment=>{
-    const portfolio=portfolios[`port-${currentUser.id}-${assignment.id}`];
-    if(portfolio?.status==='completed')return true;
-    return myRubrics.some(sub=>sub.assignmentId===assignment.id&&sub.evaluatorRole==='teacher');
-  }).length;
-  const revisionCount=myPortfolios.filter(portfolio=>portfolio.status==='feedback_received'||portfolio.status==='v2_in_revision').length;
-  const progressPercent=assignments.length?Math.round(completedAssignments/assignments.length*100):0;
+  const activePortfolio = activeAssignment ? portfolios[`port-${currentUser.id}-${activeAssignment.id}`] : undefined;
+  const activeText = activeAssignment ? literatureTexts.find(text => text.id === activeAssignment.textId) : undefined;
+  const activeVersion = activePortfolio?.currentActiveVersion || 'v1.0 (nháp)';
 
-  const latestTeacherRubric=[...myRubrics].filter(item=>item.evaluatorRole==='teacher').sort((a,b)=>new Date(a.submittedAt).getTime()-new Date(b.submittedAt).getTime()).at(-1);
-  const axisScores=useMemo(()=>{
-    const byCriterion=Object.fromEntries((rubric.criteria||[]).map(criterion=>[criterion.id,criterion.axisId]));
-    const scores:Record<string,number>={};
-    if(latestTeacherRubric){
-      for(const [criterionId,value] of Object.entries(latestTeacherRubric.criterionScores||{})){
-        const axis=byCriterion[criterionId];
-        if(axis)scores[axis]=Number(value.score||value.level||0);
+  const completedAssignments = useMemo(() => {
+    return assignments.filter(assignment => {
+      const portfolio = portfolios[`port-${currentUser.id}-${assignment.id}`];
+      if (portfolio?.status === 'completed') return true;
+      return myRubrics.some(sub => sub.assignmentId === assignment.id && sub.evaluatorRole === 'teacher');
+    }).length;
+  }, [assignments, portfolios, currentUser.id, myRubrics]);
+
+  const latestTeacherRubric = useMemo(() => {
+    return [...myRubrics]
+      .filter(item => item.evaluatorRole === 'teacher')
+      .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime())
+      .at(-1);
+  }, [myRubrics]);
+
+  const axisScores = useMemo(() => {
+    const byCriterion = Object.fromEntries((rubric.criteria || []).map(criterion => [criterion.id, criterion.axisId]));
+    const scores: Record<string, number> = {};
+    if (latestTeacherRubric) {
+      for (const [criterionId, value] of Object.entries(latestTeacherRubric.criterionScores || {})) {
+        const axis = byCriterion[criterionId];
+        if (axis) scores[axis] = Number(value.score || value.level || 0);
       }
     }
-    return POETIC_AXES.map(axis=>({axis,score:scores[axis.id]||0}));
-  },[latestTeacherRubric,rubric]);
-  const weakestAxis=axisScores.filter(item=>item.score>0).sort((a,b)=>a.score-b.score)[0];
+    return POETIC_AXES.map(axis => ({ axis, score: scores[axis.id] || 0 }));
+  }, [latestTeacherRubric, rubric]);
 
-  const greeting=(()=>{const hour=new Date().getHours();return hour<12?'Chào buổi sáng':hour<18?'Chào buổi chiều':'Chào buổi tối';})();
+  const weakestAxis = axisScores.filter(item => item.score > 0).sort((a, b) => a.score - b.score)[0];
 
-  if(isLoading&&assignments.length===0)return <div className="space-y-6"><Skeleton className="h-20 w-full rounded-lg"/><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({length:4}).map((_,index)=><Skeleton key={index} className="h-20 rounded-lg"/>)}</div><Skeleton className="h-48 w-full rounded-lg"/></div>;
-  if(assignments.length===0)return <Card padding="none"><EmptyState icon={<BookOpenIcon className="h-8 w-8 text-slate-400"/>} title="Chưa có nhiệm vụ Ngữ văn" description={dataError||'Bạn chưa được gán nhiệm vụ nào. Hãy kiểm tra lại sau khi giáo viên phân công lớp.'} action={<Button variant="outline" onClick={()=>void refreshAcademicData()}>Tải lại dữ liệu</Button>}/></Card>;
+  if (isLoading && assignments.length === 0) {
+    return (
+      <div className="py-12 text-center text-sm text-slate-500">
+        Đang tải dữ liệu bàn học...
+      </div>
+    );
+  }
 
-  return <div className="space-y-6 pb-12">
-    {dataError&&<div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">Một phần dữ liệu có thể chưa mới nhất: {dataError}</div>}
-    
-    <PageHeader
-      title={`${greeting}, ${currentUser.name.split(' ').pop()}`}
-      description={
-        <span>
-          {currentUser.className ? `Lớp ${currentUser.className} • ` : ''}
-          {assignments.length} nhiệm vụ • {unresolvedFeedbacks.length} phản hồi cần xử lý • {myPortfolios.length} hồ sơ học tập
-        </span>
-      }
-      actions={
-        activeAssignment && (
-          <Button
-            variant="primary"
-            onClick={() => onNavigate('editor', { assignmentId: activeAssignment.id })}
-            leftIcon={<DocumentTextIcon className="h-4 w-4" />}
-            rightIcon={<ArrowRightIcon className="h-4 w-4" />}
-          >
-            Tiếp tục bài đang làm
+  if (assignments.length === 0) {
+    return (
+      <div className="py-12">
+        <EmptyState
+          icon={<BookOpenIcon className="h-8 w-8 text-slate-400" />}
+          title="Chưa có nhiệm vụ"
+          description={dataError || 'Bạn chưa có nhiệm vụ nào được phân công.'}
+          action={
+            <Button variant="outline" onClick={() => void refreshAcademicData()}>
+              Tải lại
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl space-y-8 pb-12">
+      {dataError && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+          Dữ liệu hiển thị có thể chưa mới nhất: {dataError}
+        </div>
+      )}
+
+      {/* 1. Header & Quick Summary */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Bàn học</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {currentUser.name}
+            {currentUser.className && ` · Lớp ${currentUser.className}`}
+          </p>
+        </div>
+        <div className="text-xs text-slate-500">
+          {assignments.length} nhiệm vụ · {completedAssignments} hoàn thành
+          {unresolvedFeedbacks.length > 0 && ` · ${unresolvedFeedbacks.length} phản hồi cần xem`}
+        </div>
+      </div>
+
+      {/* 2. Next Action Area (3-second rule) */}
+      {activeAssignment ? (
+        <section className="border border-slate-200 bg-white rounded-md p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-500">Bài cần làm tiếp</span>
+              <span className="text-xs text-slate-400">·</span>
+              <span className="text-xs text-slate-600">{activeVersion}</span>
+            </div>
+            {activeAssignment.deadline && (
+              <span className="text-xs text-slate-500">
+                Hạn nộp: {new Date(activeAssignment.deadline).toLocaleDateString('vi-VN')}
+              </span>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">{activeAssignment.title}</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              {activeText ? `${activeText.title} — ${activeText.author}` : 'Ngữ liệu tác phẩm'}
+            </p>
+            {activeAssignment.prompt && (
+              <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+                {activeAssignment.prompt}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <div className="text-xs text-slate-500">
+              {autosaveStatus === 'dirty'
+                ? 'Có nội dung nháp chưa lưu'
+                : autosaveStatus === 'saving'
+                ? 'Đang lưu...'
+                : `Đã lưu ${lastSavedTime || 'gần đây'}`}
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => onNavigate('editor', { assignmentId: activeAssignment.id })}
+              rightIcon={<ArrowRightIcon className="h-4 w-4" />}
+            >
+              Tiếp tục viết bài
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <section className="border border-slate-200 bg-white rounded-md p-5 text-sm text-slate-600">
+          Bạn đã hoàn thành tất cả nhiệm vụ hiện có.
+        </section>
+      )}
+
+      {/* 3. Feedback needing resolution */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">Phản hồi của giáo viên</h2>
+          {myFeedbacks.length > 0 && (
+            <span className="text-xs text-slate-500">
+              {unresolvedFeedbacks.length} chưa xử lý / {myFeedbacks.length} tổng
+            </span>
+          )}
+        </div>
+
+        {unresolvedFeedbacks.length === 0 ? (
+          <div className="text-sm text-slate-500 py-3 border-t border-slate-100">
+            Không có phản hồi nào đang chờ xử lý.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 border-t border-b border-slate-200 bg-white">
+            {unresolvedFeedbacks.slice(0, 4).map(item => (
+              <div key={item.id} className="py-3 px-3 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-medium text-slate-800">{item.authorName || 'Giáo viên'}</span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-slate-500">{new Date(item.createdAt).toLocaleDateString('vi-VN')}</span>
+                  </div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{item.comment}</p>
+                </div>
+                {activeAssignment && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onNavigate('editor', { assignmentId: activeAssignment.id })}
+                  >
+                    Xem bài
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. Pedagogical focus callout (plain, calm, no StatCard) */}
+      {weakestAxis && (
+        <section className="border-l-2 border-slate-400 bg-slate-100/60 p-3.5 rounded-r-md text-sm text-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            Tiêu chí <strong>{weakestAxis.axis.title}</strong> đạt mức {weakestAxis.score.toFixed(1)}/4 trong lần chấm gần nhất.
+          </div>
+          {activeAssignment && (
+            <button
+              type="button"
+              onClick={() => onNavigate('student-analytics', { studentId: currentUser.id, assignmentId: activeAssignment.id })}
+              className="text-xs font-medium text-slate-900 underline underline-offset-2 shrink-0"
+            >
+              Xem tiến bộ chi tiết →
+            </button>
+          )}
+        </section>
+      )}
+
+      {/* 5. Assigned list rows */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">Danh sách nhiệm vụ</h2>
+          <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')}>
+            Xem tất cả ({assignments.length})
           </Button>
-        )
-      }
-    />
+        </div>
 
-    <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-      <StatCard label="Nhiệm vụ" value={String(assignments.length)} subValue={`${completedAssignments} đã hoàn thành`} icon={<BookOpenIcon className="h-4 w-4"/>}/>
-      <StatCard label="Phản hồi cần xử lý" value={String(unresolvedFeedbacks.length)} subValue={unresolvedFeedbacks.length?'Ưu tiên xem lại':'Không còn tồn đọng'} icon={<ChatBubbleLeftRightIcon className="h-4 w-4"/>}/>
-      <StatCard label="Hồ sơ đang chỉnh sửa" value={String(revisionCount)} subValue={`${myPortfolios.length} hồ sơ tổng cộng`} icon={<ArrowPathIcon className="h-4 w-4"/>}/>
-      <StatCard label="Tiến độ hoàn thành" value={`${progressPercent}%`} subValue={`${completedAssignments}/${assignments.length} nhiệm vụ`} icon={<CheckCircleIcon className="h-4 w-4"/>}/>
-    </section>
+        <div className="divide-y divide-slate-100 border-t border-b border-slate-200 bg-white">
+          {assignments.slice(0, 5).map(assignment => {
+            const portfolio = portfolios[`port-${currentUser.id}-${assignment.id}`];
+            const text = literatureTexts.find(t => t.id === assignment.textId);
+            const statusText =
+              portfolio?.status === 'completed' ? 'Đã hoàn thành' :
+              portfolio?.status === 'feedback_received' ? 'Có phản hồi' :
+              portfolio?.status === 'submitted_waiting_ai' ? 'Chờ phản hồi' :
+              portfolio?.status === 'ai_proposed_waiting_teacher' ? 'Chờ duyệt' :
+              portfolio?.status === 'drafting' ? 'Đang viết nháp' : 'Chưa bắt đầu';
 
-    {activeAssignment&&<Card padding="md" className="border-slate-200 bg-white">
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center"><div className="min-w-0 flex-1 space-y-2"><div className="flex flex-wrap items-center gap-2"><Badge variant="indigo">Nhiệm vụ hiện tại</Badge><span className="text-xs text-slate-500">{activeText?`${activeText.title} — ${activeText.author}`:'Ngữ liệu chưa khả dụng'}</span></div><div><h2 className="text-base font-semibold text-slate-900">{activeAssignment.title}</h2><p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">{activeAssignment.prompt||'Chưa có mô tả chi tiết.'}</p></div><div className="flex flex-wrap items-center gap-4 text-xs text-slate-600"><span>Phiên bản: <Badge variant="blue">{activeVersion}</Badge></span><span className="inline-flex items-center gap-1.5"><span className={`h-1.5 w-1.5 rounded-full ${autosaveStatus==='dirty'?'bg-amber-500':autosaveStatus==='saving'?'bg-sky-500':'bg-emerald-500'}`}/>{autosaveStatus==='dirty'?'Có thay đổi chưa lưu':autosaveStatus==='saving'?'Đang lưu…':`Đã lưu ${lastSavedTime||'gần đây'}`}</span>{activeAssignment.deadline&&<span className="inline-flex items-center gap-1"><ClockIcon className="h-3.5 w-3.5"/>Hạn: {new Date(activeAssignment.deadline).toLocaleDateString('vi-VN')}</span>}</div></div><div className="shrink-0"><Button variant="primary" onClick={()=>onNavigate('editor',{assignmentId:activeAssignment.id})}>Mở bài viết</Button></div></div>
-    </Card>}
-
-    <section className="grid gap-4 lg:grid-cols-2">
-      <Card padding="md"><div className="mb-3"><h2 className="text-sm font-semibold text-slate-900">Phản hồi gần đây</h2><p className="mt-0.5 text-xs text-slate-500">Nhận xét từ giáo viên, bạn học hoặc gợi ý AI.</p></div>{myFeedbacks.length===0?<p className="text-xs text-slate-500 py-4">Chưa có phản hồi nào.</p>:<div className="space-y-2.5">{[...myFeedbacks].sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime()).slice(0,4).map(item=><div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs"><div className="flex items-center justify-between gap-2"><strong className="text-slate-800">{item.authorRole==='ai'?'AI':item.authorName}</strong><Badge variant={item.resolved?'emerald':'amber'}>{item.resolved?'Đã xử lý':'Cần xem lại'}</Badge></div><p className="mt-1.5 line-clamp-3 leading-relaxed text-slate-600">{item.comment}</p></div>)}</div>}</Card>
-      <Card padding="md"><div className="mb-3"><h2 className="text-sm font-semibold text-slate-900">Năng lực cần ưu tiên</h2><p className="mt-0.5 text-xs text-slate-500">Dựa trên kết quả đánh giá rubric gần nhất.</p></div>{!latestTeacherRubric||!weakestAxis?<div className="rounded-md border border-dashed border-slate-200 p-4 text-xs text-slate-500">Chưa có kết quả rubric để phân tích. Sau lần chấm đầu tiên, hệ thống sẽ gợi ý trục cần lưu ý.</div>:<div className="space-y-3"><div className="flex items-center justify-between"><div><div className="text-sm font-semibold text-slate-900">{weakestAxis.axis.title}</div><div className="text-xs text-slate-500">Mức điểm gần nhất</div></div><div className="text-xl font-bold text-indigo-700">{weakestAxis.score.toFixed(1)}/4</div></div><Progress value={Math.min(100,weakestAxis.score/4*100)}/><Button size="sm" variant="outline" onClick={()=>activeAssignment&&onNavigate('student-analytics',{studentId:currentUser.id,assignmentId:activeAssignment.id})}>Xem phân tích chi tiết</Button></div>}</Card>
-    </section>
-  </div>;
+            return (
+              <div
+                key={assignment.id}
+                className="py-3 px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-slate-900 truncate">{assignment.title}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    {text ? `${text.title} — ${text.author}` : 'Ngữ liệu'}
+                    {assignment.deadline && ` · Hạn ${new Date(assignment.deadline).toLocaleDateString('vi-VN')}`}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-slate-500">{statusText}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onNavigate('editor', { assignmentId: assignment.id })}
+                  >
+                    Mở
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
 };

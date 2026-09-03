@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
-import { Badge, Button, Card, StatCard, PageHeader } from '../components/ui';
-import { ArrowLeftIcon, ArrowsRightLeftIcon, ChartBarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface ResearcherJudgeViewProps {
   onNavigate: (view: string, extraParams?: any) => void;
@@ -72,76 +72,93 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
   const avgPost = mean(paired.map(s => s.post));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <div>
-        <div className="mb-2">
-          <Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
-            Tổng quan
-          </Button>
-        </div>
-        <PageHeader
-          title="Minh chứng tiến bộ & Chỉ số Effect Size"
-          description="Dữ liệu nghiên cứu ẩn danh phân tích đối chứng Pre/Post và đo lường mức độ tăng trưởng năng lực theo chuẩn khoa học."
-          actions={<Badge variant="indigo">{samples.length} hồ sơ ẩn danh</Badge>}
-        />
-      </div>
-
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard label="Hồ sơ nghiên cứu" value={String(samples.length)} subValue="Bộ dữ liệu thực tế" icon={<DocumentTextIcon className="h-4 w-4" />} />
-        <StatCard label="Cặp Pre/Post (GV)" value={String(paired.length)} subValue="Đủ điều kiện so sánh" icon={<ArrowsRightLeftIcon className="h-4 w-4" />} />
-        <StatCard label="Điểm Pre trung bình" value={paired.length ? avgPre.toFixed(2) : '—'} subValue="Quy đổi thang 4" icon={<ChartBarIcon className="h-4 w-4" />} />
-        <StatCard label="Điểm Post trung bình" value={paired.length ? avgPost.toFixed(2) : '—'} subValue="Quy đổi thang 4" icon={<ChartBarIcon className="h-4 w-4" />} />
-        <StatCard label="Cohen's dz" value={effect ? effect.toFixed(2) : '—'} subValue={paired.length > 1 ? 'Độ lớn ảnh hưởng' : 'Cần ≥ 2 cặp'} icon={<ChartBarIcon className="h-4 w-4" />} />
-      </section>
-
-      <Card padding="md">
-        <div className="mb-4 border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-semibold text-slate-900">Mẫu đối chứng ẩn danh</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Mã định danh được băm ổn định từ máy chủ; thông tin cá nhân và lớp học gốc được ẩn danh hoàn toàn phục vụ công bố khoa học.
+    <div className="max-w-7xl space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <div className="mb-1">
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
+              Tổng quan
+            </Button>
+          </div>
+          <h1 className="text-2xl font-semibold text-slate-900">Phân tích nghiên cứu</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Dữ liệu đối chứng trước và sau chỉnh sửa theo thang đo Rubric (đã ẩn danh)
           </p>
         </div>
+        <div className="text-xs text-slate-500">
+          {samples.length} hồ sơ mẫu
+        </div>
+      </div>
+
+      {/* Summary Strip (No StatCards!) */}
+      <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong>{samples.length}</strong> hồ sơ nghiên cứu</span>
+        <span className="text-slate-300">·</span>
+        <span><strong>{paired.length}</strong> cặp đối chứng đủ điều kiện</span>
+        <span className="text-slate-300">·</span>
+        <span>
+          Trước TB: <strong>{paired.length ? `${avgPre.toFixed(2)}/4` : '—'}</strong>
+        </span>
+        <span className="text-slate-300">·</span>
+        <span>
+          Sau TB: <strong>{paired.length ? `${avgPost.toFixed(2)}/4` : '—'}</strong>
+        </span>
+        <span className="text-slate-300">·</span>
+        <span>
+          Cohen's d: <strong>{effect ? effect.toFixed(2) : '—'}</strong>
+        </span>
+      </div>
+
+      {/* Clean Research Data Table */}
+      <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+        <div className="p-4 border-b border-slate-200">
+          <h2 className="text-base font-semibold text-slate-900">Dữ liệu mẫu đối chứng</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Thông tin định danh học sinh được mã hóa phục vụ phân tích sư phạm.
+          </p>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="min-w-[950px] w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-700">
-                <th className="px-3 py-2.5 text-left font-semibold">Mã ẩn danh</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Nhóm (Cohort)</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Phiên bản</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Điểm Pre</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Điểm Post</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Mức tăng (Gain)</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Phản hồi đã xử lý</th>
-                <th className="px-3 py-2.5 text-left font-semibold">Trích đoạn minh chứng</th>
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+              <tr>
+                <th className="py-3 px-4">Mã ẩn danh</th>
+                <th className="py-3 px-3 text-center">Nhóm</th>
+                <th className="py-3 px-3 text-center">Số bản</th>
+                <th className="py-3 px-3 text-center">Bản trước</th>
+                <th className="py-3 px-3 text-center">Bản sau</th>
+                <th className="py-3 px-3 text-center">Mức tăng</th>
+                <th className="py-3 px-3 text-center">Đã sửa</th>
+                <th className="py-3 px-4">Minh chứng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {samples.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                  <td colSpan={8} className="py-8 text-center text-xs text-slate-500">
                     Chưa có dữ liệu nghiên cứu khả dụng.
                   </td>
                 </tr>
               ) : (
                 samples.map(s => (
                   <tr key={s.code} className="hover:bg-slate-50/60">
-                    <td className="px-3 py-2.5 font-mono font-semibold text-indigo-900">{s.code}</td>
-                    <td className="px-3 py-2.5 text-center text-slate-600">{s.cohort}</td>
-                    <td className="px-3 py-2.5 text-center font-medium text-slate-700">{s.versionCount}</td>
-                    <td className="px-3 py-2.5 text-center text-slate-700">{s.pre ? s.pre.toFixed(2) : '—'}</td>
-                    <td className="px-3 py-2.5 text-center text-slate-700">{s.post ? s.post.toFixed(2) : '—'}</td>
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="py-3 px-4 text-xs font-mono text-slate-700">{s.code}</td>
+                    <td className="py-3 px-3 text-center text-xs text-slate-600">{s.cohort}</td>
+                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.versionCount}</td>
+                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.pre ? s.pre.toFixed(2) : '—'}</td>
+                    <td className="py-3 px-3 text-center text-xs font-medium text-slate-900">{s.post ? s.post.toFixed(2) : '—'}</td>
+                    <td className="py-3 px-3 text-center text-xs">
                       {s.pre && s.post ? (
-                        <span className={`font-semibold ${s.gain > 0 ? 'text-emerald-700' : s.gain < 0 ? 'text-rose-700' : 'text-slate-600'}`}>
-                          {s.gain > 0 ? '+' : ''}
-                          {s.gain.toFixed(2)}
+                        <span className={s.gain > 0 ? 'text-emerald-700 font-medium' : s.gain < 0 ? 'text-rose-700' : 'text-slate-500'}>
+                          {s.gain > 0 ? `+${s.gain.toFixed(2)}` : s.gain.toFixed(2)}
                         </span>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-center text-slate-700">{s.resolved}</td>
-                    <td className="px-3 py-2.5 text-slate-600 italic max-w-xs truncate">
+                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.resolved}</td>
+                    <td className="py-3 px-4 text-xs text-slate-600 italic max-w-xs truncate">
                       {s.evidence ? `“${s.evidence}…”` : '—'}
                     </td>
                   </tr>
@@ -150,7 +167,7 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

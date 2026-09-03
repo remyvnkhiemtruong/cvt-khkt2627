@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -72,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1 text-xs text-slate-700">
+        <div className="p-6 overflow-y-auto flex-1 text-sm text-slate-700">
           {children}
         </div>
 

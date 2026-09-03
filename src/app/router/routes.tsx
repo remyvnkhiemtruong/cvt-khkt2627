@@ -11,7 +11,9 @@ export interface RouteDefinition {
 export const APP_ROUTES: Record<string, RouteDefinition> = {
   login: { id:'login', path:'/login', title:'Đăng nhập', isGuestOnly:true },
   dashboard: { id:'dashboard', path:'/', title:'Bàn học', allowedRoles:['student','teacher','peer','researcher','admin'] },
-  'ui-kit': { id:'ui-kit', path:'/ui-kit', title:'Design System & UI Kit', allowedRoles:['student','teacher','peer','researcher','admin','ai'] },
+  ...(import.meta.env?.DEV ? {
+    'ui-kit': { id:'ui-kit', path:'/ui-kit', title:'Bản mẫu giao diện', allowedRoles:['admin'] }
+  } : {}),
   'assignment-list': { id:'assignment-list', path:'/assignments', title:'Nhiệm vụ Ngữ văn', allowedRoles:['student','teacher','peer','researcher','admin'] },
   'student-dashboard': { id:'student-dashboard', path:'/student/assignments', title:'Nhiệm vụ của tôi', allowedRoles:['student','teacher'] },
   'portfolio-list': { id:'portfolio-list', path:'/portfolios', title:'Hồ sơ học tập', allowedRoles:['student','teacher','peer','researcher','admin'] },

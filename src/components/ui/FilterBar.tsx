@@ -24,7 +24,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   className
 }) => {
   return (
-    <div className={cn("p-2.5 bg-white rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2.5", className)}>
+    <div className={cn("flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3", className)}>
       <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[240px]">
         {onSearchChange && (
           <div className="relative w-full max-w-xs">
@@ -41,14 +41,16 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               data-lpignore="true"
               data-1p-ignore="true"
               data-form-type="other"
-              className="w-full bg-slate-50 border border-slate-200 rounded-md text-xs py-1.5 pl-9 pr-3 text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white transition"
+              className="w-full bg-white border border-slate-300 rounded-md text-sm py-1.5 pl-9 pr-8 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-500 transition"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => onSearchChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                aria-label="Xóa tìm kiếm"
               >
-                <XMarkIcon className="w-3.5 h-3.5" />
+                <XMarkIcon className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -58,10 +60,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
         {activeFilterCount > 0 && onResetFilters && (
           <button
+            type="button"
             onClick={onResetFilters}
-            className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-rose-50 transition"
+            className="text-xs text-slate-500 hover:text-slate-800 transition px-2 py-1 underline underline-offset-2"
           >
-            <XMarkIcon className="w-3 h-3" /> Xóa bộ lọc ({activeFilterCount})
+            Xóa bộ lọc ({activeFilterCount})
           </button>
         )}
       </div>

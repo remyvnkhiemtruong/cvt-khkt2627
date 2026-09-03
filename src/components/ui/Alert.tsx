@@ -22,24 +22,24 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const styles = {
     info: {
-      container: "bg-sky-50/70 border-sky-200 text-sky-900",
-      icon: <InformationCircleIcon className="w-5 h-5 text-sky-600 shrink-0" />,
-      titleColor: "text-sky-950 font-bold"
+      container: "bg-slate-50 border-slate-300 border-l-sky-600 text-slate-800",
+      icon: <InformationCircleIcon className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />,
+      titleColor: "text-slate-900 font-medium"
     },
     success: {
-      container: "bg-emerald-50/70 border-emerald-200 text-emerald-900",
-      icon: <CheckCircleIcon className="w-5 h-5 text-emerald-600 shrink-0" />,
-      titleColor: "text-emerald-950 font-bold"
+      container: "bg-emerald-50/50 border-emerald-200 border-l-emerald-600 text-emerald-950",
+      icon: <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />,
+      titleColor: "text-emerald-950 font-medium"
     },
     warning: {
-      container: "bg-amber-50/70 border-amber-200 text-amber-900",
-      icon: <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 shrink-0" />,
-      titleColor: "text-amber-950 font-bold"
+      container: "bg-amber-50/60 border-amber-200 border-l-amber-600 text-amber-950",
+      icon: <ExclamationTriangleIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />,
+      titleColor: "text-amber-950 font-medium"
     },
     error: {
-      container: "bg-rose-50/70 border-rose-200 text-rose-900",
-      icon: <XCircleIcon className="w-5 h-5 text-rose-600 shrink-0" />,
-      titleColor: "text-rose-950 font-bold"
+      container: "bg-rose-50/60 border-rose-200 border-l-rose-600 text-rose-950",
+      icon: <XCircleIcon className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />,
+      titleColor: "text-rose-950 font-medium"
     }
   };
 
@@ -48,12 +48,12 @@ export const Alert: React.FC<AlertProps> = ({
   return (
     <aside
       role="alert"
-      className={cn("p-3.5 rounded-xl border flex items-start gap-3 text-xs leading-relaxed", current.container, className)}
+      className={cn("p-3 rounded-md border border-l-3 flex items-start gap-2.5 text-xs leading-relaxed", current.container, className)}
     >
       {current.icon}
       <div className="flex-1 space-y-0.5">
-        {title && <h3 className={cn("text-xs", current.titleColor)}>{title}</h3>}
-        <div>{children}</div>
+        {title && <h3 className={cn("text-xs font-medium", current.titleColor)}>{title}</h3>}
+        <div className="text-slate-700">{children}</div>
       </div>
     </aside>
   );

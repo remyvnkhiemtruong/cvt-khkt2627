@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Modal, Badge } from '../ui';
+import { Button, Modal } from '../ui';
 import type { FeedbackItem } from '../../types';
 
 interface CreateVersionModalProps {
@@ -72,56 +72,55 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
     }
   };
 
+  const modalTitle = isPrediction
+    ? 'Nộp bản dự đoán'
+    : `Nộp phiên bản ${nextVersionNumber}`;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isPrediction ? 'Nộp Bản Dự Đoán Trước Đọc' : isInitial ? `Nộp Bài Lần Đầu (${nextVersionNumber})` : `Nộp Phiên Bản Mới (${nextVersionNumber})`}
-      description="Bài nộp sẽ được lưu thành phiên bản cố định để theo dõi tiến trình và gửi vào hàng đợi nhận xét."
+      title={modalTitle}
+      description={
+        isPrediction
+          ? 'Ghi nhận quan sát ban đầu trước khi đọc sâu tác phẩm.'
+          : isInitial
+          ? `${nextVersionNumber} · Bản đầu tiên gửi đánh giá`
+          : `${nextVersionNumber} · Bản chỉnh sửa sau phản hồi`
+      }
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Hủy bỏ
+        <div className="flex items-center justify-end gap-2 w-full">
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Hủy
           </Button>
           <Button
             variant="primary"
             isLoading={isSubmitting}
             onClick={handleSubmit}
-            className="bg-indigo-900 text-white font-bold"
           >
-            {isPrediction ? 'Nộp bản dự đoán' : isInitial ? 'Nộp bài (gửi phản hồi)' : `Nộp phiên bản ${nextVersionNumber}`}
+            {isPrediction ? 'Nộp bản dự đoán' : `Nộp ${nextVersionNumber}`}
           </Button>
-        </>
+        </div>
       }
     >
-      <div className="space-y-4 text-xs text-slate-700">
+      <div className="space-y-4 text-sm text-slate-700">
         {errorMsg && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5 text-rose-700 font-medium">
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-800">
             {errorMsg}
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50/70 p-3">
-          <div>
-            <span className="block text-[11px] font-semibold text-indigo-700">Mốc phiên bản</span>
-            <span className="font-bold text-indigo-950 text-sm">{nextVersionNumber}</span>
-          </div>
-          <Badge variant="indigo">
-            {isPrediction ? 'Dự đoán trước đọc' : isInitial ? 'Bản khởi đầu' : 'Bản sửa đổi (Revision)'}
-          </Badge>
-        </div>
-
         {/* Change Summary */}
         <div>
-          <label className="block font-semibold text-slate-800 mb-1">
+          <label className="block text-xs font-medium text-slate-800 mb-1">
             {isInitial ? 'Ghi chú bài nộp:' : 'Tôi đã sửa gì? *'}
           </label>
           <textarea
             rows={3}
             value={changeSummary}
             onChange={e => setChangeSummary(e.target.value)}
-            placeholder={isInitial ? 'Ghi chú các trọng tâm phân tích của bạn…' : 'Ví dụ: Đã bổ sung 2 dẫn chứng về người kể chuyện, sửa lại đoạn kết…'}
-            className="w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            placeholder={isInitial ? 'Ghi chú vắn tắt về bài viết...' : 'Ví dụ: Bổ sung dẫn chứng ở trục cốt truyện, diễn đạt lại luận điểm...'}
+            className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500"
           />
         </div>
 
@@ -129,52 +128,56 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
         {!isInitial && (
           <>
             <div>
-              <label className="block font-semibold text-slate-800 mb-1">Vì sao em sửa? *</label>
+              <label className="block text-xs font-medium text-slate-800 mb-1">
+                Vì sao em sửa? *
+              </label>
               <textarea
                 rows={2}
                 value={revisionReason}
                 onChange={e => setRevisionReason(e.target.value)}
-                placeholder="Giải thích lí do sửa (do phát hiện thiếu dẫn chứng, theo nhận xét giáo viên…)"
-                className="w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                placeholder="Giải thích lí do (phát hiện thiếu dẫn chứng, theo góp ý của giáo viên...)"
+                className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-800 mb-1">Nguồn thay đổi:</label>
+              <label className="block text-xs font-medium text-slate-800 mb-1">
+                Nguồn thay đổi:
+              </label>
               <select
                 value={changeSource}
                 onChange={e => setChangeSource(e.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs outline-none focus:border-indigo-500"
+                className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
               >
-                <option value="self">Tự phát hiện & chỉnh sửa</option>
-                <option value="teacher_feedback">Dựa trên phản hồi giáo viên</option>
-                <option value="peer_feedback">Dựa trên phản hồi bạn học</option>
-                <option value="mixed">Hỗn hợp (cả tự sửa và phản hồi)</option>
+                <option value="self">Tự phát hiện và chỉnh sửa</option>
+                <option value="teacher_feedback">Theo phản hồi của giáo viên</option>
+                <option value="peer_feedback">Theo góp ý của bạn học</option>
+                <option value="mixed">Kết hợp tự sửa và phản hồi</option>
               </select>
             </div>
 
             {feedbacks.length > 0 && (
               <div>
-                <label className="block font-semibold text-slate-800 mb-1.5">
-                  Em sửa dựa trên phản hồi nào? (Chọn các góp ý liên quan)
+                <label className="block text-xs font-medium text-slate-800 mb-1.5">
+                  Phản hồi đã sử dụng:
                 </label>
-                <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-md border border-slate-200 bg-slate-50 p-2">
+                <div className="max-h-36 overflow-y-auto space-y-1 rounded-md border border-slate-200 bg-slate-50/50 p-2">
                   {feedbacks.map(f => (
                     <label
                       key={f.id}
-                      className="flex items-start gap-2 cursor-pointer rounded p-1 hover:bg-white text-[11px]"
+                      className="flex items-start gap-2 cursor-pointer rounded p-1 hover:bg-white text-xs text-slate-700"
                     >
                       <input
                         type="checkbox"
                         checked={linkedFeedbackIds.includes(f.id)}
                         onChange={() => toggleFeedback(f.id)}
-                        className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
                       />
-                      <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-slate-800">
-                          {f.authorRole === 'teacher' ? 'Giáo viên' : (f.authorRole === 'peer' ? 'Bạn học' : 'AI')}:
+                      <div className="min-w-0 flex-1 truncate">
+                        <span className="font-medium">
+                          {f.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học'}:
                         </span>{' '}
-                        <span className="text-slate-600 truncate">{f.comment}</span>
+                        <span>{f.comment}</span>
                       </div>
                     </label>
                   ))}
@@ -184,28 +187,27 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
           </>
         )}
 
-        {/* Confidence scale 1-5 */}
+        {/* Confidence scale 1-5 with radio semantics */}
         <div>
-          <label className="block font-semibold text-slate-800 mb-1">
-            Mức độ tự tin với bài viết này (1: Chưa tự tin — 5: Rất tự tin):
+          <label className="block text-xs font-medium text-slate-800 mb-2">
+            Mức độ tự tin với bài nộp này:
           </label>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 text-sm text-slate-700">
             {[1, 2, 3, 4, 5].map(val => (
-              <button
-                type="button"
-                key={val}
-                onClick={() => setConfidence(val)}
-                className={`flex h-8 w-8 items-center justify-center rounded-md border text-xs font-bold transition-all ${
-                  confidence === val
-                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                    : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-                }`}
-              >
-                {val}
-              </button>
+              <label key={val} className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="confidence-level"
+                  value={val}
+                  checked={confidence === val}
+                  onChange={() => setConfidence(val)}
+                  className="text-slate-900 focus:ring-slate-500"
+                />
+                <span>{val}</span>
+              </label>
             ))}
-            <span className="text-[11px] text-slate-500 ml-1">
-              {confidence === 1 ? 'Chưa chắc chắn' : confidence === 3 ? 'Bình thường' : confidence === 5 ? 'Rất tự tin' : ''}
+            <span className="text-xs text-slate-500 ml-2">
+              {confidence === 1 ? '(Chưa chắc chắn)' : confidence === 5 ? '(Rất tự tin)' : ''}
             </span>
           </div>
         </div>

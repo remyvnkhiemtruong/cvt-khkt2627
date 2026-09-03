@@ -1,32 +1,17 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
-import { usePortfolioStore } from '../app/store/usePortfolioStore';
-import { mockDb } from '../services/mockApi/mockDb';
+import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
-import type { Assignment, PoeticAxisId } from '../types';
+import type { Assignment } from '../types';
 import {
   Button,
   Badge,
-  Card,
   Tabs,
   FilterBar,
   Pagination,
   Drawer,
-  EmptyState,
-  PageHeader
+  EmptyState
 } from '../components/ui';
-import {
-  BookOpenIcon,
-  ClockIcon,
-  ArrowRightIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowPathIcon,
-  DocumentDuplicateIcon,
-  EyeIcon,
-  CalendarIcon,
-  ShieldCheckIcon,
-  AcademicCapIcon
-} from '@heroicons/react/24/outline';
 
 interface AssignmentListViewProps {
   onNavigate: (view: string, extraParams?: any) => void;
@@ -42,30 +27,33 @@ export type AssignmentStatusVi =
 
 export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNavigate }) => {
   const { currentUser } = useAuthStore();
-  const { portfolios } = usePortfolioStore();
+  const {
+    assignments,
+    literatureTexts,
+    portfolios,
+    feedbacks,
+    rubricSubmissions
+  } = usePortfolio();
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTextFilter, setSelectedTextFilter] = useState<string>('all');
-  const [selectedAxisFilter, setSelectedAxisFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
-  // Selected assignment for detail drawer
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const assignments = mockDb.getAssignments();
-  const literatureTexts = mockDb.getLiteratureTexts();
-  const rubricSubmissions = mockDb.getRubricSubmissions();
-  const allFeedbacks = mockDb.getFeedbacks();
-
-  // Helper to determine accurate Vietnamese status per assignment for current student
-  const getAssignmentStatusInfo = useCallback((assignment: Assignment): { status: AssignmentStatusVi; badgeVariant: 'slate' | 'blue' | 'emerald' | 'amber' | 'purple' | 'rose'; unresolvedFbCount: number; versionCount: number } => {
+  const getAssignmentStatusInfo = useCallback((assignment: Assignment): {
+    status: AssignmentStatusVi;
+    badgeVariant: 'slate' | 'blue' | 'emerald' | 'amber' | 'indigo';
+    unresolvedFbCount: number;
+    versionCount: number;
+  } => {
     const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
     const versions = port?.versions || [];
-    const fbs = allFeedbacks.filter(f => f.studentId === currentUser.id && f.assignmentId === assignment.id);
+    const fbs = feedbacks.filter(f => f.studentId === currentUser.id && f.assignmentId === assignment.id);
     const unresolvedFbCount = fbs.filter(f => !f.resolved).length;
     const versionCount = versions.length;
 
@@ -87,136 +75,119 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
       if (hasTeacherScore) {
         return { status: 'Hoàn thành', badgeVariant: 'emerald', unresolvedFbCount, versionCount };
       }
-      return { status: 'Đã nộp lại', badgeVariant: 'purple', unresolvedFbCount, versionCount };
+      return { status: 'Đã nộp lại', badgeVariant: 'indigo', unresolvedFbCount, versionCount };
     }
 
     return { status: 'Đang thực hiện', badgeVariant: 'blue', unresolvedFbCount, versionCount };
-  }, [currentUser.id, portfolios, allFeedbacks, rubricSubmissions]);
+  }, [currentUser.id, portfolios, feedbacks, rubricSubmissions]);
 
-  // Filter and Search pipeline
   const filteredAssignments = useMemo(() => {
     return assignments.filter(item => {
       const textObj = literatureTexts.find(t => t.id === item.textId);
       const statusInfo = getAssignmentStatusInfo(item);
 
-      // Search match
+      if (activeTab === 'pending' && (statusInfo.status === 'Hoàn thành' || statusInfo.status === 'Đã nộp')) return false;
+      if (activeTab === 'revision' && statusInfo.status !== 'Cần chỉnh sửa') return false;
+      if (activeTab === 'completed' && statusInfo.status !== 'Hoàn thành') return false;
+
+      if (selectedTextFilter !== 'all' && item.textId !== selectedTextFilter) return false;
+      if (selectedStatusFilter !== 'all' && statusInfo.status !== selectedStatusFilter) return false;
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchTitle = item.title.toLowerCase().includes(q);
-        const matchText = textObj?.title.toLowerCase().includes(q) || textObj?.author.toLowerCase().includes(q);
-        const matchPrompt = item.prompt.toLowerCase().includes(q);
-        if (!matchTitle && !matchText && !matchPrompt) return false;
+        const matchPrompt = item.prompt?.toLowerCase().includes(q);
+        const matchText = textObj ? `${textObj.title} ${textObj.author}`.toLowerCase().includes(q) : false;
+        if (!matchTitle && !matchPrompt && !matchText) return false;
       }
-
-      // Text filter
-      if (selectedTextFilter !== 'all' && item.textId !== selectedTextFilter) {
-        return false;
-      }
-
-      // Axis filter
-      if (selectedAxisFilter !== 'all' && !item.targetAxes.includes(selectedAxisFilter as PoeticAxisId)) {
-        return false;
-      }
-
-      // Status filter
-      if (selectedStatusFilter !== 'all' && statusInfo.status !== selectedStatusFilter) {
-        return false;
-      }
-
-      // Tab filter
-      if (activeTab === 'in_progress' && !['Đang thực hiện', 'Chưa bắt đầu'].includes(statusInfo.status)) return false;
-      if (activeTab === 'needs_revision' && statusInfo.status !== 'Cần chỉnh sửa') return false;
-      if (activeTab === 'completed' && statusInfo.status !== 'Hoàn thành') return false;
-      if (activeTab === 'upcoming' && statusInfo.status !== 'Chưa bắt đầu') return false;
 
       return true;
     });
-  }, [assignments, literatureTexts, getAssignmentStatusInfo, searchQuery, selectedTextFilter, selectedAxisFilter, selectedStatusFilter, activeTab]);
+  }, [assignments, literatureTexts, getAssignmentStatusInfo, activeTab, selectedTextFilter, selectedStatusFilter, searchQuery]);
 
-  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
-  const paginatedAssignments = filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const activeFiltersCount = (selectedTextFilter !== 'all' ? 1 : 0) + (selectedAxisFilter !== 'all' ? 1 : 0) + (selectedStatusFilter !== 'all' ? 1 : 0);
-
-  const resetFilters = () => {
-    setSelectedTextFilter('all');
-    setSelectedAxisFilter('all');
-    setSelectedStatusFilter('all');
-    setSearchQuery('');
-  };
+  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage) || 1;
+  const paginatedAssignments = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredAssignments.slice(start, start + itemsPerPage);
+  }, [filteredAssignments, currentPage, itemsPerPage]);
 
   const handleOpenDetail = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
     setIsDetailOpen(true);
   };
 
-  const selectedTextObj = literatureTexts.find(t => t.id === selectedAssignment?.textId);
-  const selectedStatusInfo = selectedAssignment ? getAssignmentStatusInfo(selectedAssignment) : null;
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedTextFilter('all');
+    setSelectedStatusFilter('all');
+    setCurrentPage(1);
+  };
+
+  const selectedTextObj = selectedAssignment
+    ? literatureTexts.find(t => t.id === selectedAssignment.textId)
+    : null;
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-5 pb-12">
       {/* Header */}
-      <PageHeader
-        title="Nhiệm vụ học tập"
-        description="Danh mục các bài đọc hiểu và phân tích văn học theo hệ thống trục thi pháp."
-        actions={
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="outline"
-              onClick={() => onNavigate('portfolio-list')}
-              leftIcon={<DocumentDuplicateIcon className="w-4 h-4" />}
-            >
-              Xem Hồ sơ học tập
-            </Button>
-            {assignments[0] && (
-              <Button
-                variant="primary"
-                onClick={() => onNavigate('editor', { assignmentId: assignments[0].id })}
-                rightIcon={<ArrowRightIcon className="w-4 h-4" />}
-              >
-                Làm bài trọng tâm
-              </Button>
-            )}
-          </div>
-        }
-      />
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Nhiệm vụ</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Danh mục các bài đọc hiểu và phân tích văn học
+          </p>
+        </div>
+        <div className="text-xs text-slate-500">
+          {assignments.length} nhiệm vụ tổng số
+        </div>
+      </div>
 
       {/* Tabs */}
       <Tabs
         activeId={activeTab}
-        onChange={(id) => {
+        onChange={id => {
           setActiveTab(id);
           setCurrentPage(1);
         }}
         items={[
-          { id: 'all', label: 'Tất cả nhiệm vụ', count: assignments.length },
-          { id: 'in_progress', label: 'Đang làm' },
-          { id: 'needs_revision', label: 'Cần chỉnh sửa' },
-          { id: 'completed', label: 'Đã hoàn thành' },
-          { id: 'upcoming', label: 'Sắp tới' },
+          { id: 'all', label: 'Tất cả', count: assignments.length },
+          {
+            id: 'pending',
+            label: 'Cần làm',
+            count: assignments.filter(a => {
+              const s = getAssignmentStatusInfo(a).status;
+              return s !== 'Hoàn thành' && s !== 'Đã nộp';
+            }).length
+          },
+          {
+            id: 'revision',
+            label: 'Cần chỉnh sửa',
+            count: assignments.filter(a => getAssignmentStatusInfo(a).status === 'Cần chỉnh sửa').length
+          },
+          {
+            id: 'completed',
+            label: 'Đã hoàn thành',
+            count: assignments.filter(a => getAssignmentStatusInfo(a).status === 'Hoàn thành').length
+          }
         ]}
       />
 
-      {/* Search & Filter Bar */}
+      {/* Filter Toolbar */}
       <FilterBar
         searchQuery={searchQuery}
-        onSearchChange={(q) => {
-          setSearchQuery(q);
-          setCurrentPage(1);
-        }}
-        searchPlaceholder="Tìm theo tên tác phẩm, tác giả, tên nhiệm vụ..."
-        activeFilterCount={activeFiltersCount}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Tìm nhiệm vụ hoặc tác phẩm..."
+        activeFilterCount={(selectedTextFilter !== 'all' ? 1 : 0) + (selectedStatusFilter !== 'all' ? 1 : 0)}
         onResetFilters={resetFilters}
         filters={
           <>
-            {/* Filter by Literature Text */}
             <select
               value={selectedTextFilter}
               onChange={e => {
                 setSelectedTextFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-slate-50 border border-slate-200 text-xs rounded-lg py-1.5 px-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
+              className="bg-white border border-slate-300 text-sm rounded-md py-1.5 px-2.5 text-slate-800 focus:outline-none focus:border-slate-500"
             >
               <option value="all">Tất cả tác phẩm</option>
               {literatureTexts.map(t => (
@@ -224,29 +195,13 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
               ))}
             </select>
 
-            {/* Filter by Poetic Axis */}
-            <select
-              value={selectedAxisFilter}
-              onChange={e => {
-                setSelectedAxisFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-slate-50 border border-slate-200 text-xs rounded-lg py-1.5 px-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
-            >
-              <option value="all">Tất cả trục thi pháp</option>
-              {POETIC_AXES.map(a => (
-                <option key={a.id} value={a.id}>{a.shortName}</option>
-              ))}
-            </select>
-
-            {/* Filter by Status */}
             <select
               value={selectedStatusFilter}
               onChange={e => {
                 setSelectedStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-slate-50 border border-slate-200 text-xs rounded-lg py-1.5 px-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800"
+              className="bg-white border border-slate-300 text-sm rounded-md py-1.5 px-2.5 text-slate-800 focus:outline-none focus:border-slate-500"
             >
               <option value="all">Tất cả trạng thái</option>
               <option value="Chưa bắt đầu">Chưa bắt đầu</option>
@@ -260,277 +215,169 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
         }
       />
 
-      {/* Assignment List / Cards */}
+      {/* Rows Table */}
       {filteredAssignments.length === 0 ? (
         <EmptyState
           title="Không tìm thấy nhiệm vụ phù hợp"
-          description="Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các bộ lọc tác phẩm và trục thi pháp."
+          description="Thử thay đổi từ khóa tìm kiếm hoặc đặt lại các bộ lọc."
           action={
             <Button size="sm" variant="outline" onClick={resetFilters}>
-              Xóa bộ lọc tìm kiếm
+              Đặt lại bộ lọc
             </Button>
           }
         />
       ) : (
-        <div className="space-y-4">
+        <div className="border border-slate-200 rounded-md bg-white overflow-hidden divide-y divide-slate-200">
           {paginatedAssignments.map(item => {
             const textObj = literatureTexts.find(t => t.id === item.textId);
             const statusInfo = getAssignmentStatusInfo(item);
+            const axesText = (item.targetAxes || [])
+              .map(id => POETIC_AXES.find(a => a.id === id)?.title)
+              .filter(Boolean)
+              .join(' · ');
 
             return (
-              <Card
+              <div
                 key={item.id}
-                padding="md"
-                className="hover:border-slate-300 transition-all border border-slate-200 bg-white"
+                className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                  <div className="space-y-2.5 flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Status Badge */}
-                      <Badge variant={statusInfo.badgeVariant}>
-                        {statusInfo.status}
-                      </Badge>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={statusInfo.badgeVariant}>
+                      {statusInfo.status}
+                    </Badge>
+                    <span className="text-xs text-slate-500">
+                      {textObj ? `${textObj.title} — ${textObj.author}` : 'Ngữ liệu'}
+                    </span>
+                    {item.deadline && (
+                      <>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500">
+                          Hạn: {new Date(item.deadline).toLocaleDateString('vi-VN')}
+                        </span>
+                      </>
+                    )}
+                  </div>
 
-                      {/* Difficulty */}
-                      <Badge variant={item.difficulty === 'Nâng cao' ? 'purple' : 'slate'} size="sm">
-                        {item.difficulty}
-                      </Badge>
-
-                      <span className="text-caption text-slate-500 font-medium">
-                        Tác phẩm: <strong className="text-slate-800">{textObj?.title}</strong> ({textObj?.author})
-                      </span>
-
-                      {(item as any).teacherName && (
-                        <span className="text-caption text-slate-400">• Giáo viên: {(item as any).teacherName}</span>
-                      )}
-                    </div>
-
-                    <div>
-                      <h2
-                        onClick={() => handleOpenDetail(item)}
-                        className="text-sm sm:text-base font-semibold text-slate-900 hover:text-indigo-600 cursor-pointer transition-colors truncate"
-                      >
-                        {item.title}
-                      </h2>
+                  <div>
+                    <h2
+                      onClick={() => handleOpenDetail(item)}
+                      className="text-base font-medium text-slate-900 hover:text-slate-700 cursor-pointer transition-colors"
+                    >
+                      {item.title}
+                    </h2>
+                    {item.prompt && (
                       <p className="text-xs text-slate-600 mt-0.5 line-clamp-2 leading-relaxed">
                         {item.prompt}
                       </p>
-                    </div>
-
-                    {/* Target Axes Badges */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      {item.targetAxes.map(axisId => {
-                        const axis = POETIC_AXES.find(a => a.id === axisId);
-                        return (
-                          <span
-                            key={axisId}
-                            className="text-[11px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200"
-                          >
-                            {axis?.shortName}
-                          </span>
-                        );
-                      })}
-                    </div>
+                    )}
                   </div>
 
-                  {/* Right Side: Version Count, Feedback & Action Buttons */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end justify-between gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <DocumentDuplicateIcon className="w-3.5 h-3.5 text-slate-400" />
-                        <strong>{statusInfo.versionCount}</strong> phiên bản
-                      </span>
-
-                      {statusInfo.unresolvedFbCount > 0 && (
-                        <span className="text-amber-700 font-bold text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1">
-                          <ChatBubbleLeftRightIcon className="w-3 h-3" />
-                          {statusInfo.unresolvedFbCount} góp ý
-                        </span>
-                      )}
-
-                      <span className="flex items-center gap-1 text-slate-500">
-                        <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
-                        {item.deadline}
-                      </span>
+                  {axesText && (
+                    <div className="text-xs text-slate-500">
+                      Trọng tâm: {axesText}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenDetail(item)}
-                        leftIcon={<EyeIcon className="w-3.5 h-3.5" />}
-                      >
-                        Chi tiết
-                      </Button>
-
-                      {statusInfo.status === 'Chưa bắt đầu' ? (
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => onNavigate('editor', { assignmentId: item.id })}
-                          rightIcon={<ArrowRightIcon className="w-3.5 h-3.5" />}
-                          className="bg-indigo-900 text-white font-bold"
-                        >
-                          Bắt đầu tạo hồ sơ
-                        </Button>
-                      ) : statusInfo.status === 'Cần chỉnh sửa' ? (
-                        <Button
-                          size="sm"
-                          variant="academic"
-                          onClick={() => onNavigate('editor', { assignmentId: item.id })}
-                          rightIcon={<ArrowPathIcon className="w-3.5 h-3.5" />}
-                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold"
-                        >
-                          Xem phản hồi & Chỉnh sửa
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => onNavigate('editor', { assignmentId: item.id })}
-                          rightIcon={<ArrowRightIcon className="w-3.5 h-3.5" />}
-                        >
-                          Tiếp tục hồ sơ
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </Card>
+
+                <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleOpenDetail(item)}
+                  >
+                    Chi tiết
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => onNavigate('editor', { assignmentId: item.id })}
+                  >
+                    {statusInfo.versionCount > 0 ? 'Viết tiếp' : 'Bắt đầu'}
+                  </Button>
+                </div>
+              </div>
             );
           })}
-
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
         </div>
       )}
 
-      {/* B. ASSIGNMENT DETAIL DRAWER */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Detail Drawer */}
       <Drawer
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        width="xl"
-        title="Chi Tiết Nhiệm Vụ Đọc Hiểu"
+        title={selectedAssignment?.title || 'Chi tiết nhiệm vụ'}
+        width="md"
         footer={
-          <div className="flex items-center justify-between w-full">
-            <Button variant="secondary" onClick={() => setIsDetailOpen(false)}>
-              Đóng lại
-            </Button>
-
-            <Button
-              variant="academic"
-              onClick={() => {
-                if (selectedAssignment) {
-                  onNavigate('editor', { assignmentId: selectedAssignment.id });
+          selectedAssignment && (
+            <div className="flex justify-end gap-2 w-full">
+              <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
+                Đóng
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
                   setIsDetailOpen(false);
-                }
-              }}
-              rightIcon={<ArrowRightIcon className="w-4 h-4" />}
-            >
-              {selectedStatusInfo?.status === 'Chưa bắt đầu' ? 'Tạo hồ sơ ngay' : 'Vào phòng soạn thảo'}
-            </Button>
-          </div>
+                  onNavigate('editor', { assignmentId: selectedAssignment.id });
+                }}
+              >
+                Mở bài viết
+              </Button>
+            </div>
+          )
         }
       >
         {selectedAssignment && (
-          <div className="space-y-6 text-xs text-slate-700">
-            {/* Header info */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <Badge variant={selectedStatusInfo?.badgeVariant || 'slate'}>
-                  {selectedStatusInfo?.status}
-                </Badge>
-                <span className="text-caption text-slate-500 flex items-center gap-1">
-                  <CalendarIcon className="w-3.5 h-3.5" /> Hạn nộp: {selectedAssignment.deadline}
-                </span>
+          <div className="space-y-6 text-sm text-slate-700">
+            <div>
+              <div className="text-xs text-slate-500">
+                Tác phẩm: <strong>{selectedTextObj?.title}</strong> ({selectedTextObj?.author})
               </div>
-              <h2 className="text-sm font-bold text-slate-900">{selectedAssignment.title}</h2>
-              <div className="text-caption text-slate-600 flex items-center gap-2">
-                <span>Tác phẩm: <strong>{selectedTextObj?.title}</strong> ({selectedTextObj?.author})</span>
-                {(selectedAssignment as any).teacherName && <span>• Giáo viên: {(selectedAssignment as any).teacherName}</span>}
-              </div>
+              {selectedAssignment.deadline && (
+                <div className="text-xs text-slate-500 mt-1">
+                  Hạn nộp: {new Date(selectedAssignment.deadline).toLocaleDateString('vi-VN')}
+                </div>
+              )}
             </div>
 
-            {/* Mục tiêu học tập */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-                <AcademicCapIcon className="w-4 h-4 text-slate-600" />
-                1. Mục tiêu năng lực cần đạt
-              </h3>
-              <ul className="list-disc pl-4 space-y-1 text-slate-600 leading-relaxed">
-                <li>Nhận diện và phân tích đặc trưng của thể loại truyện ngắn hiện đại qua hệ thống 6 trục thi pháp.</li>
-                <li>Biết trích xuất dẫn chứng cụ thể từ văn bản nghệ thuật để minh chứng cho luận điểm cá nhân.</li>
-                <li>Rèn luyện kỹ năng tiếp thu phản hồi đa chiều để chỉnh sửa và nâng cao chất lượng hồ sơ qua các phiên bản.</li>
-              </ul>
-            </div>
+            {selectedAssignment.prompt && (
+              <div className="space-y-1.5">
+                <h3 className="text-xs font-semibold text-slate-900">Yêu cầu nhiệm vụ</h3>
+                <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-md border border-slate-200">
+                  {selectedAssignment.prompt}
+                </p>
+              </div>
+            )}
 
-            {/* Trục thi pháp trọng tâm */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-                <BookOpenIcon className="w-4 h-4 text-slate-600" />
-                2. Trục thi pháp & câu hỏi định hướng
-              </h3>
+              <h3 className="text-xs font-semibold text-slate-900">Trọng tâm thi pháp</h3>
               <div className="space-y-2">
-                {selectedAssignment.targetAxes.map(axisId => {
+                {(selectedAssignment.targetAxes || []).map(axisId => {
                   const axis = POETIC_AXES.find(a => a.id === axisId);
                   return (
-                    <div key={axisId} className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                      <div className="font-bold text-slate-900">{axis?.title}</div>
-                      <p className="text-slate-600 text-[11px] leading-relaxed">{axis?.description}</p>
+                    <div key={axisId} className="border-l-2 border-slate-300 pl-3 py-1 space-y-0.5">
+                      <div className="font-medium text-slate-900">{axis?.title}</div>
+                      <p className="text-xs text-slate-500">{axis?.description}</p>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Yêu cầu sản phẩm & Rubric Preview */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-                <ShieldCheckIcon className="w-4 h-4 text-indigo-600" />
-                3. Yêu cầu sản phẩm & Thang đánh giá
-              </h3>
-              <div className="p-3 rounded-lg bg-indigo-50/50 border border-indigo-200 space-y-2">
-                <p className="text-indigo-950 font-medium">
-                  Hồ sơ được đánh giá theo Ma trận Rubric 4 Mức độ (Chưa đạt, Đạt, Khá, Xuất sắc) trên thang điểm 24.
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 bg-white rounded border border-indigo-100">
-                    <strong>Bản sơ thảo v1.0:</strong> Yêu cầu hoàn thành tối thiểu 4/6 trục thi pháp.
-                  </div>
-                  <div className="p-2 bg-white rounded border border-indigo-100">
-                    <strong>Bản chỉnh sửa v2.0:</strong> Tiếp thu ít nhất 2 phản hồi từ giáo viên/bạn học.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline các mốc */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-                <ClockIcon className="w-4 h-4 text-indigo-600" />
-                4. Tiến trình các mốc thời gian
-              </h3>
-              <div className="relative pl-5 space-y-3 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-                <div className="relative">
-                  <div className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <div className="font-bold text-slate-800">Mốc 1: Nộp bản sơ thảo v1.0</div>
-                  <div className="text-caption text-slate-500">Đã đóng băng và chuyển sang giai đoạn nhận xét</div>
-                </div>
-                <div className="relative">
-                  <div className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  <div className="font-bold text-slate-800">Mốc 2: Đánh giá đồng đẳng & Nhận xét của GV</div>
-                  <div className="text-caption text-slate-500">Gắn các phản hồi neo ngữ cảnh trực tiếp vào bài</div>
-                </div>
-                <div className="relative">
-                  <div className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                  <div className="font-bold text-slate-800">Mốc 3: Hoàn thiện và đóng băng bản v2.0</div>
-                  <div className="text-caption text-slate-500">Hạn chót: {selectedAssignment.deadline}</div>
-                </div>
-              </div>
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <h3 className="text-xs font-semibold text-slate-900">Quy trình đánh giá</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Bài viết được phản hồi và đánh giá theo chuẩn Rubric. Học sinh tiếp thu các ý kiến đóng góp của giáo viên để hoàn thiện bài viết qua các phiên bản tiếp theo.
+              </p>
             </div>
           </div>
         )}

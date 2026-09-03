@@ -20,9 +20,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <div className={cn("mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", className)}>
       <div className="min-w-0 space-y-1">
         {breadcrumbs && <div className="mb-1 text-xs text-slate-500">{breadcrumbs}</div>}
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">{title}</h1>
         {description && (
-          <p className="text-sm text-slate-500 leading-normal">{description}</p>
+          <p className="text-sm text-slate-500">{description}</p>
         )}
       </div>
       {actions && (

@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
-import { Button, Card, StatCard, PageHeader } from '../components/ui';
-import { ArrowLeftIcon, ChartBarIcon, DocumentTextIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface ClassAnalyticsViewProps {
   onNavigate: (view: string, extraParams?: any) => void;
@@ -12,7 +12,7 @@ const axisLabels: Record<PoeticAxisId, string> = {
   plot_situation: 'Tình huống',
   character_detail: 'Nhân vật',
   narrator_pov: 'Điểm nhìn',
-  space_time: 'Không-thời gian',
+  space_time: 'Không gian',
   language_tone_symbol: 'Ngôn ngữ',
   form_argument: 'Lập luận'
 };
@@ -38,7 +38,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
     [rubric]
   );
 
-  // OFFICIAL ONLY: Exclusively teacher rubric evaluations. No fallback to self or peer!
+  // OFFICIAL ONLY: Exclusively teacher rubric evaluations
   const rows = useMemo(() => {
     return filtered.map(p => {
       const teacherSub = rubricSubmissions
@@ -78,140 +78,125 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
   const overall = scored.length ? scored.reduce((a, b) => a + b.average, 0) / scored.length : 0;
   const submitted = filtered.filter(p => p.versions.length > 0).length;
 
-  const cell = (score: number | undefined) => {
-    if (!score) return 'bg-slate-100 text-slate-400';
-    if (score < 2) return 'bg-rose-50 text-rose-800 border border-rose-200 font-semibold';
-    if (score < 3) return 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold';
-    if (score < 3.6) return 'bg-sky-50 text-sky-800 border border-sky-200 font-semibold';
-    return 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold';
-  };
-
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <div>
-        <div className="mb-2">
-          <Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
-            Quay lại
-          </Button>
+    <div className="max-w-7xl space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <div className="mb-1">
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
+              Quay lại
+            </Button>
+          </div>
+          <h1 className="text-2xl font-semibold text-slate-900">Phân tích lớp</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Bảng điểm Rubric chính thức theo 6 trục thi pháp (chỉ ghi nhận đánh giá của giáo viên)
+          </p>
         </div>
-        <PageHeader
-          title="Phân tích năng lực lớp học"
-          description="Bảng tổng hợp điểm Rubric chính thức theo 6 trục thi pháp. Chỉ thống kê điểm đánh giá từ giáo viên."
-          actions={
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-500 font-medium">Lớp:</span>
-                <select
-                  value={classFilter}
-                  onChange={e => setClassFilter(e.target.value)}
-                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:border-indigo-500"
-                >
-                  <option value="all">Tất cả lớp</option>
-                  {classes.map(c => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-500 font-medium">Nhiệm vụ:</span>
-                <select
-                  value={assignmentFilter}
-                  onChange={e => setAssignmentFilter(e.target.value)}
-                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium outline-none focus:border-indigo-500 max-w-xs truncate"
-                >
-                  <option value="all">Tất cả nhiệm vụ</option>
-                  {assignments.map(a => (
-                    <option key={a.id} value={a.id}>
-                      {a.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          }
-        />
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={classFilter}
+            onChange={e => setClassFilter(e.target.value)}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-500"
+          >
+            <option value="all">Tất cả lớp</option>
+            {classes.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <select
+            value={assignmentFilter}
+            onChange={e => setAssignmentFilter(e.target.value)}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-500 max-w-xs truncate"
+          >
+            <option value="all">Tất cả nhiệm vụ</option>
+            {assignments.map(a => (
+              <option key={a.id} value={a.id}>{a.title}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Hồ sơ bài tập" value={String(filtered.length)} subValue="Trong phạm vi lọc" icon={<UserGroupIcon className="h-4 w-4" />} />
-        <StatCard label="Đã nộp bài" value={`${submitted}/${filtered.length}`} subValue="Đã có bản nộp" icon={<DocumentTextIcon className="h-4 w-4" />} />
-        <StatCard
-          label="Điểm Rubric TB (GV)"
-          value={overall ? overall.toFixed(2) : '—'}
-          subValue={scored.length ? `Từ ${scored.length} bài đã chấm` : 'Chưa có bài chấm'}
-          icon={<ChartBarIcon className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Trục cần hỗ trợ nhất"
-          value={weakAxis && Number(axisAverages[weakAxis]) ? axisLabels[weakAxis] : '—'}
-          subValue={weakAxis && Number(axisAverages[weakAxis]) ? `TB: ${Number(axisAverages[weakAxis]).toFixed(2)}/4` : 'Chưa đủ dữ liệu'}
-          icon={<ChartBarIcon className="h-4 w-4" />}
-        />
-      </section>
+      {/* Summary Strip (No StatCards!) */}
+      <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong>{filtered.length}</strong> học sinh trong danh sách</span>
+        <span className="text-slate-300">·</span>
+        <span><strong>{submitted}</strong> đã nộp bài</span>
+        <span className="text-slate-300">·</span>
+        <span>
+          Điểm Rubric trung bình: <strong>{overall ? `${overall.toFixed(2)}/4` : '—'}</strong> ({scored.length} bài đã chấm)
+        </span>
+        {weakAxis && Number(axisAverages[weakAxis]) > 0 && (
+          <>
+            <span className="text-slate-300">·</span>
+            <span>
+              Trục cần lưu ý: <strong>{axisLabels[weakAxis]}</strong> ({Number(axisAverages[weakAxis]).toFixed(2)}/4)
+            </span>
+          </>
+        )}
+      </div>
 
-      <Card padding="md">
-        <div className="mb-4 border-b border-slate-100 pb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Bảng tổng hợp điểm 6 trục thi pháp (Chính thức)</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Chỉ ghi nhận đánh giá chính thức từ giáo viên. Ô hiển thị “—” nếu giáo viên chưa chấm điểm.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-rose-200" /> &lt;2: Chưa đạt</span>
-            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-amber-200" /> 2–3: Đạt</span>
-            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-sky-200" /> 3–3.6: Khá</span>
-            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-emerald-200" /> &ge;3.6: Xuất sắc</span>
+      {/* Table-First Matrix */}
+      <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">Bảng điểm theo tiêu chí</h2>
+          <div className="text-xs text-slate-500 flex items-center gap-3">
+            <span>Thang điểm: 1 (Chưa đạt) — 4 (Xuất sắc)</span>
+            <span>·</span>
+            <span>“—” là chưa chấm</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-[900px] w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-700">
-                <th className="px-3 py-2.5 text-left font-semibold">Học sinh / Lớp</th>
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+              <tr>
+                <th className="py-3 px-4">Học sinh</th>
+                <th className="py-3 px-3">Lớp</th>
                 {axes.map(a => (
-                  <th key={a} className="px-2 py-2.5 text-center font-semibold">
-                    {axisLabels[a]}
-                  </th>
+                  <th key={a} className="py-3 px-2 text-center">{axisLabels[a]}</th>
                 ))}
-                <th className="px-3 py-2.5 text-center font-semibold">Điểm TB</th>
-                <th className="px-3 py-2.5 text-right font-semibold">Thao tác</th>
+                <th className="py-3 px-3 text-center">TB</th>
+                <th className="py-3 px-4 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={axes.length + 3} className="py-8 text-center text-slate-500">
-                    Không có hồ sơ nào trong phạm vi lọc đã chọn.
+                  <td colSpan={axes.length + 4} className="py-8 text-center text-xs text-slate-500">
+                    Không có hồ sơ nào phù hợp bộ lọc.
                   </td>
                 </tr>
               ) : (
                 rows.map(({ portfolio, scores, average, submission }) => (
                   <tr key={portfolio.id} className="hover:bg-slate-50/60">
-                    <td className="px-3 py-2.5">
-                      <div className="font-semibold text-slate-900">{portfolio.studentName}</div>
-                      <div className="text-[11px] text-slate-400">
-                        {portfolio.className || '—'} • {portfolio.currentActiveVersion || 'Chưa nộp'}
-                      </div>
+                    <td className="py-3 px-4 font-medium text-slate-900">
+                      {portfolio.studentName}
+                    </td>
+                    <td className="py-3 px-3 text-xs text-slate-500">
+                      {portfolio.className || '—'}
                     </td>
                     {axes.map(a => {
                       const val = scores[a];
                       return (
-                        <td key={a} className="px-2 py-2.5 text-center">
-                          <span className={`inline-block min-w-[2.2rem] rounded px-1.5 py-0.5 text-xs ${cell(val)}`}>
-                            {val ? val.toFixed(1) : '—'}
-                          </span>
+                        <td key={a} className="py-3 px-2 text-center text-xs">
+                          {val ? (
+                            <span className={val < 2.5 ? 'text-amber-800 font-medium' : 'text-slate-800'}>
+                              {val.toFixed(1)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
                         </td>
                       );
                     })}
-                    <td className="px-3 py-2.5 text-center font-bold text-slate-900">
+                    <td className="py-3 px-3 text-center font-semibold text-slate-900 text-xs">
                       {average ? average.toFixed(2) : '—'}
                     </td>
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="py-3 px-4 text-right">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -231,7 +216,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

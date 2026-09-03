@@ -1,227 +1,539 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Input, Modal, PageHeader } from '../components/ui';
+import React, { useEffect, useState } from 'react';
+import { Alert, Badge, Button, Input, Modal, Tabs } from '../components/ui';
 import type { AcademicClass, AuditLog, UserRole } from '../types';
-import { AcademicCapIcon, ArrowPathIcon, LockClosedIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
-interface AdminAuditViewProps { onNavigate:(view:string,extraParams?:any)=>void; }
-type AdminUser={id:string;email:string;name:string;role:UserRole;account_status:'active'|'locked';must_change_password:boolean;created_at:string;last_login:string|null;};
-const roles:UserRole[]=['student','teacher','peer','researcher','admin','ai'];
-const labels:Record<UserRole,string>={student:'Học sinh',teacher:'Giáo viên',peer:'Phản biện',researcher:'Nghiên cứu',admin:'Quản trị',ai:'AI'};
-const fmt=(v:string|null)=>v?new Date(v).toLocaleString('vi-VN'):'Chưa ghi nhận';
-async function act(payload:unknown){const r=await fetch('/api/admin/manage',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.code||'Không thể cập nhật');return d;}
+interface AdminAuditViewProps {
+  onNavigate: (view: string, extraParams?: any) => void;
+}
 
-export const AdminAuditView:React.FC<AdminAuditViewProps>=({onNavigate})=>{
-  const [users,setUsers]=useState<AdminUser[]>([]),[classes,setClasses]=useState<AcademicClass[]>([]),[logs,setLogs]=useState<AuditLog[]>([]);
-  const [loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null),[message,setMessage]=useState<string|null>(null);
-  const [selected,setSelected]=useState<AdminUser|null>(null),[editRole,setEditRole]=useState<UserRole>('student'),[editStatus,setEditStatus]=useState<'active'|'locked'>('active'),[tempPassword,setTempPassword]=useState('');
-  const [newName,setNewName]=useState(''),[newEmail,setNewEmail]=useState(''),[newRole,setNewRole]=useState<UserRole>('student'),[newPassword,setNewPassword]=useState('');
-  const [classCode,setClassCode]=useState(''),[className,setClassName]=useState(''),[schoolYear,setSchoolYear]=useState('2026-2027');
-  const [memberUser,setMemberUser]=useState(''),[memberClass,setMemberClass]=useState(''),[memberRole,setMemberRole]=useState<'student'|'teacher'>('student');
+type AdminUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  account_status: 'active' | 'locked';
+  must_change_password: boolean;
+  created_at: string;
+  last_login: string | null;
+};
 
-  const load=async()=>{setLoading(true);setError(null);try{const [u,s]=await Promise.all([fetch('/api/admin/users',{credentials:'include'}),fetch('/api/academic/snapshot',{credentials:'include'})]);const ud=await u.json(),sd=await s.json();if(!u.ok)throw new Error(ud.message||'Không thể tải tài khoản');if(!s.ok)throw new Error(sd.message||'Không thể tải dữ liệu học thuật');const nextUsers=ud.users||[],nextClasses=sd.snapshot?.classes||[];setUsers(nextUsers);setClasses(nextClasses);setLogs(sd.snapshot?.auditLogs||[]);if(!memberUser&&nextUsers[0])setMemberUser(nextUsers[0].id);if(!memberClass&&nextClasses[0])setMemberClass(nextClasses[0].code);}catch(e:any){setError(e.message);}finally{setLoading(false);}};
-  useEffect(()=>{void load();},[]);
-  const totals=useMemo(()=>({total:users.length,students:users.filter(x=>x.role==='student').length,teachers:users.filter(x=>x.role==='teacher').length,locked:users.filter(x=>x.account_status==='locked').length,change:users.filter(x=>x.must_change_password).length}),[users]);
-  const open=(u:AdminUser)=>{setSelected(u);setEditRole(u.role);setEditStatus(u.account_status||'active');setTempPassword('');setMessage(null);};
-  const saveUser=async()=>{if(!selected)return;setLoading(true);try{await act({action:'update_user',userId:selected.id,role:editRole,accountStatus:editStatus});setMessage('Đã cập nhật tài khoản và ghi nhật ký kiểm toán.');setSelected(null);await load();}catch(e:any){setError(e.message);}finally{setLoading(false);}};
-  const resetPass=async()=>{if(!selected)return;setLoading(true);try{const d=await act({action:'reset_password',userId:selected.id});setTempPassword(d.temporaryPassword);setMessage('Đã tạo mật khẩu tạm; chỉ hiển thị trong hộp thoại hiện tại.');await load();}catch(e:any){setError(e.message);}finally{setLoading(false);}};
-  const createUser=async()=>{setLoading(true);setError(null);try{const d=await act({action:'create_user',name:newName,email:newEmail,role:newRole});setNewPassword(d.temporaryPassword);setMessage('Đã tạo tài khoản thành công. Sao chép mật khẩu tạm và bàn giao cho người dùng.');setNewName('');setNewEmail('');await load();}catch(e:any){setError(e.message);}finally{setLoading(false);}};
-  const createClass=async()=>{setLoading(true);try{await act({action:'create_class',code:classCode,name:className,schoolYear});setClassCode('');setClassName('');setMessage('Đã tạo/cập nhật lớp học.');await load();}catch(e:any){setError(e.message);}finally{setLoading(false);}};
-  const assignMember=async()=>{setLoading(true);try{await act({action:'assign_member',classCode:memberClass,userId:memberUser,memberRole});setMessage('Đã gán thành viên vào lớp học.');await load();}catch(e:any){setError(e.message);}finally{setLoading(false);}};
+const roles: UserRole[] = ['student', 'teacher', 'peer', 'researcher', 'admin', 'ai'];
+const labels: Record<UserRole, string> = {
+  student: 'Học sinh',
+  teacher: 'Giáo viên',
+  peer: 'Phản biện',
+  researcher: 'Nghiên cứu',
+  admin: 'Quản trị',
+  ai: 'AI'
+};
+
+const fmt = (v: string | null) => (v ? new Date(v).toLocaleString('vi-VN') : '—');
+
+async function act(payload: unknown) {
+  const r = await fetch('/api/admin/manage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.message || d.code || 'Không thể cập nhật');
+  return d;
+}
+
+export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onNavigate }) => {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [classes, setClasses] = useState<AcademicClass[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'users' | 'classes' | 'logs'>('users');
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Modals state
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
+  const [isAssignMemberOpen, setIsAssignMemberOpen] = useState(false);
+
+  // Edit user modal
+  const [selected, setSelected] = useState<AdminUser | null>(null);
+  const [editRole, setEditRole] = useState<UserRole>('student');
+  const [editStatus, setEditStatus] = useState<'active' | 'locked'>('active');
+  const [tempPassword, setTempPassword] = useState('');
+
+  // Create user form
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('student');
+  const [newPassword, setNewPassword] = useState('');
+
+  // Create class form
+  const [classCode, setClassCode] = useState('');
+  const [className, setClassName] = useState('');
+  const [schoolYear, setSchoolYear] = useState('2026-2027');
+
+  // Assign member form
+  const [memberUser, setMemberUser] = useState('');
+  const [memberClass, setMemberClass] = useState('');
+  const [memberRole, setMemberRole] = useState<'student' | 'teacher'>('student');
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [u, s] = await Promise.all([
+        fetch('/api/admin/users', { credentials: 'include' }),
+        fetch('/api/academic/snapshot', { credentials: 'include' })
+      ]);
+      const ud = await u.json();
+      const sd = await s.json();
+      if (!u.ok) throw new Error(ud.message || 'Không thể tải tài khoản');
+      if (!s.ok) throw new Error(sd.message || 'Không thể tải dữ liệu');
+      const nextUsers = ud.users || [];
+      const nextClasses = sd.snapshot?.classes || [];
+      setUsers(nextUsers);
+      setClasses(nextClasses);
+      setLogs(sd.snapshot?.auditLogs || []);
+      if (!memberUser && nextUsers[0]) setMemberUser(nextUsers[0].id);
+      if (!memberClass && nextClasses[0]) setMemberClass(nextClasses[0].code);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const openUserModal = (u: AdminUser) => {
+    setSelected(u);
+    setEditRole(u.role);
+    setEditStatus(u.account_status || 'active');
+    setTempPassword('');
+    setMessage(null);
+  };
+
+  const saveUser = async () => {
+    if (!selected) return;
+    setLoading(true);
+    try {
+      await act({ action: 'update_user', userId: selected.id, role: editRole, accountStatus: editStatus });
+      setMessage('Đã cập nhật thông tin tài khoản.');
+      setSelected(null);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPass = async () => {
+    if (!selected) return;
+    setLoading(true);
+    try {
+      const d = await act({ action: 'reset_password', userId: selected.id });
+      setTempPassword(d.temporaryPassword);
+      setMessage('Đã tạo mật khẩu tạm.');
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createUser = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const d = await act({ action: 'create_user', name: newName, email: newEmail, role: newRole });
+      setNewPassword(d.temporaryPassword);
+      setMessage('Đã tạo tài khoản thành công.');
+      setNewName('');
+      setNewEmail('');
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createClass = async () => {
+    setLoading(true);
+    try {
+      await act({ action: 'create_class', code: classCode, name: className, schoolYear });
+      setClassCode('');
+      setClassName('');
+      setMessage('Đã lưu lớp học.');
+      setIsCreateClassOpen(false);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const assignMember = async () => {
+    setLoading(true);
+    try {
+      await act({ action: 'assign_member', classCode: memberClass, userId: memberUser, memberRole });
+      setMessage('Đã phân công thành viên vào lớp.');
+      setIsAssignMemberOpen(false);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <PageHeader
-        title="Quản trị hệ thống"
-        description="Quản lý tài khoản người dùng, phân quyền vai trò, thiết lập lớp học và nhật ký kiểm toán."
-        actions={
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={()=>void load()} isLoading={loading} leftIcon={<ArrowPathIcon className="h-4 w-4"/>}>
-              Tải lại
-            </Button>
-            <Button size="sm" variant="outline" onClick={()=>onNavigate('researcher-view')} leftIcon={<AcademicCapIcon className="h-4 w-4"/>}>
-              Nghiên cứu
-            </Button>
-          </div>
-        }
+    <div className="max-w-7xl space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Quản trị hệ thống</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Quản lý tài khoản, cấu hình lớp học và theo dõi nhật ký hệ thống
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => void load()} isLoading={loading} leftIcon={<ArrowPathIcon className="h-4 w-4" />}>
+            Tải lại
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setIsAssignMemberOpen(true)}>
+            Gán vào lớp
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setIsCreateClassOpen(true)}>
+            Thêm lớp
+          </Button>
+          <Button size="sm" variant="primary" onClick={() => setIsCreateUserOpen(true)}>
+            Tạo tài khoản
+          </Button>
+        </div>
+      </div>
+
+      {error && <Alert type="error" title="Lỗi">{error}</Alert>}
+      {message && <Alert type="success" title="Thông báo">{message}</Alert>}
+
+      {/* Underline Tabs */}
+      <Tabs
+        activeId={activeTab}
+        onChange={id => setActiveTab(id as any)}
+        items={[
+          { id: 'users', label: 'Tài khoản', count: users.length },
+          { id: 'classes', label: 'Lớp học', count: classes.length },
+          { id: 'logs', label: 'Nhật ký hệ thống', count: logs.length }
+        ]}
       />
 
-      {error&&<Alert type="error" title="Lỗi">{error}</Alert>}
-      {message&&<Alert type="success" title="Thông báo">{message}</Alert>}
-
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {[
-          ['Tổng tài khoản', totals.total],
-          ['Học sinh', totals.students],
-          ['Giáo viên', totals.teachers],
-          ['Đang khóa', totals.locked],
-          ['Cần đổi mật khẩu', totals.change]
-        ].map(([l,v])=>(
-          <div key={String(l)} className="rounded-lg border border-slate-200 bg-white p-3.5">
-            <div className="text-xs font-medium text-slate-500">{l}</div>
-            <div className="mt-1.5 text-xl font-bold text-slate-900">{loading?'—':v}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Tạo tài khoản mới</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Mật khẩu tạm thời sẽ yêu cầu người dùng đổi trong lần đăng nhập đầu tiên.</p>
-          <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
-            <Input label="Họ và tên" value={newName} onChange={e=>setNewName(e.target.value)}/>
-            <Input label="Email" type="email" value={newEmail} onChange={e=>setNewEmail(e.target.value)}/>
-            <label className="text-xs font-semibold text-slate-700">Vai trò
-              <select className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500" value={newRole} onChange={e=>setNewRole(e.target.value as UserRole)}>
-                {roles.map(r=><option key={r} value={r}>{labels[r]}</option>)}
-              </select>
-            </label>
-            <div className="flex items-end">
-              <Button size="sm" variant="primary" onClick={createUser} disabled={!newName.trim()||!newEmail.includes('@')} isLoading={loading}>
-                Tạo tài khoản
-              </Button>
-            </div>
-          </div>
-          {newPassword&&(
-            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5">
-              <div className="text-xs font-semibold text-amber-900">Mật khẩu tạm (sao chép ngay):</div>
-              <div className="mt-1 select-all rounded border border-amber-200 bg-white p-2 font-mono text-xs font-bold text-slate-900">{newPassword}</div>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            <UserGroupIcon className="h-4 w-4 text-slate-600"/>
-            <span>Tạo lớp & phân công thành viên</span>
-          </h2>
-          <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
-            <Input label="Mã lớp" value={classCode} onChange={e=>setClassCode(e.target.value)} placeholder="11A2"/>
-            <Input label="Năm học" value={schoolYear} onChange={e=>setSchoolYear(e.target.value)}/>
-            <Input label="Tên lớp" value={className} onChange={e=>setClassName(e.target.value)} placeholder="Lớp 11A2"/>
-            <div className="flex items-end">
-              <Button size="sm" variant="outline" onClick={createClass} disabled={!classCode.trim()||!className.trim()}>
-                Lưu lớp
-              </Button>
-            </div>
-          </div>
-          <div className="my-3 border-t border-slate-100"/>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs font-semibold text-slate-700">Người dùng
-              <select value={memberUser} onChange={e=>setMemberUser(e.target.value)} className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500">
-                {users.map(u=><option key={u.id} value={u.id}>{u.name} — {labels[u.role]}</option>)}
-              </select>
-            </label>
-            <label className="text-xs font-semibold text-slate-700">Lớp học
-              <select value={memberClass} onChange={e=>setMemberClass(e.target.value)} className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500">
-                {classes.map(c=><option key={c.id} value={c.code}>{c.code} — {c.name}</option>)}
-              </select>
-            </label>
-            <label className="text-xs font-semibold text-slate-700">Vai trò trong lớp
-              <select value={memberRole} onChange={e=>setMemberRole(e.target.value as 'student'|'teacher')} className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500">
-                <option value="student">Học sinh</option>
-                <option value="teacher">Giáo viên</option>
-              </select>
-            </label>
-            <div className="flex items-end">
-              <Button size="sm" variant="primary" onClick={assignMember} disabled={!memberUser||!memberClass}>
-                Gán vào lớp
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Danh sách tài khoản người dùng</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Khóa/mở tài khoản, đổi vai trò và cấp lại mật khẩu tạm.</p>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="px-4 py-2.5 font-semibold">Người dùng</th>
-                <th className="px-3 py-2.5 font-semibold">Vai trò</th>
-                <th className="px-3 py-2.5 font-semibold">Trạng thái</th>
-                <th className="px-3 py-2.5 font-semibold">Đăng nhập gần nhất</th>
-                <th className="px-3 py-2.5 font-semibold">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {users.map(u=>(
-                <tr key={u.id} className="hover:bg-slate-50/50">
-                  <td className="px-4 py-2.5">
-                    <b className="text-slate-900">{u.name}</b>
-                    <div className="text-slate-400">{u.email}</div>
-                  </td>
-                  <td className="px-3 py-2.5"><Badge variant="indigo" size="sm">{labels[u.role]}</Badge></td>
-                  <td className="px-3 py-2.5">
-                    <Badge variant={u.account_status==='locked'?'rose':'emerald'} size="sm">
-                      {u.account_status==='locked'?'Đã khóa':'Hoạt động'}
-                    </Badge>
-                    {u.must_change_password&&<div className="mt-0.5 text-[11px] text-amber-700 font-medium">Cần đổi MK</div>}
-                  </td>
-                  <td className="px-3 py-2.5 text-slate-500">{fmt(u.last_login)}</td>
-                  <td className="px-3 py-2.5">
-                    <Button size="sm" variant="outline" onClick={()=>open(u)}>Quản lý</Button>
-                  </td>
+      {/* Tab: Users Table */}
+      {activeTab === 'users' && (
+        <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+                <tr>
+                  <th className="py-3 px-4">Họ và tên</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Vai trò</th>
+                  <th className="py-3 px-4">Trạng thái</th>
+                  <th className="py-3 px-4">Đăng nhập gần nhất</th>
+                  <th className="py-3 px-4 text-right">Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {users.map(u => (
+                  <tr key={u.id} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-medium text-slate-900">{u.name}</td>
+                    <td className="py-3 px-4 text-xs text-slate-600">{u.email}</td>
+                    <td className="py-3 px-4 text-xs">
+                      <span className="font-medium text-slate-800">{labels[u.role]}</span>
+                    </td>
+                    <td className="py-3 px-4 text-xs">
+                      <Badge variant={u.account_status === 'locked' ? 'rose' : 'slate'} size="sm">
+                        {u.account_status === 'locked' ? 'Đã khóa' : 'Hoạt động'}
+                      </Badge>
+                      {u.must_change_password && (
+                        <span className="ml-2 text-amber-700 font-medium">Cần đổi MK</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-500">{fmt(u.last_login)}</td>
+                    <td className="py-3 px-4 text-right">
+                      <Button size="sm" variant="ghost" onClick={() => openUserModal(u)}>
+                        Quản lý
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      )}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Nhật ký hệ thống (Audit log)</h2>
-        <p className="mt-0.5 text-xs text-slate-500">200 sự kiện kiểm toán gần nhất được ghi nhận tự động từ máy chủ.</p>
-        <div className="mt-3 max-h-80 overflow-y-auto divide-y divide-slate-100">
-          {logs.slice(0,200).map(log=>(
-            <div key={log.id} className="grid gap-1 py-2 text-xs sm:grid-cols-[160px_160px_1fr]">
-              <span className="text-slate-400">{new Date(log.timestamp).toLocaleString('vi-VN')}</span>
-              <span className="font-medium text-slate-700">{log.actorName} [{log.actorRole}]</span>
-              <span><b className="text-slate-900">{log.action}</b> <span className="text-slate-500">{log.target}</span></span>
-            </div>
-          ))}
-          {logs.length===0&&<p className="py-4 text-xs text-slate-500 text-center">Chưa có sự kiện nào.</p>}
+      {/* Tab: Classes Table */}
+      {activeTab === 'classes' && (
+        <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+                <tr>
+                  <th className="py-3 px-4">Mã lớp</th>
+                  <th className="py-3 px-4">Tên lớp</th>
+                  <th className="py-3 px-4">Năm học</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {classes.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-xs text-slate-500">
+                      Chưa có lớp học nào được tạo.
+                    </td>
+                  </tr>
+                ) : (
+                  classes.map(c => (
+                    <tr key={c.id} className="hover:bg-slate-50/60">
+                      <td className="py-3 px-4 font-mono text-xs font-semibold text-slate-900">{c.code}</td>
+                      <td className="py-3 px-4 font-medium text-slate-800">{c.name}</td>
+                      <td className="py-3 px-4 text-xs text-slate-500">{c.school_year}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      )}
 
+      {/* Tab: Audit Logs Table */}
+      {activeTab === 'logs' && (
+        <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+                <tr>
+                  <th className="py-3 px-4">Thời gian</th>
+                  <th className="py-3 px-4">Người thực hiện</th>
+                  <th className="py-3 px-4">Thao tác</th>
+                  <th className="py-3 px-4">Đối tượng</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-xs text-slate-500">
+                      Chưa có sự kiện nào trong nhật ký.
+                    </td>
+                  </tr>
+                ) : (
+                  logs.slice(0, 200).map(log => (
+                    <tr key={log.id} className="hover:bg-slate-50/60 text-xs">
+                      <td className="py-2.5 px-4 text-slate-500 whitespace-nowrap">
+                        {new Date(log.timestamp).toLocaleString('vi-VN')}
+                      </td>
+                      <td className="py-2.5 px-4 font-medium text-slate-800">
+                        {log.actorName} ({log.actorRole})
+                      </td>
+                      <td className="py-2.5 px-4 font-semibold text-slate-900">{log.action}</td>
+                      <td className="py-2.5 px-4 text-slate-600">{log.target}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Create User */}
       <Modal
-        isOpen={Boolean(selected)}
-        onClose={()=>setSelected(null)}
-        title={selected?`Quản lý tài khoản — ${selected.name}`:'Quản lý tài khoản'}
+        isOpen={isCreateUserOpen}
+        onClose={() => {
+          setIsCreateUserOpen(false);
+          setNewPassword('');
+        }}
+        title="Tạo tài khoản mới"
+        description="Mật khẩu tạm thời sẽ yêu cầu người dùng đổi mật khẩu trong lần đăng nhập đầu tiên."
         footer={
           <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={()=>setSelected(null)}>Đóng</Button>
-            <Button variant="primary" size="sm" onClick={saveUser} isLoading={loading}>Lưu thay đổi</Button>
+            <Button variant="outline" size="sm" onClick={() => setIsCreateUserOpen(false)}>
+              Đóng
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={createUser}
+              disabled={!newName.trim() || !newEmail.includes('@')}
+              isLoading={loading}
+            >
+              Tạo tài khoản
+            </Button>
           </div>
         }
       >
-        <div className="space-y-3 text-xs">
-          <label className="block font-semibold text-slate-700">Vai trò người dùng
-            <select className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500" value={editRole} onChange={e=>setEditRole(e.target.value as UserRole)}>
-              {roles.map(r=><option key={r} value={r}>{labels[r]}</option>)}
+        <div className="space-y-3 text-sm">
+          <Input label="Họ và tên" value={newName} onChange={e => setNewName(e.target.value)} />
+          <Input label="Email" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Vai trò</label>
+            <select
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+              value={newRole}
+              onChange={e => setNewRole(e.target.value as UserRole)}
+            >
+              {roles.map(r => (
+                <option key={r} value={r}>{labels[r]}</option>
+              ))}
             </select>
-          </label>
-          <label className="block font-semibold text-slate-700">Trạng thái tài khoản
-            <select className="mt-1 w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500" value={editStatus} onChange={e=>setEditStatus(e.target.value as 'active'|'locked')}>
+          </div>
+          {newPassword && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+              <div className="text-xs font-semibold text-amber-900">Mật khẩu tạm (sao chép ngay):</div>
+              <div className="mt-1 select-all rounded border border-amber-200 bg-white p-2 font-mono text-sm font-bold text-slate-900">
+                {newPassword}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Modal: Create Class */}
+      <Modal
+        isOpen={isCreateClassOpen}
+        onClose={() => setIsCreateClassOpen(false)}
+        title="Thêm lớp học"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsCreateClassOpen(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" onClick={createClass} disabled={!classCode.trim() || !className.trim()}>
+              Lưu lớp
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <Input label="Mã lớp (ví dụ: 11A2)" value={classCode} onChange={e => setClassCode(e.target.value)} />
+          <Input label="Tên lớp (ví dụ: Lớp 11A2)" value={className} onChange={e => setClassName(e.target.value)} />
+          <Input label="Năm học" value={schoolYear} onChange={e => setSchoolYear(e.target.value)} />
+        </div>
+      </Modal>
+
+      {/* Modal: Assign Member */}
+      <Modal
+        isOpen={isAssignMemberOpen}
+        onClose={() => setIsAssignMemberOpen(false)}
+        title="Phân công thành viên vào lớp"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsAssignMemberOpen(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" onClick={assignMember} disabled={!memberUser || !memberClass}>
+              Xác nhận
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Người dùng</label>
+            <select
+              value={memberUser}
+              onChange={e => setMemberUser(e.target.value)}
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+            >
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.name} — {labels[u.role]}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Lớp học</label>
+            <select
+              value={memberClass}
+              onChange={e => setMemberClass(e.target.value)}
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+            >
+              {classes.map(c => (
+                <option key={c.id} value={c.code}>{c.code} — {c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Vai trò trong lớp</label>
+            <select
+              value={memberRole}
+              onChange={e => setMemberRole(e.target.value as 'student' | 'teacher')}
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+            >
+              <option value="student">Học sinh</option>
+              <option value="teacher">Giáo viên</option>
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Edit User */}
+      <Modal
+        isOpen={Boolean(selected)}
+        onClose={() => setSelected(null)}
+        title={selected ? `Tài khoản — ${selected.name}` : 'Quản lý tài khoản'}
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelected(null)}>
+              Đóng
+            </Button>
+            <Button variant="primary" size="sm" onClick={saveUser} isLoading={loading}>
+              Lưu thay đổi
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 text-sm">
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Vai trò</label>
+            <select
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+              value={editRole}
+              onChange={e => setEditRole(e.target.value as UserRole)}
+            >
+              {roles.map(r => (
+                <option key={r} value={r}>{labels[r]}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Trạng thái tài khoản</label>
+            <select
+              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+              value={editStatus}
+              onChange={e => setEditStatus(e.target.value as 'active' | 'locked')}
+            >
               <option value="active">Hoạt động bình thường</option>
               <option value="locked">Khóa tài khoản</option>
             </select>
-          </label>
-          <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3">
-            <div className="flex items-center gap-2 font-semibold text-amber-900">
-              <LockClosedIcon className="h-4 w-4"/>
+          </div>
+          <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3 space-y-2">
+            <div className="flex items-center gap-2 font-medium text-xs text-amber-900">
+              <LockClosedIcon className="h-4 w-4" />
               <span>Cấp lại mật khẩu tạm</span>
             </div>
-            <Button size="sm" variant="outline" className="mt-2.5" onClick={resetPass} isLoading={loading}>
-              Tạo mật khẩu tạm
+            <Button size="sm" variant="outline" onClick={resetPass} isLoading={loading}>
+              Tạo mật khẩu mới
             </Button>
-            {tempPassword&&(
-              <div className="mt-2 select-all rounded border border-amber-200 bg-white p-2 font-mono text-xs font-bold text-slate-900">
+            {tempPassword && (
+              <div className="select-all rounded border border-amber-200 bg-white p-2 font-mono text-sm font-bold text-slate-900">
                 {tempPassword}
               </div>
             )}

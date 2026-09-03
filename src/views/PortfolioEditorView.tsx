@@ -5,16 +5,9 @@ import { useNotificationStore } from '../app/store/useNotificationStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
 import type { EvidenceQuote, PoeticAxisId } from '../types';
-import { Badge, Button } from '../components/ui';
+import { Button } from '../components/ui';
 import { CreateVersionModal } from '../components/versioning/CreateVersionModal';
-import {
-  ArrowLeftIcon,
-  BookOpenIcon,
-  ChatBubbleLeftRightIcon,
-  ClockIcon,
-  DocumentDuplicateIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface PortfolioEditorViewProps {
   assignmentId: string;
@@ -27,12 +20,24 @@ const nextVersionNumber = (versions: { versionNumber: string }[]) => {
   return `v${Math.floor(max) + 1}.0`;
 };
 
-const StatePanel: React.FC<{title:string;message:string;actionLabel?:string;onAction?:()=>void;loading?:boolean}> = ({title,message,actionLabel,onAction,loading}) => (
-  <div className="mx-auto mt-10 max-w-xl rounded-lg border border-slate-200 bg-white p-8 text-center">
-    {loading ? <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/> : <ExclamationTriangleIcon className="mx-auto mb-4 h-9 w-9 text-slate-400"/>}
-    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-    <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
-    {actionLabel && onAction && <Button className="mt-5" variant="primary" onClick={onAction}>{actionLabel}</Button>}
+const StatePanel: React.FC<{
+  title: string;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  loading?: boolean;
+}> = ({ title, message, actionLabel, onAction, loading }) => (
+  <div className="mx-auto mt-16 max-w-md p-6 text-center space-y-3">
+    {loading && (
+      <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
+    )}
+    <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+    <p className="text-sm text-slate-500 leading-relaxed">{message}</p>
+    {actionLabel && onAction && (
+      <div className="pt-2">
+        <Button variant="primary" onClick={onAction}>{actionLabel}</Button>
+      </div>
+    )}
   </div>
 );
 
@@ -44,13 +49,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const [activeAxisId, setActiveAxisId] = useState<PoeticAxisId>('plot_situation');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isPredictionMode, setIsPredictionMode] = useState(false);
-  const [fontSizeLevel, setFontSizeLevel] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+  const [fontSizeLevel, setFontSizeLevel] = useState<'sm' | 'base' | 'lg'>('base');
 
   const editorFontSizeClass = {
     sm: 'text-sm leading-6',
-    base: 'text-[15px] sm:text-base leading-7',
-    lg: 'text-base sm:text-lg leading-8',
-    xl: 'text-lg sm:text-xl leading-9',
+    base: 'text-[15px] leading-7',
+    lg: 'text-base leading-8',
   }[fontSizeLevel];
 
   const assignment = assignments.find(item => item.id === assignmentId);
@@ -76,19 +80,19 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   }, [portfolio]);
 
   if (isLoading && !assignment) {
-    return <StatePanel loading title="Đang tải bài học" message="Học tốt Ngữ Văn đang đồng bộ nhiệm vụ và hồ sơ của bạn từ máy chủ." />;
+    return <StatePanel loading title="Đang mở bài viết" message="Đang tải dữ liệu hồ sơ và bài làm từ máy chủ..." />;
   }
   if (dataError && !assignment) {
     return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshAcademicData()} />;
   }
   if (!currentUser.id) {
-    return <StatePanel title="Phiên đăng nhập không hợp lệ" message="Không xác định được tài khoản đang sử dụng. Vui lòng đăng nhập lại." actionLabel="Quay lại" onAction={() => onNavigate('dashboard')} />;
+    return <StatePanel title="Phiên đăng nhập hết hạn" message="Vui lòng đăng nhập lại để tiếp tục viết bài." actionLabel="Đăng nhập" onAction={() => onNavigate('dashboard')} />;
   }
   if (!assignment) {
-    return <StatePanel title="Không tìm thấy nhiệm vụ" message="Nhiệm vụ này không tồn tại, đã bị đóng hoặc bạn chưa được phân công." actionLabel="Xem nhiệm vụ" onAction={() => onNavigate('assignment-list')} />;
+    return <StatePanel title="Không tìm thấy nhiệm vụ" message="Nhiệm vụ này không tồn tại hoặc bạn chưa được phân công." actionLabel="Xem danh sách nhiệm vụ" onAction={() => onNavigate('assignment-list')} />;
   }
   if (!portfolio) {
-    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Tài khoản của bạn chưa có hồ sơ học tập gắn với nhiệm vụ. Nếu vừa được thêm vào lớp, hãy tải lại dữ liệu." actionLabel="Tải lại dữ liệu" onAction={() => void refreshAcademicData()} />;
+    return <StatePanel title="Chưa có hồ sơ cho nhiệm vụ này" message="Hồ sơ học tập của bạn đang được tạo. Hãy tải lại dữ liệu." actionLabel="Tải lại dữ liệu" onAction={() => void refreshAcademicData()} />;
   }
 
   const evidenceText = (currentAxis?.evidenceQuotes || []).map(item => item.text).join('\n');
@@ -101,15 +105,15 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     updateDraft(currentUser.id, assignment.id, activeAxisId, text, currentAxis?.evidenceQuotes || []);
   };
   const updateEvidence = (text: string) => {
-    const quotes: EvidenceQuote[] = text.split('\n').map(line => line.trim()).filter(Boolean).map((line, index) => ({ id:`${activeAxisId}-${index + 1}`, text:line }));
+    const quotes: EvidenceQuote[] = text.split('\n').map(line => line.trim()).filter(Boolean).map((line, index) => ({ id: `${activeAxisId}-${index + 1}`, text: line }));
     updateDraft(currentUser.id, assignment.id, activeAxisId, currentAxis?.analysisText || '', quotes);
   };
   const saveNow = async () => {
     try {
       await manualSaveDraft(currentUser.id, assignment.id);
-      addToast({type:'success',title:'Đã lưu',message:'Bản nháp đã được lưu vào máy chủ.'});
+      addToast({ type: 'success', title: 'Đã lưu', message: 'Bản nháp đã được lưu thành công.' });
     } catch {
-      addToast({type:'error',title:'Chưa lưu được',message:'Không thể lưu bản nháp. Kiểm tra kết nối và thử lại.'});
+      addToast({ type: 'error', title: 'Chưa lưu được', message: 'Kiểm tra kết nối và thử lại.' });
     }
   };
 
@@ -121,7 +125,6 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     confidence: number;
     stage?: 'prediction' | 'initial' | 'revision';
   }) => {
-    await manualSaveDraft(currentUser.id, assignment.id);
     const ok = await createSnapshot(
       currentUser.id,
       assignment.id,
@@ -142,166 +145,247 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     addToast({
       type: 'success',
       title: `Đã nộp phiên bản ${nextVersion}`,
-      message: 'Bài đang chờ phản hồi.'
+      message: 'Bài viết đã được gửi vào hàng đợi phản hồi.'
     });
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-3 py-3 sm:px-5">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-white flex flex-col">
+      {/* Top Workspace Header */}
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-2.5">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4"/>}>Quay lại</Button>
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
+              Quay lại
+            </Button>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2"><strong className="truncate text-sm text-slate-900">{assignment.title}</strong><Badge variant="blue" size="sm">{portfolio.currentActiveVersion || 'v1.0 (nháp)'}</Badge></div>
-              <div className="mt-0.5 text-xs text-slate-500">{literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu chưa khả dụng'}</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate text-sm font-semibold text-slate-900">{assignment.title}</span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs font-medium text-slate-600">{portfolio.currentActiveVersion || 'v1.0 (nháp)'}</span>
+              </div>
+              <div className="text-xs text-slate-500">
+                {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu'}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <ClockIcon className="h-4 w-4"/><span>{autosaveStatus === 'saving' ? 'Đang lưu…' : autosaveStatus === 'dirty' ? 'Có thay đổi chưa lưu' : `Đã lưu${lastSavedTime ? ` lúc ${lastSavedTime}` : ''}`}</span>
-            <Button size="sm" variant="outline" onClick={saveNow}>Lưu ngay</Button>
+
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span>
+              {autosaveStatus === 'saving'
+                ? 'Đang lưu…'
+                : autosaveStatus === 'dirty'
+                ? 'Có thay đổi chưa lưu'
+                : `Đã lưu ${lastSavedTime || 'gần đây'}`}
+            </span>
+            <Button size="sm" variant="outline" onClick={saveNow}>Lưu nháp</Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                setIsPredictionMode(false);
+                setIsSubmitModalOpen(true);
+              }}
+            >
+              {isInitial ? 'Nộp bài V1' : `Nộp bản ${nextVersion}`}
+            </Button>
+            {isInitial && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setIsPredictionMode(true);
+                  setIsSubmitModalOpen(true);
+                }}
+              >
+                Nộp V0 (dự đoán)
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)_300px]">
-        <aside className="rounded-lg border border-slate-200 bg-white p-3">
-          <div className="mb-2 text-xs font-semibold text-slate-500">6 trục thi pháp</div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:pb-0">
+      {/* 3-Column Desk Layout */}
+      <div className="mx-auto flex-1 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+        {/* Left Rail: Poetic Axes Navigation */}
+        <aside className="border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/50 p-3">
+          <div className="mb-2 px-2 text-xs font-medium text-slate-500">Trục phân tích</div>
+          <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-x-visible">
             {POETIC_AXES.map(axis => {
-              const response=portfolio.currentDraft?.[axis.id];
-              const done=Boolean(response?.analysisText?.trim());
+              const response = portfolio.currentDraft?.[axis.id];
+              const done = Boolean(response?.analysisText?.trim());
+              const active = activeAxisId === axis.id;
+
               return (
                 <button
                   key={axis.id}
-                  onClick={()=>setActiveAxisId(axis.id)}
-                  className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs transition-colors lg:w-full ${
-                    activeAxisId===axis.id
-                      ? 'bg-slate-100 text-slate-900 font-semibold'
-                      : 'text-slate-600 hover:bg-slate-50 lg:bg-transparent'
+                  onClick={() => setActiveAxisId(axis.id)}
+                  className={`shrink-0 rounded-md px-2.5 py-2 text-left text-sm transition-colors lg:w-full flex items-center justify-between ${
+                    active
+                      ? 'bg-white text-slate-900 font-medium shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <div className="whitespace-nowrap lg:whitespace-normal">{axis.shortName}</div>
-                  <div className={`mt-0.5 text-[11px] hidden sm:block ${activeAxisId===axis.id?'text-slate-600':'text-slate-400'}`}>
-                    {done?'Đã có nội dung':'Chưa viết'}
-                  </div>
+                  <span className="truncate">{axis.shortName}</span>
+                  <span className={`text-xs ml-1.5 shrink-0 ${done ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {done ? '●' : '○'}
+                  </span>
                 </button>
               );
             })}
-          </div>
+          </nav>
         </aside>
 
-        <main className="space-y-4">
-          {dataError && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">Dữ liệu đang hiển thị có thể chưa phải bản mới nhất: {dataError}</div>}
-          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div><div className="text-xs font-medium text-indigo-700">{currentAxisMeta.title}</div><h1 className="mt-1 text-lg font-semibold text-slate-900">Viết phân tích</h1><p className="mt-1 text-xs leading-5 text-slate-500">{currentAxisMeta.description}</p></div>
-              <div className="rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500">Tổng bài: <strong className="text-slate-800">{wordCount} từ</strong></div>
+        {/* Center: Document Editor */}
+        <main className="p-4 sm:p-6 space-y-6">
+          {dataError && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+              Dữ liệu hiển thị có thể chưa mới nhất: {dataError}
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="block text-xs font-semibold text-slate-700">Phân tích của bạn</label>
-              <div className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs">
-                <span className="px-1.5 text-xs text-slate-400">Cỡ chữ:</span>
-                {(['sm', 'base', 'lg', 'xl'] as const).map(level => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setFontSizeLevel(level)}
-                    className={`rounded px-2 py-0.5 text-xs font-medium transition ${
-                      fontSizeLevel === level ? 'bg-white text-indigo-700 font-semibold' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {level === 'sm' ? 'Nhỏ' : level === 'base' ? 'Vừa' : level === 'lg' ? 'Lớn' : 'Rất lớn'}
-                  </button>
-                ))}
+          )}
+
+          <div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-3">
+              <div>
+                <h1 className="text-lg font-semibold text-slate-900">{currentAxisMeta.title}</h1>
+                <p className="text-xs text-slate-500 mt-0.5">{currentAxisMeta.description}</p>
               </div>
-            </div>
-            <textarea
-              value={currentAxis?.analysisText || ''}
-              onChange={e=>updateAnalysis(e.target.value)}
-              rows={16}
-              placeholder="Viết luận điểm, phân tích nghệ thuật, lí giải tác dụng và liên hệ với chủ đề tác phẩm…"
-              className={`mt-2 w-full resize-y rounded-md border border-slate-300 bg-white p-3 font-sans text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${editorFontSizeClass}`}
-            />
-            <label className="mt-4 block text-xs font-semibold text-slate-700">Dẫn chứng — mỗi dòng một dẫn chứng</label>
-            <textarea
-              value={evidenceText}
-              onChange={e=>updateEvidence(e.target.value)}
-              rows={4}
-              placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật dùng làm dẫn chứng…"
-              className="mt-1.5 w-full resize-y rounded-md border border-slate-300 bg-slate-50 p-2.5 font-sans text-xs leading-5 text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-          </section>
-
-          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="flex items-center gap-2"><DocumentDuplicateIcon className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">Lịch sử và nộp phiên bản</h2></div>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Mỗi lần nộp sẽ lưu lại một phiên bản hoàn chỉnh để bạn và giáo viên theo dõi tiến trình chỉnh sửa.</p>
-            
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setIsPredictionMode(false);
-                  setIsSubmitModalOpen(true);
-                }}
-              >
-                {isInitial ? 'Nộp bài V1 (gửi nhận xét)' : `Nộp phiên bản ${nextVersion}`}
-              </Button>
-              {isInitial && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsPredictionMode(true);
-                    setIsSubmitModalOpen(true);
-                  }}
-                >
-                  Nộp bản dự đoán trước đọc (V0)
-                </Button>
-              )}
-              {portfolio.versions.length >= 2 && (
-                <Button
-                  variant="outline"
-                  onClick={() => onNavigate('version-diff', { assignmentId: assignment.id })}
-                >
-                  So sánh phiên bản
-                </Button>
-              )}
-            </div>
-
-            {portfolio.versions.length > 0 && (
-              <div className="mt-4 border-t border-slate-100 pt-3">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-2">Các phiên bản đã nộp</span>
-                <div className="flex flex-wrap gap-2">
-                  {portfolio.versions.map(version => (
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span>{wordCount} từ toàn bài</span>
+                <div className="flex items-center gap-1">
+                  <span>Cỡ chữ:</span>
+                  {(['sm', 'base', 'lg'] as const).map(lvl => (
                     <button
-                      key={version.id}
-                      onClick={() => portfolio.versions.length >= 2 && onNavigate('version-diff', {
-                        assignmentId: assignment.id,
-                        v1Number: portfolio.versions[0].versionNumber,
-                        v2Number: version.versionNumber
-                      })}
-                      className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs hover:bg-slate-100"
+                      key={lvl}
+                      type="button"
+                      onClick={() => setFontSizeLevel(lvl)}
+                      className={`px-1.5 py-0.5 rounded text-xs ${
+                        fontSizeLevel === lvl ? 'bg-slate-200 font-semibold text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                      }`}
                     >
-                      <strong>{version.versionNumber}</strong>
-                      <span className="ml-2 text-slate-400">{new Date(version.createdAt).toLocaleString('vi-VN')}</span>
-                      {version.changeSummary && <div className="mt-0.5 text-[11px] text-slate-500 truncate max-w-xs">{version.changeSummary}</div>}
+                      {lvl === 'sm' ? 'Nhỏ' : lvl === 'base' ? 'Vừa' : 'Lớn'}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-          </section>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  Nội dung phân tích
+                </label>
+                <textarea
+                  value={currentAxis?.analysisText || ''}
+                  onChange={e => updateAnalysis(e.target.value)}
+                  rows={14}
+                  placeholder="Viết luận điểm, phân tích chi tiết nghệ thuật, lí giải ý nghĩa..."
+                  className={`w-full resize-y rounded-md border border-slate-300 bg-white p-3 font-sans text-slate-900 outline-none focus:border-slate-500 ${editorFontSizeClass}`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  Dẫn chứng trích dẫn (mỗi dòng một dẫn chứng)
+                </label>
+                <textarea
+                  value={evidenceText}
+                  onChange={e => updateEvidence(e.target.value)}
+                  rows={3}
+                  placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật trích từ tác phẩm..."
+                  className="w-full resize-y rounded-md border border-slate-300 bg-slate-50/50 p-2.5 text-xs text-slate-800 outline-none focus:border-slate-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Version History Table / List */}
+          {versions.length > 0 && (
+            <section className="pt-4 border-t border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-slate-700">Các phiên bản đã nộp</h2>
+                {versions.length >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('version-diff', { assignmentId: assignment.id })}
+                    className="text-xs text-slate-600 underline underline-offset-2 hover:text-slate-900"
+                  >
+                    So sánh các phiên bản
+                  </button>
+                )}
+              </div>
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-md bg-white">
+                {versions.map(ver => (
+                  <div key={ver.id} className="p-2.5 flex items-center justify-between text-xs text-slate-600">
+                    <div>
+                      <span className="font-semibold text-slate-900">{ver.versionNumber}</span>
+                      <span className="ml-2 text-slate-500">
+                        {new Date(ver.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {ver.revisionReason && (
+                        <span className="ml-2 text-slate-600 italic">· {ver.revisionReason}</span>
+                      )}
+                    </div>
+                    {versions.length >= 2 && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('version-diff', {
+                          assignmentId: assignment.id,
+                          v1Number: versions[0].versionNumber,
+                          v2Number: ver.versionNumber
+                        })}
+                        className="text-slate-500 hover:text-slate-900"
+                      >
+                        So sánh
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
 
-        <aside className="space-y-4">
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-2"><BookOpenIcon className="h-4 w-4 text-slate-600"/><h2 className="text-xs font-semibold text-slate-900">Nhiệm vụ</h2></div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">{assignment.prompt || 'Chưa có yêu cầu chi tiết.'}</p>
-            {assignment.guidingSteps?.length > 0 && <ol className="mt-2.5 list-decimal space-y-1 pl-4 text-xs leading-5 text-slate-500">{assignment.guidingSteps.map((step,index)=><li key={`${index}-${step}`}>{step}</li>)}</ol>}
+        {/* Right Inspector: Assignment prompt & Feedback */}
+        <aside className="border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50/40 p-4 space-y-5">
+          <section className="space-y-2">
+            <h2 className="text-xs font-semibold text-slate-800">Yêu cầu nhiệm vụ</h2>
+            <p className="text-xs text-slate-600 leading-relaxed bg-white p-3 rounded-md border border-slate-200">
+              {assignment.prompt || 'Chưa có yêu cầu chi tiết.'}
+            </p>
+            {assignment.guidingSteps && assignment.guidingSteps.length > 0 && (
+              <ol className="list-decimal pl-4 space-y-1 text-xs text-slate-500 leading-relaxed">
+                {assignment.guidingSteps.map((step, idx) => (
+                  <li key={`${idx}-${step}`}>{step}</li>
+                ))}
+              </ol>
+            )}
           </section>
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-center gap-2"><ChatBubbleLeftRightIcon className="h-4 w-4 text-slate-600"/><h2 className="text-xs font-semibold text-slate-900">Phản hồi trục này</h2></div>
-            {axisFeedbacks.length===0 ? <p className="mt-2 text-xs text-slate-500">Chưa có phản hồi cho trục này.</p> : <div className="mt-2.5 space-y-2.5">{axisFeedbacks.map(item=><div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs"><div className="font-medium text-slate-800">{item.authorName} • {item.authorRole.toUpperCase()}</div>{item.selectedSnippet&&<div className="mt-1.5 border-l-2 border-indigo-300 pl-2 italic text-slate-500">{item.selectedSnippet}</div>}<p className="mt-1.5 leading-5 text-slate-700">{item.comment}</p><div className={`mt-1.5 font-medium ${item.resolved?'text-emerald-700':'text-amber-700'}`}>{item.resolved?'Đã xử lý':'Cần xem lại'}</div></div>)}</div>}
+
+          <section className="space-y-2 pt-3 border-t border-slate-200">
+            <h2 className="text-xs font-semibold text-slate-800">Phản hồi theo trục này</h2>
+            {axisFeedbacks.length === 0 ? (
+              <p className="text-xs text-slate-500 py-2">Chưa có phản hồi cho trục này.</p>
+            ) : (
+              <div className="space-y-2">
+                {axisFeedbacks.map(item => (
+                  <div key={item.id} className="p-3 bg-white rounded-md border border-slate-200 text-xs space-y-1">
+                    <div className="flex items-center justify-between text-slate-700 font-medium">
+                      <span>{item.authorName || (item.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học')}</span>
+                      <span className={item.resolved ? 'text-emerald-700' : 'text-amber-700'}>
+                        {item.resolved ? 'Đã xử lý' : 'Cần xem lại'}
+                      </span>
+                    </div>
+                    {item.selectedSnippet && (
+                      <div className="border-l-2 border-slate-300 pl-2 italic text-slate-500">
+                        {item.selectedSnippet}
+                      </div>
+                    )}
+                    <p className="text-slate-700 leading-relaxed">{item.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </aside>
       </div>

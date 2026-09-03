@@ -1,99 +1,190 @@
 import React, { useMemo } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolio } from '../contexts/PortfolioContext';
-import { Avatar, Badge, Button, Card, Progress, StatCard, PageHeader } from '../components/ui';
-import { ArrowRightIcon, BookOpenIcon, ChartBarIcon, ChatBubbleLeftRightIcon, PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui';
 
-interface TeacherDashboardViewProps { onNavigate:(view:string,extraParams?:any)=>void; }
+interface TeacherDashboardViewProps {
+  onNavigate: (view: string, extraParams?: any) => void;
+}
 
-export const TeacherDashboardView:React.FC<TeacherDashboardViewProps>=({onNavigate})=>{
-  const user=useAuthStore(s=>s.currentUser);
-  const {assignments,portfolios,feedbacks,isLoading,dataError}=usePortfolio();
-  const portfolioList=useMemo(()=>Object.values(portfolios),[portfolios]);
-  const classes=useMemo(()=>Array.from(new Set(portfolioList.map(p=>p.className).filter(Boolean))),[portfolioList]);
-  const submissions=useMemo(()=>portfolioList.filter(p=>p.versions.length>0).sort((a,b)=>new Date(b.versions.at(-1)?.createdAt||0).getTime()-new Date(a.versions.at(-1)?.createdAt||0).getTime()),[portfolioList]);
-  const unresolved=feedbacks.filter(f=>!f.resolved).length;
-  const aiFeedbacks=feedbacks.filter(f=>f.authorRole==='ai').length;
-  const progress=assignments.map(a=>{const ps=portfolioList.filter(p=>p.assignmentId===a.id);const done=ps.filter(p=>p.versions.length>0).length;return{assignment:a,total:ps.length,done,pct:ps.length?Math.round(done/ps.length*100):0};});
+export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({ onNavigate }) => {
+  const user = useAuthStore(s => s.currentUser);
+  const { assignments, portfolios, aiReviews, dataError } = usePortfolio();
 
-  return <div className="space-y-6 pb-16">
-    <PageHeader
-      title={`Tổng quan giảng dạy — ${user.name}`}
-      description="Theo dõi tiến độ hoàn thành nhiệm vụ, hồ sơ bài nộp và đánh giá rubric của các lớp."
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={()=>onNavigate('class-analytics')} leftIcon={<ChartBarIcon className="h-4 w-4"/>}>Phân tích lớp</Button>
-          <Button variant="primary" size="sm" onClick={()=>onNavigate('assignment-builder')} leftIcon={<PlusIcon className="h-4 w-4"/>}>Tạo nhiệm vụ</Button>
+  const portfolioList = useMemo(() => Object.values(portfolios), [portfolios]);
+  const classes = useMemo(
+    () => Array.from(new Set(portfolioList.map(p => p.className).filter(Boolean))),
+    [portfolioList]
+  );
+
+  // Submissions needing grading
+  const submissionsNeedingGrade = useMemo(() => {
+    return portfolioList.filter(p => p.status === 'submitted_waiting_ai' || p.status === 'revising' || p.versions.length > 0);
+  }, [portfolioList]);
+
+  // AI proposals pending teacher review
+  const pendingAiProposals = useMemo(() => {
+    return (aiReviews || []).filter(
+      r => r.status === 'completed' && r.teacher_review_status === 'pending'
+    );
+  }, [aiReviews]);
+
+  // Assignment submission progress
+  const assignmentProgress = useMemo(() => {
+    return assignments.map(a => {
+      const classPortfolios = portfolioList.filter(p => p.assignmentId === a.id);
+      const submitted = classPortfolios.filter(p => p.versions.length > 0).length;
+      const total = classPortfolios.length || 0;
+      const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
+      return { assignment: a, total, submitted, percent };
+    });
+  }, [assignments, portfolioList]);
+
+  return (
+    <div className="max-w-6xl space-y-8 pb-16">
+      {/* Header & Primary Action */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Giảng dạy</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Tổng quan công việc của {user.name}
+          </p>
         </div>
-      }
-    />
-    {dataError&&<div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{dataError}</div>}
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      <StatCard label="Lớp phụ trách" value={isLoading?'—':`${classes.length} lớp`} subValue={classes.join(', ')||'Chưa có lớp'} icon={<UserGroupIcon className="h-4 w-4"/>}/>
-      <StatCard label="Nhiệm vụ" value={isLoading?'—':`${assignments.length} bài`} subValue="Đang giao" icon={<BookOpenIcon className="h-4 w-4"/>}/>
-      <StatCard label="Hồ sơ đã nộp" value={isLoading?'—':`${submissions.length} hồ sơ`} subValue="Đã có bài nộp" icon={<ChatBubbleLeftRightIcon className="h-4 w-4"/>}/>
-      <StatCard label="Chưa phản hồi" value={isLoading?'—':String(unresolved)} subValue="Cần xem xét" icon={<ChatBubbleLeftRightIcon className="h-4 w-4"/>}/>
-      <StatCard label="Gợi ý AI" value={isLoading?'—':String(aiFeedbacks)} subValue="Tự động hỗ trợ" icon={<ChatBubbleLeftRightIcon className="h-4 w-4"/>}/>
-    </section>
 
-    <div className="grid gap-6 lg:grid-cols-12">
-      <Card padding="md" className="lg:col-span-7">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Hoàn thành theo nhiệm vụ</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Tiến độ nộp bài của học sinh theo từng bài tập</p>
+        <div className="flex items-center gap-2.5">
+          <Button size="sm" variant="outline" onClick={() => onNavigate('class-analytics')}>
+            Phân tích lớp
+          </Button>
+          <Button size="sm" variant="primary" onClick={() => onNavigate('assignment-builder')}>
+            Tạo nhiệm vụ
+          </Button>
+        </div>
+      </div>
+
+      {dataError && (
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs text-rose-800">
+          {dataError}
+        </div>
+      )}
+
+      {/* Compact Summary Strip (No StatCards!) */}
+      <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong>{classes.length}</strong> lớp phụ trách</span>
+        <span className="text-slate-300">·</span>
+        <span><strong>{assignments.length}</strong> nhiệm vụ đang mở</span>
+        <span className="text-slate-300">·</span>
+        <span><strong>{submissionsNeedingGrade.length}</strong> bài đã nộp</span>
+        <span className="text-slate-300">·</span>
+        <span>
+          <strong>{pendingAiProposals.length}</strong> đề xuất AI chờ duyệt
+        </span>
+      </div>
+
+      {/* Main Hierarchy: Cần xử lý & Tiến độ nộp bài */}
+      <div className="grid gap-8 lg:grid-cols-12">
+        {/* Left: Cần xử lý (Submissions and AI proposals) */}
+        <section className="space-y-4 lg:col-span-7">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900">Hồ sơ nộp gần đây</h2>
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('portfolio-list')}>
+              Xem tất cả
+            </Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={()=>onNavigate('class-analytics')} rightIcon={<ArrowRightIcon className="h-3.5 w-3.5"/>}>Chi tiết</Button>
-        </div>
-        <div className="space-y-3">
-          {progress.length===0 ? (
-            <p className="text-xs text-slate-500 py-3">Chưa có nhiệm vụ nào được giao.</p>
-          ) : (
-            progress.map(item=>(
-              <div key={item.assignment.id} className="rounded-md border border-slate-200 bg-slate-50/50 p-3">
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div>
-                    <Badge variant="blue">{item.assignment.classId||'Chưa gán lớp'}</Badge>
-                    <h3 className="mt-1 text-xs font-semibold text-slate-900">{item.assignment.title}</h3>
-                  </div>
-                  <b className="text-xs text-slate-700">{item.done}/{item.total}</b>
-                </div>
-                <Progress value={item.pct} max={100} variant={item.pct===100?'success':'indigo'} size="sm"/>
-                <div className="mt-1 text-right text-xs font-medium text-slate-600">{item.pct}%</div>
-              </div>
-            ))
-          )}
-        </div>
-      </Card>
 
-      <Card padding="md" className="lg:col-span-5">
-        <div className="mb-4 border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-semibold text-slate-900">Hồ sơ nộp gần đây</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Các bài nộp mới cần giáo viên đọc và chấm</p>
-        </div>
-        <div className="space-y-2.5">
-          {submissions.slice(0,8).map(p=>{
-            const version=p.versions.at(-1);
-            return (
-              <button
-                key={p.id}
-                onClick={()=>onNavigate('teacher-review',{studentId:p.studentId,assignmentId:p.assignmentId})}
-                className="w-full rounded-md border border-slate-200 p-2.5 text-left hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Avatar name={p.studentName} size="sm"/>
-                  <div className="min-w-0 flex-1">
-                    <b className="block truncate text-xs font-semibold text-slate-900">{p.studentName}</b>
-                    <span className="text-xs text-slate-500">{p.className} • {version?.versionNumber}</span>
+          {submissionsNeedingGrade.length === 0 ? (
+            <div className="border border-slate-200 rounded-md p-6 text-center text-sm text-slate-500 bg-white">
+              Hiện chưa có bài nộp nào cần xử lý.
+            </div>
+          ) : (
+            <div className="border border-slate-200 rounded-md bg-white divide-y divide-slate-100 overflow-hidden">
+              {submissionsNeedingGrade.slice(0, 8).map(p => {
+                const latestVersion = p.versions.at(-1);
+                const assignment = assignments.find(a => a.id === p.assignmentId);
+                const hasPendingAi = pendingAiProposals.some(r => r.student_id === p.studentId && r.assignment_id === p.assignmentId);
+
+                return (
+                  <div
+                    key={p.id}
+                    className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm text-slate-900">{p.studentName}</span>
+                        <span className="text-xs text-slate-500">· Lớp {p.className}</span>
+                      </div>
+                      <div className="text-xs text-slate-600 mt-0.5 truncate">
+                        {assignment?.title || 'Nhiệm vụ'}
+                        {latestVersion && ` · ${latestVersion.versionNumber}`}
+                        {hasPendingAi && (
+                          <span className="ml-2 text-amber-700 font-medium">· Đề xuất AI chờ duyệt</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          onNavigate('teacher-review', {
+                            studentId: p.studentId,
+                            assignmentId: p.assignmentId
+                          })
+                        }
+                      >
+                        Chấm bài
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Right: Nhiệm vụ đang giao */}
+        <section className="space-y-4 lg:col-span-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900">Nhiệm vụ đang giao</h2>
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('class-analytics')}>
+              Xem biểu đồ
+            </Button>
+          </div>
+
+          {assignmentProgress.length === 0 ? (
+            <div className="border border-slate-200 rounded-md p-6 text-center text-sm text-slate-500 bg-white">
+              Chưa có nhiệm vụ nào được giao.
+            </div>
+          ) : (
+            <div className="border border-slate-200 rounded-md bg-white divide-y divide-slate-100 overflow-hidden">
+              {assignmentProgress.map(item => (
+                <div key={item.assignment.id} className="p-3.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-medium text-sm text-slate-900 truncate">
+                      {item.assignment.title}
+                    </div>
+                    <span className="text-xs text-slate-600 shrink-0">
+                      {item.submitted}/{item.total} đã nộp
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-slate-800 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${item.percent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Hạn: {item.assignment.deadline ? new Date(item.assignment.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}</span>
+                    <span>{item.percent}%</span>
                   </div>
                 </div>
-                <div className="mt-1.5 text-xs text-slate-400">Nộp: {version?new Date(version.createdAt).toLocaleString('vi-VN'):'—'}</div>
-              </button>
-            );
-          })}
-          {submissions.length===0&&<p className="text-xs text-slate-500 py-3">Chưa có bài nộp.</p>}
-        </div>
-      </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
-  </div>;
+  );
 };

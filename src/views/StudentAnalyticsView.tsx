@@ -1,15 +1,8 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
-import { Badge, Button, Card, StatCard, PageHeader } from '../components/ui';
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  ChartBarIcon,
-  ChatBubbleLeftRightIcon,
-  DocumentTextIcon,
-  SparklesIcon
-} from '@heroicons/react/24/outline';
+import { Button } from '../components/ui';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface StudentAnalyticsViewProps {
   studentId: string;
@@ -18,12 +11,12 @@ interface StudentAnalyticsViewProps {
 }
 
 const labels: Record<PoeticAxisId, string> = {
-  plot_situation: 'Tình huống',
-  character_detail: 'Nhân vật',
-  narrator_pov: 'Điểm nhìn',
-  space_time: 'Không-thời gian',
-  language_tone_symbol: 'Ngôn ngữ',
-  form_argument: 'Lập luận'
+  plot_situation: 'Tình huống – Cốt truyện',
+  character_detail: 'Nhân vật – Chi tiết',
+  narrator_pov: 'Người kể – Điểm nhìn',
+  space_time: 'Không gian – Thời gian',
+  language_tone_symbol: 'Ngôn ngữ – Giọng điệu',
+  form_argument: 'Tổng hợp & Lập luận'
 };
 
 export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({
@@ -88,16 +81,17 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({
 
   const weakest = axisRows.filter(x => x.last > 0).sort((a, b) => a.last - b.last)[0];
   const resolved = studentFeedback.filter(f => f.resolved).length;
-  const aiCount = studentFeedback.filter(f => f.authorRole === 'ai' || f.sourceAiReviewId).length;
 
   if (!portfolio) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">
-        <h2 className="font-semibold text-slate-900">Chưa có hồ sơ học tập</h2>
-        <p className="mt-1 text-xs text-slate-500">Hồ sơ sẽ xuất hiện sau khi bạn bắt đầu nhiệm vụ.</p>
-        <Button className="mt-4" size="sm" variant="primary" onClick={() => onNavigate('student-dashboard')}>
-          Về danh sách nhiệm vụ
-        </Button>
+      <div className="max-w-md mx-auto mt-16 p-6 text-center space-y-3">
+        <h2 className="text-base font-semibold text-slate-900">Chưa có hồ sơ học tập</h2>
+        <p className="text-sm text-slate-500">Hồ sơ sẽ xuất hiện sau khi bạn bắt đầu nhiệm vụ.</p>
+        <div className="pt-2">
+          <Button size="sm" variant="primary" onClick={() => onNavigate('student-dashboard')}>
+            Về danh sách nhiệm vụ
+          </Button>
+        </div>
       </div>
     );
   }
@@ -105,171 +99,168 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({
   const currentAssignmentTitle = assignments.find(a => a.id === assignmentId)?.title || assignmentId;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-16">
-      <div>
-        <div className="mb-2 flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={() => onNavigate('portfolio-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
-            Quay lại
-          </Button>
-          <span className="text-xs text-slate-300">/</span>
-          <span className="text-xs text-slate-500">{currentAssignmentTitle}</span>
+    <div className="max-w-5xl space-y-8 pb-16">
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('portfolio-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
+              Quay lại
+            </Button>
+            <span>·</span>
+            <span>{currentAssignmentTitle}</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-slate-900">Tiến bộ học tập</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Quỹ đạo phát triển năng lực qua các lần đánh giá của {portfolio.studentName}
+          </p>
         </div>
-        <PageHeader
-          title={`Tiến bộ năng lực — ${portfolio.studentName}`}
-          description="Đánh giá quỹ đạo tăng trưởng năng lực đọc hiểu qua các mốc đánh giá chính thức của giáo viên."
-          actions={
-            portfolio.versions.length >= 2 ? (
-              <Button size="sm" variant="outline" onClick={() => onNavigate('version-diff', { assignmentId })}>
-                So sánh phiên bản
-              </Button>
-            ) : undefined
-          }
-        />
+
+        {portfolio.versions.length >= 2 && (
+          <Button size="sm" variant="outline" onClick={() => onNavigate('version-diff', { assignmentId })}>
+            So sánh phiên bản
+          </Button>
+        )}
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          label="Phiên bản bài nộp"
-          value={String(portfolio.versions.length)}
-          subValue={portfolio.currentActiveVersion}
-          icon={<DocumentTextIcon className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Phản hồi giáo viên"
-          value={String(studentFeedback.length)}
-          subValue={`${resolved} đã tiếp thu`}
-          icon={<ChatBubbleLeftRightIcon className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Gợi ý qua AI"
-          value={String(aiCount)}
-          subValue="Đã được duyệt"
-          icon={<SparklesIcon className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Đánh giá chính thức"
-          value={String(officialSubmissions.length)}
-          subValue={latest ? `Gần nhất: ${latest.sub.totalScore}/${latest.sub.maxScore}` : 'Chờ giáo viên chấm'}
-          icon={<ChartBarIcon className="h-4 w-4" />}
-        />
-      </section>
+      {/* Summary Line (No StatCards!) */}
+      <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong>{portfolio.versions.length}</strong> phiên bản bài nộp</span>
+        <span className="text-slate-300">·</span>
+        <span>
+          <strong>{studentFeedback.length}</strong> phản hồi ({resolved} đã tiếp thu)
+        </span>
+        <span className="text-slate-300">·</span>
+        <span>
+          Điểm gần nhất: <strong>{latest ? `${latest.sub.totalScore}/${latest.sub.maxScore}` : 'Chưa có'}</strong>
+        </span>
+      </div>
 
-      {/* Trajectory Card */}
-      <Card padding="md">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Quỹ đạo năng lực theo 6 trục thi pháp</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Dữ liệu được chuẩn hóa dựa trên các lần chấm Rubric chính thức của giáo viên.
-            </p>
-          </div>
-          {officialSubmissions.length > 0 && (
-            <Badge variant="indigo">
-              {officialSubmissions.length === 1
-                ? 'Đã chấm 1 lần'
-                : `So sánh ${officialSubmissions.length} lần chấm`}
-            </Badge>
-          )}
+      {/* Competency Trajectory Table */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">Năng lực theo 6 trục thi pháp</h2>
+          <span className="text-xs text-slate-500">
+            {officialSubmissions.length > 0
+              ? `${officialSubmissions.length} lần đánh giá chính thức`
+              : 'Chưa có điểm'}
+          </span>
         </div>
 
         {officialSubmissions.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center text-xs text-slate-500">
+          <div className="border border-slate-200 rounded-md p-6 text-center text-sm text-slate-500 bg-white">
             Chưa có đánh giá Rubric chính thức từ giáo viên cho bài tập này.
-            <div className="mt-1 text-slate-400">
-              Khi giáo viên hoàn tất chấm điểm bản nộp của bạn, quỹ đạo tiến bộ sẽ hiển thị tại đây.
-            </div>
           </div>
         ) : (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {axisRows.map(r => (
-                <div key={r.axis} className="rounded-md border border-slate-200 p-3">
-                  <div className="flex items-center justify-between">
-                    <b className="text-xs font-semibold text-slate-800">{labels[r.axis]}</b>
-                    {hasMultipleAssessments && r.last > 0 && (
-                      <Badge variant={r.delta > 0 ? 'emerald' : r.delta < 0 ? 'rose' : 'slate'}>
-                        {r.delta > 0 ? '+' : ''}
-                        {r.delta.toFixed(1)}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-2.5 flex items-center gap-2">
-                    {hasMultipleAssessments ? (
-                      <>
-                        <span className="text-xs text-slate-500">
-                          Đầu: <b className="text-slate-800">{r.first ? r.first.toFixed(1) : '—'}</b>
+          <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
+                <tr>
+                  <th className="py-3 px-4">Trục thi pháp</th>
+                  <th className="py-3 px-4 text-center">Bản đầu</th>
+                  <th className="py-3 px-4 text-center">Gần nhất</th>
+                  <th className="py-3 px-4 text-right">Thay đổi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {axisRows.map(r => (
+                  <tr key={r.axis} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-medium text-slate-900">{labels[r.axis]}</td>
+                    <td className="py-3 px-4 text-center text-slate-600 text-xs">
+                      {r.first ? `${r.first.toFixed(1)}/4` : '—'}
+                    </td>
+                    <td className="py-3 px-4 text-center text-slate-900 font-semibold text-xs">
+                      {r.last ? `${r.last.toFixed(1)}/4` : '—'}
+                    </td>
+                    <td className="py-3 px-4 text-right text-xs">
+                      {hasMultipleAssessments && r.last > 0 ? (
+                        <span className={r.delta > 0 ? 'text-emerald-700 font-medium' : r.delta < 0 ? 'text-rose-700' : 'text-slate-400'}>
+                          {r.delta > 0 ? `+${r.delta.toFixed(1)}` : r.delta < 0 ? r.delta.toFixed(1) : '0.0'}
                         </span>
-                        <ArrowRightIcon className="h-3.5 w-3.5 text-slate-300" />
-                        <span className="text-xs text-slate-500">
-                          Gần nhất: <b className="text-slate-800">{r.last ? r.last.toFixed(1) : '—'}</b>
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-xs text-slate-500">
-                        Điểm đạt: <b className="text-slate-800">{r.last ? `${r.last.toFixed(1)}/4` : '—'}</b>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {weakest && weakest.last > 0 && (
-              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                <b>Trọng tâm cần phát triển:</b> Trục {labels[weakest.axis]} hiện đạt {weakest.last.toFixed(1)}/4. Bạn nên ưu tiên rà soát các phản hồi và dẫn chứng liên quan đến trục này trước khi nộp phiên bản tiếp theo.
-              </div>
-            )}
-          </>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {weakest && weakest.last > 0 && (
+          <div className="border-l-2 border-slate-400 pl-3 py-2 bg-slate-50 rounded-r text-xs text-slate-700">
+            <strong>Trọng tâm cần phát triển:</strong> Trục {labels[weakest.axis]} ({weakest.last.toFixed(1)}/4). Nên rà soát kĩ dẫn chứng và phản hồi trước khi nộp phiên bản tiếp theo.
+          </div>
         )}
 
         {peerSubmissions.length > 0 && (
-          <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-            * Bạn có {peerSubmissions.length} nhận xét đồng đẳng tham khảo (không tính vào quỹ đạo điểm chính thức).
+          <div className="text-xs text-slate-500">
+            * Có {peerSubmissions.length} nhận xét đồng đẳng tham khảo (không tính vào quỹ đạo điểm chính thức).
           </div>
         )}
-      </Card>
+      </section>
 
-      {/* Version and Feedback History */}
-      <Card padding="md">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-slate-900">Lịch sử nộp phiên bản & Nhận xét</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Ghi nhận các mốc phiên bản và phản hồi đã tiếp thu.</p>
-        </div>
-        <div className="space-y-3">
-          {portfolio.versions.length === 0 ? (
-            <p className="text-xs text-slate-500 py-3">Chưa có phiên bản nào được nộp.</p>
-          ) : (
-            portfolio.versions.map(v => {
+      {/* Version & Feedback Timeline */}
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold text-slate-900">Lịch sử nộp bài & Nhận xét</h2>
+
+        {portfolio.versions.length === 0 ? (
+          <div className="border border-slate-200 rounded-md p-6 text-center text-sm text-slate-500 bg-white">
+            Chưa có phiên bản nào được nộp.
+          </div>
+        ) : (
+          <div className="border border-slate-200 rounded-md bg-white divide-y divide-slate-100 overflow-hidden">
+            {portfolio.versions.map(v => {
               const linked = studentFeedback.filter(f => f.versionNumber === v.versionNumber);
+
               return (
-                <div key={v.id} className="rounded-md border border-slate-200 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <b className="text-xs font-semibold text-slate-900">{v.versionNumber}</b>
-                      <span className="ml-2 text-xs text-slate-400">{new Date(v.createdAt).toLocaleString('vi-VN')}</span>
-                      <span className="ml-2 text-xs text-indigo-700 font-medium">
-                        {v.stage === 'prediction' ? 'Dự đoán trước đọc' : v.stage === 'initial' ? 'Khởi đầu' : 'Chỉnh sửa'}
+                <div key={v.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-slate-900">{v.versionNumber}</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-slate-500">
+                        {v.stage === 'prediction' ? 'Dự đoán trước đọc' : v.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}
                       </span>
                     </div>
-                    <Badge variant="blue">{linked.length} phản hồi</Badge>
+                    <span className="text-slate-400">
+                      {new Date(v.createdAt).toLocaleString('vi-VN')}
+                    </span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-600">{v.changeSummary || 'Không có ghi chú thay đổi.'}</p>
-                  {v.revisionReason && (
-                    <p className="mt-0.5 text-xs text-slate-500 italic">Lí do: {v.revisionReason}</p>
+
+                  {v.changeSummary && (
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      <strong>Nội dung đã sửa:</strong> {v.changeSummary}
+                    </p>
                   )}
-                  {linked.map(f => (
-                    <div key={f.id} className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs">
-                      <span className="font-semibold text-slate-800">
-                        {f.authorRole === 'teacher' ? 'Giáo viên' : (f.authorRole === 'peer' ? 'Bạn học' : 'AI')}:
-                      </span>{' '}
-                      {f.comment} {f.resolved && <span className="font-medium text-emerald-700 ml-1">• Đã tiếp thu</span>}
+
+                  {v.revisionReason && (
+                    <p className="text-xs text-slate-500 italic">
+                      Lí do sửa: {v.revisionReason}
+                    </p>
+                  )}
+
+                  {linked.length > 0 && (
+                    <div className="pt-2 space-y-1">
+                      <span className="text-xs font-medium text-slate-700 block">Phản hồi đã nhận:</span>
+                      {linked.map(f => (
+                        <div key={f.id} className="border-l-2 border-slate-300 pl-2 text-xs text-slate-700 py-0.5">
+                          <span className="font-medium">
+                            {f.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học'}:
+                          </span>{' '}
+                          {f.comment}
+                          {f.resolved && <span className="text-emerald-700 ml-1 font-medium">· Đã tiếp thu</span>}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               );
-            })
-          )}
-        </div>
-      </Card>
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

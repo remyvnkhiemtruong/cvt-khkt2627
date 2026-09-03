@@ -23,7 +23,7 @@ const StatePanel: React.FC<{title:string;message:string;actionLabel?:string;onAc
   </div>
 );
 
-export const VersionDiffView: React.FC<VersionDiffViewProps> = ({ assignmentId = 'assign-vo-nhat', v1Number, v2Number, onNavigate }) => {
+export const VersionDiffView: React.FC<VersionDiffViewProps> = ({ assignmentId = '', v1Number, v2Number, onNavigate }) => {
   const currentUser = useAuthStore(state => state.currentUser);
   const { assignments, portfolios, feedbacks, isLoading, dataError, refreshAcademicData } = usePortfolio();
   const [selectedV1, setSelectedV1] = useState(v1Number || '');
@@ -38,18 +38,18 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({ assignmentId =
     if (!assignment) return undefined;
     return relevantPortfolios.find(item => item.studentId === currentUser.id) || relevantPortfolios[0];
   }, [assignment, relevantPortfolios, currentUser.id]);
-  const versions = portfolio?.versions || [];
+  const versions = useMemo(() => portfolio?.versions || [], [portfolio?.versions]);
 
   useEffect(() => {
     if (versions.length === 0) return;
     const validBefore = versions.some(item => item.versionNumber === selectedV1);
     const validAfter = versions.some(item => item.versionNumber === selectedV2);
     if (!validBefore) {
-      const requested = v1Number && versions.find(item => item.versionNumber === v1Number);
+      const requested = v1Number ? versions.find(item => item.versionNumber === v1Number) : undefined;
       setSelectedV1(requested?.versionNumber || versions[0].versionNumber);
     }
     if (!validAfter) {
-      const requested = v2Number && versions.find(item => item.versionNumber === v2Number);
+      const requested = v2Number ? versions.find(item => item.versionNumber === v2Number) : undefined;
       setSelectedV2(requested?.versionNumber || versions[versions.length - 1].versionNumber);
     }
   }, [versions, selectedV1, selectedV2, v1Number, v2Number]);

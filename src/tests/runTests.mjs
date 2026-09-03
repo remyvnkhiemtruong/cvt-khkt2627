@@ -44,6 +44,18 @@ test('Version Diff không dựng phiên bản giả và có guard dữ liệu th
 test('Teacher Review chỉ dùng hàng đợi và feedback production',()=>{const review=read('src/views/TeacherReviewView.tsx');assert(!review.includes('user-std-1'));assert(!review.includes('mockDb'));assert(!review.includes('saveFeedback'));assert(review.includes('addAnchoredFeedback'));assert(review.includes('Object.values(portfolios)'));});
 test('Không còn simulated state trong ba workspace trọng yếu',()=>{for(const path of ['src/views/PortfolioEditorView.tsx','src/views/VersionDiffView.tsx','src/views/TeacherReviewView.tsx']){const source=read(path);assert(!source.includes('Network status simulation'));assert(!source.includes('setTimeout('),`${path} còn delay giả`);}});
 test('Editor chỉ cho học sinh ghi bài',()=>{const routes=read('src/app/router/routes.tsx');assert(routes.includes("editor: { id:'editor', path:'/student/editor', title:'Không gian viết & phân tích', allowedRoles:['student'] }"));});
+test('Không hardcode assign-vo-nhat trong navigation shortcut và view chính',()=>{
+  for(const path of ['src/App.tsx','src/views/AssignmentListView.tsx','src/views/PortfolioListView.tsx','src/views/VersionDiffView.tsx']){
+    assert(!read(path).includes("'assign-vo-nhat'"),`${path} còn hardcode assign-vo-nhat`);
+  }
+});
+test('Recommendation engine xử lý an toàn khi availableAssignments rỗng',()=>{
+  const engine=read('src/utils/recommendationEngine.ts');
+  assert(engine.includes('if (!fallback) return EMPTY_RECOMMENDATION;'),'Recommendation engine thiếu guard fallback');
+  const guardIndex=engine.indexOf('if (!fallback)');
+  const fallbackIdIndex=engine.indexOf('fallback.id');
+  assert(guardIndex>=0&&fallbackIdIndex>guardIndex,'fallback.id phải được gọi sau guard !fallback');
+});
 test('Không còn simulated API service cũ',()=>{const removed=['src/services/api/assignmentService.ts','src/services/api/portfolioService.ts','src/services/api/rubricService.ts','src/services/api/analyticsService.ts'];assert(removed.every(path=>!fs.existsSync(path)));});
 
 const failed=results.filter(result=>result.status==='FAIL');

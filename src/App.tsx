@@ -6,7 +6,7 @@ import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
 import { APP_ROUTES } from './app/router/routes';
-import { PortfolioProvider } from './contexts/PortfolioContext';
+import { PortfolioProvider, usePortfolio } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 
@@ -55,6 +55,7 @@ const AppContent: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
   const clearAuth = useAuthStore((state) => state.logout);
+  const { assignments } = usePortfolio();
   const initial = locationState();
   const [sessionChecking, setSessionChecking] = useState(true);
   const [currentView, setCurrentView] = useState<string>(initial.view);
@@ -127,16 +128,18 @@ const AppContent: React.FC = () => {
   const routeConfig = APP_ROUTES[currentView];
   if (routeConfig?.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig.allowedRoles.join(', ')} /></MainLayout>;
 
+  const targetAssignmentId = navParams.assignmentId || assignments[0]?.id || '';
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <StudentDashboardView onNavigate={handleNavigate} />;
       case 'assignment-list': case 'student-dashboard': return <AssignmentListView onNavigate={handleNavigate} />;
       case 'portfolio-list': return <PortfolioListView onNavigate={handleNavigate} />;
-      case 'editor': return <PortfolioEditorView assignmentId={navParams.assignmentId || 'assign-vo-nhat'} onNavigate={handleNavigate} />;
-      case 'version-diff': return <VersionDiffView assignmentId={navParams.assignmentId || 'assign-vo-nhat'} v1Number={navParams.v1Number} v2Number={navParams.v2Number} onNavigate={handleNavigate} />;
-      case 'student-analytics': return <StudentAnalyticsView studentId={navParams.studentId || currentUser.id} assignmentId={navParams.assignmentId || 'assign-vo-nhat'} onNavigate={handleNavigate} />;
+      case 'editor': return <PortfolioEditorView assignmentId={targetAssignmentId} onNavigate={handleNavigate} />;
+      case 'version-diff': return <VersionDiffView assignmentId={targetAssignmentId} v1Number={navParams.v1Number} v2Number={navParams.v2Number} onNavigate={handleNavigate} />;
+      case 'student-analytics': return <StudentAnalyticsView studentId={navParams.studentId || currentUser.id} assignmentId={targetAssignmentId} onNavigate={handleNavigate} />;
       case 'teacher-dashboard': return <TeacherDashboardView onNavigate={handleNavigate} />;
-      case 'teacher-review': return <TeacherReviewView studentId={navParams.studentId || ''} assignmentId={navParams.assignmentId || 'assign-vo-nhat'} isPeerMode={navParams.isPeerMode === 'true' || navParams.isPeerMode === true} onNavigate={handleNavigate} />;
+      case 'teacher-review': return <TeacherReviewView studentId={navParams.studentId || ''} assignmentId={targetAssignmentId} isPeerMode={navParams.isPeerMode === 'true' || navParams.isPeerMode === true} onNavigate={handleNavigate} />;
       case 'assignment-builder': return <AssignmentBuilderView onNavigate={handleNavigate} />;
       case 'rubric-management': return <RubricManagementView onNavigate={handleNavigate} />;
       case 'literature-texts': return <LiteratureTextsView onNavigate={handleNavigate} />;

@@ -47,7 +47,7 @@ export function exportPortfolioAsHTML(
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Hồ sơ đọc thi pháp - ${portfolio.studentName} - ${version.versionNumber}</title>
+        <title>Học tốt Ngữ Văn - ${portfolio.studentName} - ${version.versionNumber}</title>
         <meta charset="utf-8" />
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; background: #fff; }
@@ -57,7 +57,7 @@ export function exportPortfolioAsHTML(
       </head>
       <body>
         <div class="header">
-          <span class="badge">HỒ SƠ ĐỌC SỐ THEO TRỤC THI PHÁP</span>
+          <span class="badge">HỌC TỐT NGỮ VĂN - THEO TRỤC THI PHÁP</span>
           <h1 style="margin: 8px 0 4px 0;">Học sinh: ${portfolio.studentName} - Lớp: ${portfolio.className}</h1>
           <p style="margin: 0; color: #64748b;">Phiên bản: <strong>${version.versionNumber}</strong> | Ngày tạo: ${version.createdAt.slice(0, 10)} | Chú thích: ${version.changeSummary}</p>
         </div>

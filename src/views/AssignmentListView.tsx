@@ -178,13 +178,15 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
           >
             Xem Danh sách Hồ sơ đọc
           </Button>
-          <Button
-            variant="academic"
-            onClick={() => onNavigate('editor', { assignmentId: 'assign-vo-nhat' })}
-            rightIcon={<ArrowRightIcon className="w-4 h-4" />}
-          >
-            Làm bài trọng tâm
-          </Button>
+          {assignments[0] && (
+            <Button
+              variant="academic"
+              onClick={() => onNavigate('editor', { assignmentId: assignments[0].id })}
+              rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+            >
+              Làm bài trọng tâm
+            </Button>
+          )}
         </div>
       </header>
 

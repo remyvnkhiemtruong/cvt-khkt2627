@@ -84,7 +84,7 @@ export const DesignSystemKitView: React.FC = () => {
             Thư Viện Chuẩn Hóa Design System & UI Kit
           </h1>
           <p className="text-small text-slate-500">
-            Tổng hợp toàn bộ Semantic Tokens, Typography, Color Palette, Base Components, và Interactive States phục vụ hệ thống hồ sơ đọc số THPT.
+            Tổng hợp toàn bộ Semantic Tokens, Typography, Color Palette, Base Components, và Interactive States phục vụ hệ thống Học tốt Ngữ Văn.
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export const DesignSystemKitView: React.FC = () => {
 
               <div className="pt-3">
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Heading 1 (30–32px / 700)</span>
-                <h1 className="text-h1 text-slate-900 mt-1">Hồ Sơ Đọc Số THPT - Lưu Phiên Bản & Visual Diff</h1>
+                <h1 className="text-h1 text-slate-900 mt-1">Học tốt Ngữ Văn - Lưu Phiên Bản & Visual Diff</h1>
               </div>
 
               <div className="pt-3">
@@ -148,25 +148,13 @@ export const DesignSystemKitView: React.FC = () => {
 
               <div className="pt-3">
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Heading 3 (20–22px / 600)</span>
-                <h3 className="text-h3 text-slate-900 mt-1">Ma Trận Đánh Giá Rubric 6 Trục Thi Pháp</h3>
+                <h3 className="text-h3 text-slate-900 mt-1">Nghệ Thuật Xây Dựng Tình Huống Truyện</h3>
               </div>
 
               <div className="pt-3">
-                <span className="text-caption font-semibold text-slate-400 block uppercase">Heading 4 (18px / 600)</span>
-                <h4 className="text-h4 text-slate-900 mt-1">Chi tiết đắt giá: Bát cháo cám trong tác phẩm Vợ nhặt</h4>
-              </div>
-
-              <div className="pt-3">
-                <span className="text-caption font-semibold text-slate-400 block uppercase">Body Large (17px / 400)</span>
-                <p className="text-body-lg text-slate-800 mt-1">
-                  Người kể chuyện ngôi thứ ba giấu mình nhưng có khả năng thấu suốt diễn biến nội tâm của từng nhân vật.
-                </p>
-              </div>
-
-              <div className="pt-3">
-                <span className="text-caption font-semibold text-slate-400 block uppercase">Body Standard (15–16px / 400)</span>
+                <span className="text-caption font-semibold text-slate-400 block uppercase">Body (15–16px / 400)</span>
                 <p className="text-body text-slate-700 mt-1">
-                  Đoạn văn phân tích thể hiện rõ sự thấu hiểu về hoàn cảnh bần hàn nhưng tràn đầy tình người của người dân xóm ngụ cư trước nạn đói 1945.
+                  Đoạn văn phân tích thi pháp: Chi tiết chiếc lá sen khô bọc lấy nắm xôi không đơn thuần là chi tiết miêu tả hiện thực mà đã trở thành biểu tượng nghệ thuật mang chiều sâu tâm lý.
                 </p>
               </div>
 
@@ -174,7 +162,7 @@ export const DesignSystemKitView: React.FC = () => {
                 <span className="text-caption font-semibold text-slate-400 block uppercase">Small (13–14px) & Caption (12px)</span>
                 <div className="flex items-center gap-6 mt-1">
                   <span className="text-small text-slate-600">Text Small: Đã lưu tự động lúc 14:30</span>
-                  <span className="text-caption text-slate-400">Text Caption: ID: assign-vo-nhat • Mã HS: user-std-1</span>
+                  <span className="text-caption text-slate-400">Text Caption: Phiên bản v1.0 • Đã đồng bộ máy chủ</span>
                 </div>
               </div>
 

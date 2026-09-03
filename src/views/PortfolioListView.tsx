@@ -127,10 +127,10 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-semibold border border-indigo-200 mb-2">
             <DocumentDuplicateIcon className="w-4 h-4" />
-            Hồ Sơ Đọc Số Cá Nhân Có Lưu Phiên Bản
+            Hồ Sơ Học Tập Cá Nhân Có Lưu Phiên Bản
           </div>
           <h1 className="text-h2 font-bold text-slate-900 tracking-tight">
-            Danh Sách Hồ Sơ Đọc Số (Portfolio List)
+            Danh Sách Hồ Sơ Học Tập (Portfolio List)
           </h1>
           <p className="text-small text-slate-500 mt-1">
             Tổng hợp toàn bộ quá trình đọc hiểu, bản thảo, snapshot phiên bản và nhận xét sư phạm
@@ -145,13 +145,15 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
           >
             Quay lại Nhiệm vụ
           </Button>
-          <Button
-            variant="academic"
-            onClick={() => onNavigate('editor', { assignmentId: 'assign-vo-nhat' })}
-            rightIcon={<ArrowRightIcon className="w-4 h-4" />}
-          >
-            Viết tiếp bài gần nhất
-          </Button>
+          {(filteredList[0]?.assignmentId || assignments[0]?.id) && (
+            <Button
+              variant="academic"
+              onClick={() => onNavigate('editor', { assignmentId: filteredList[0]?.assignmentId || assignments[0]?.id })}
+              rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+            >
+              Viết tiếp bài gần nhất
+            </Button>
+          )}
         </div>
       </header>
 

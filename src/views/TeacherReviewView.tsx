@@ -62,11 +62,10 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({ studentId 
   const assignment=currentPortfolio ? assignments.find(item=>item.id===currentPortfolio.assignmentId) : undefined;
   const literatureText=assignment ? literatureTexts.find(item=>item.id===assignment.textId) : undefined;
 
+  const latestVersionNumber = currentPortfolio?.versions[currentPortfolio.versions.length-1]?.versionNumber || '';
   useEffect(()=>{
-    if(!currentPortfolio){setSelectedVersion('');return;}
-    const latest=currentPortfolio.versions[currentPortfolio.versions.length-1];
-    setSelectedVersion(latest?.versionNumber || '');
-  },[currentPortfolio?.id]);
+    setSelectedVersion(latestVersionNumber);
+  },[currentPortfolio?.id, latestVersionNumber]);
 
   useEffect(()=>{
     setRubricScores(previous=>{

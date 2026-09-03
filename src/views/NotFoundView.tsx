@@ -21,7 +21,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onNavigate }) => {
           Địa Chỉ Yêu Cầu Không Tồn Tại
         </h1>
         <p className="text-small text-slate-500 leading-relaxed">
-          Đường dẫn bạn vừa truy cập không tồn tại hoặc đã được chuyển sang phân hệ khác trong hệ thống hồ sơ đọc số.
+          Đường dẫn bạn vừa truy cập không tồn tại hoặc đã được chuyển sang phân hệ khác trong hệ thống Học tốt Ngữ Văn.
         </p>
       </div>
 

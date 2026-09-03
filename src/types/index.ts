@@ -1,5 +1,21 @@
 export type UserRole = 'student' | 'teacher' | 'peer' | 'admin' | 'researcher' | 'ai';
 
+export interface UserProfile {
+  phone?: string;
+  dateOfBirth?: string;
+  school?: string;
+  schoolYear?: string;
+  grade?: string;
+  studentCode?: string;
+  staffCode?: string;
+  department?: string;
+  bio?: string;
+  learningGoal?: string;
+  favoriteGenres?: string[];
+  favoriteAuthors?: string[];
+  favoriteWorks?: string[];
+}
+
 export interface User {
   id: string;
   name: string;
@@ -11,6 +27,7 @@ export interface User {
   mustChangePassword?: boolean;
   accountStatus?: 'active' | 'locked';
   lastLogin?: string | null;
+  profile?: UserProfile;
 }
 
 export type PoeticAxisId = 

@@ -5,7 +5,8 @@ export default async function handler(req:any,res:any) {
     const counts=await academicHealth();
     return res.status(200).json({
       ok:true,
-      service:'cvt-khkt2627-api',
+      service:'hoc-tot-ngu-van-api',
+      product:'Học tốt Ngữ Văn',
       version:'backend-v2',
       academicData:'postgresql',
       aiFeedbackMode:'manual-review-queue',
@@ -15,6 +16,8 @@ export default async function handler(req:any,res:any) {
   } catch(error:any) {
     return res.status(500).json({
       ok:false,
+      service:'hoc-tot-ngu-van-api',
+      product:'Học tốt Ngữ Văn',
       version:'backend-v2',
       message:error?.message||'Backend unavailable',
       timestamp:new Date().toISOString()

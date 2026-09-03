@@ -6,7 +6,7 @@ import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
 import { APP_ROUTES } from './app/router/routes';
-import { PortfolioProvider, usePortfolio } from './contexts/PortfolioContext';
+import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 
@@ -55,7 +55,6 @@ const AppContent: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
   const clearAuth = useAuthStore((state) => state.logout);
-  const { assignments } = usePortfolio();
   const initial = locationState();
   const [sessionChecking, setSessionChecking] = useState(true);
   const [currentView, setCurrentView] = useState<string>(initial.view);
@@ -128,7 +127,7 @@ const AppContent: React.FC = () => {
   const routeConfig = APP_ROUTES[currentView];
   if (routeConfig?.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig.allowedRoles.join(', ')} /></MainLayout>;
 
-  const targetAssignmentId = navParams.assignmentId || assignments[0]?.id || '';
+  const targetAssignmentId = navParams.assignmentId || '';
 
   const renderView = () => {
     switch (currentView) {

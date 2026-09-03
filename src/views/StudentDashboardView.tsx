@@ -26,10 +26,30 @@ export const StudentDashboardView:React.FC<StudentDashboardViewProps>=({onNaviga
   const unresolvedFeedbacks=myFeedbacks.filter(item=>!item.resolved);
   const myRubrics=useMemo(()=>rubricSubmissions.filter(item=>item.studentId===currentUser.id),[rubricSubmissions,currentUser.id]);
 
-  const activeAssignment=assignments.find(assignment=>{
-    const portfolio=portfolios[`port-${currentUser.id}-${assignment.id}`];
-    return portfolio && portfolio.status!=='completed';
-  }) || assignments[0];
+  const activeAssignment = useMemo(() => {
+    // Priority 1: Has feedback received or is in revision
+    const revising = assignments.find(assignment => {
+      const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
+      return port && (port.status === 'feedback_received' || port.status === 'revising' || port.status === 'v2_in_revision');
+    });
+    if (revising) return revising;
+
+    // Priority 2: Pending unfinished draft
+    const unfinished = assignments.find(assignment => {
+      const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
+      return port && port.status !== 'completed' && !myRubrics.some(r => r.assignmentId === assignment.id && r.evaluatorRole === 'teacher');
+    });
+    if (unfinished) return unfinished;
+
+    // Priority 3: Not yet started, closest deadline first
+    const unstarted = assignments.filter(a => !portfolios[`port-${currentUser.id}-${a.id}`]);
+    if (unstarted.length > 0) {
+      return [...unstarted].sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime())[0];
+    }
+
+    // Priority 4: If all are completed, return null rather than falling back to assignments[0]
+    return null;
+  }, [assignments, portfolios, currentUser.id, myRubrics]);
   const activePortfolio=activeAssignment?portfolios[`port-${currentUser.id}-${activeAssignment.id}`]:undefined;
   const activeText=activeAssignment?literatureTexts.find(text=>text.id===activeAssignment.textId):undefined;
   const activeVersion=activePortfolio?.currentActiveVersion||'v1.0 (nháp)';

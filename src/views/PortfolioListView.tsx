@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuthStore } from '../app/store/useAuthStore';
-import { usePortfolioStore } from '../app/store/usePortfolioStore';
-import { mockDb } from '../services/mockApi/mockDb';
+import { usePortfolio } from '../contexts/PortfolioContext';
+import type { StudentPortfolio, Assignment, LiteratureText, FeedbackItem, RubricAssessmentSubmission } from '../types';
 import {
   Button,
   Badge,
@@ -25,43 +25,54 @@ interface PortfolioListViewProps {
 
 export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate }) => {
   const { currentUser } = useAuthStore();
-  const { portfolios, lastSavedTime } = usePortfolioStore();
+  const { portfolios, assignments, literatureTexts, rubricSubmissions, feedbacks: allFeedbacks } = usePortfolio();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [groupBy, setGroupBy] = useState<'assignment' | 'text' | 'status' | 'updated'>('assignment');
+  const [groupBy, setGroupBy] = useState<'assignment' | 'text'>('assignment');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const assignments = mockDb.getAssignments();
-  const literatureTexts = mockDb.getLiteratureTexts();
-  const rubricSubmissions = mockDb.getRubricSubmissions();
-  const allFeedbacks = mockDb.getFeedbacks();
+  // Find most recent active portfolio based on lastAutosavedAt
+  const mostRecentPortfolio = useMemo(() => {
+    const allPortfolios: StudentPortfolio[] = Object.values(portfolios);
+    const active = allPortfolios.filter(
+      p => p.studentId === currentUser.id && p.status !== 'completed'
+    );
+    if (!active.length) return null;
+    return active.sort((a, b) => {
+      const timeA = new Date(a.lastAutosavedAt || 0).getTime();
+      const timeB = new Date(b.lastAutosavedAt || 0).getTime();
+      return timeB - timeA;
+    })[0];
+  }, [portfolios, currentUser.id]);
 
   // Aggregate student portfolios
   const portfolioList = useMemo(() => {
-    return assignments.map(assignment => {
-      const textObj = literatureTexts.find(t => t.id === assignment.textId);
-      const port = portfolios[`port-${currentUser.id}-${assignment.id}`];
+    const list = assignments.map((assignment: Assignment) => {
+      const textObj = literatureTexts.find((t: LiteratureText) => t.id === assignment.textId);
+      const port: StudentPortfolio | undefined = portfolios[`port-${currentUser.id}-${assignment.id}`];
       const versions = port?.versions || [];
       const versionCount = versions.length;
       const currentVersion = port?.currentActiveVersion || (versionCount > 0 ? versions[versions.length - 1].versionNumber : 'v1.0 (nháp)');
 
-      const myFbs = allFeedbacks.filter(f => f.studentId === currentUser.id && f.assignmentId === assignment.id);
-      const unresolvedFbCount = myFbs.filter(f => !f.resolved).length;
+      const myFbs = allFeedbacks.filter((f: FeedbackItem) => f.studentId === currentUser.id && f.assignmentId === assignment.id);
+      const unresolvedFbCount = myFbs.filter((f: FeedbackItem) => !f.resolved).length;
 
-      const myRubrics = rubricSubmissions.filter(s => s.studentId === currentUser.id && s.assignmentId === assignment.id);
-      const latestTeacherRubric = myRubrics.find(s => s.evaluatorRole === 'teacher');
-      const scoreDisplay = latestTeacherRubric ? `${latestTeacherRubric.totalScore}/${latestTeacherRubric.maxScore} đ` : 'Chờ chấm';
+      const myRubrics = rubricSubmissions.filter((s: RubricAssessmentSubmission) => s.studentId === currentUser.id && s.assignmentId === assignment.id);
+      const latestTeacherRubric = myRubrics
+        .filter((s: RubricAssessmentSubmission) => s.evaluatorRole === 'teacher')
+        .sort((a: RubricAssessmentSubmission, b: RubricAssessmentSubmission) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
 
-      // Status determination
-      let statusLabel = 'Chưa bắt đầu';
-      let statusVariant: 'slate' | 'blue' | 'emerald' | 'amber' | 'purple' = 'slate';
+      let scoreDisplay = 'Chưa chấm';
+      if (latestTeacherRubric) {
+        scoreDisplay = `${latestTeacherRubric.totalScore}/${latestTeacherRubric.maxScore} đ`;
+      }
 
-      if (versionCount === 0) {
-        statusLabel = 'Đang viết nháp';
-        statusVariant = 'blue';
-      } else if (versionCount === 1) {
+      let statusLabel = 'Đang viết nháp';
+      let statusVariant: 'slate' | 'blue' | 'purple' | 'amber' | 'emerald' = 'slate';
+
+      if (versionCount === 1) {
         if (unresolvedFbCount > 0) {
           statusLabel = 'Cần chỉnh sửa';
           statusVariant = 'amber';
@@ -88,16 +99,24 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
         textAuthor: textObj?.author || 'Tác giả',
         currentVersion,
         versionCount,
-        lastSaved: lastSavedTime || 'vừa xong',
         unresolvedFbCount,
         scoreDisplay,
         statusLabel,
         statusVariant,
         hasMultipleVersions: versionCount >= 2,
-        updatedAt: port?.lastAutosavedAt || new Date().toISOString()
+        updatedAt: port?.lastAutosavedAt || '',
+        lastSaved: port?.lastAutosavedAt
+          ? new Date(port.lastAutosavedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+          : 'Chưa lưu'
       };
     });
-  }, [assignments, literatureTexts, portfolios, allFeedbacks, rubricSubmissions, currentUser, lastSavedTime]);
+
+    // Apply real grouping / sorting
+    if (groupBy === 'text') {
+      return list.sort((a, b) => a.textTitle.localeCompare(b.textTitle, 'vi'));
+    }
+    return list.sort((a, b) => a.assignmentTitle.localeCompare(b.assignmentTitle, 'vi'));
+  }, [assignments, literatureTexts, portfolios, allFeedbacks, rubricSubmissions, currentUser.id, groupBy]);
 
   // Filter and search
   const filteredList = useMemo(() => {
@@ -135,10 +154,10 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
             >
               Quay lại Nhiệm vụ
             </Button>
-            {(filteredList[0]?.assignmentId || assignments[0]?.id) && (
+            {mostRecentPortfolio && (
               <Button
                 variant="primary"
-                onClick={() => onNavigate('editor', { assignmentId: filteredList[0]?.assignmentId || assignments[0]?.id })}
+                onClick={() => onNavigate('editor', { assignmentId: mostRecentPortfolio.assignmentId })}
                 rightIcon={<ArrowRightIcon className="w-4 h-4" />}
               >
                 Viết tiếp bài gần nhất
@@ -278,7 +297,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onNavigate('student-analytics')}
+                    onClick={() => onNavigate('student-analytics', { studentId: currentUser.id, assignmentId: item.assignmentId })}
                     leftIcon={<ChartBarIcon className="w-3.5 h-3.5" />}
                     className="text-caption"
                   >

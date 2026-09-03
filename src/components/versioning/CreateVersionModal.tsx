@@ -1,189 +1,213 @@
 import React, { useState } from 'react';
 import { Button, Modal, Badge } from '../ui';
-import {
-  PlusIcon,
-  MinusIcon,
-  PencilSquareIcon
-} from '@heroicons/react/24/outline';
+import type { FeedbackItem } from '../../types';
 
 interface CreateVersionModalProps {
   isOpen: boolean;
   onClose: () => void;
   nextVersionNumber: string;
-  onConfirm: (data: { reason: string; note: string; labels: string[] }) => void;
-  stats?: {
-    addedWords: number;
-    deletedWords: number;
-    changedBlocks: number;
-  };
+  isInitial?: boolean;
+  isPrediction?: boolean;
+  feedbacks?: FeedbackItem[];
+  onConfirm: (data: {
+    changeSummary: string;
+    revisionReason: string;
+    linkedFeedbackIds: string[];
+    changeSource: string;
+    confidence: number;
+    stage?: 'prediction' | 'initial' | 'revision';
+  }) => Promise<void>;
 }
 
 export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
   isOpen,
   onClose,
   nextVersionNumber,
-  onConfirm,
-  stats = { addedWords: 126, deletedWords: 32, changedBlocks: 4 }
+  isInitial = false,
+  isPrediction = false,
+  feedbacks = [],
+  onConfirm
 }) => {
-  const [reason, setReason] = useState('Sau phản hồi của giáo viên');
-  const [note, setNote] = useState('');
-  const [selectedLabels, setSelectedLabels] = useState<string[]>([
-    'Bổ sung dẫn chứng',
-    'Lí giải sâu hơn'
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [changeSummary, setChangeSummary] = useState('');
+  const [revisionReason, setRevisionReason] = useState('');
+  const [linkedFeedbackIds, setLinkedFeedbackIds] = useState<string[]>([]);
+  const [changeSource, setChangeSource] = useState('self');
+  const [confidence, setConfidence] = useState<number>(3);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const availableReasons = [
-    'Sau phản hồi của giáo viên',
-    'Sau phản biện của bạn học',
-    'Tự đánh giá và đối chiếu Rubric',
-    'Bổ sung dẫn chứng nghệ thuật & điểm nhìn',
-    'Hoàn thiện hồ sơ trước hạn nộp'
-  ];
-
-  const changeLabels = [
-    'Bổ sung dẫn chứng',
-    'Sửa diễn đạt',
-    'Thay đổi luận điểm',
-    'Lí giải sâu hơn',
-    'Sửa sai kiến thức',
-    'Tổ chức lại cấu trúc'
-  ];
-
-  const toggleLabel = (label: string) => {
-    if (selectedLabels.includes(label)) {
-      setSelectedLabels(selectedLabels.filter(l => l !== label));
-    } else {
-      setSelectedLabels([...selectedLabels, label]);
-    }
+  const toggleFeedback = (id: string) => {
+    setLinkedFeedbackIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
   };
 
-  const handleConfirm = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onConfirm({
-        reason,
-        note: note || `Đóng băng phiên bản ${nextVersionNumber} theo lý do: ${reason}`,
-        labels: selectedLabels
+  const handleSubmit = async () => {
+    if (!isInitial && !changeSummary.trim()) {
+      setErrorMsg('Vui lòng mô tả tóm tắt nội dung bạn đã sửa.');
+      return;
+    }
+    if (!isInitial && !revisionReason.trim()) {
+      setErrorMsg('Vui lòng giải thích lí do bạn thực hiện chỉnh sửa này.');
+      return;
+    }
+
+    setErrorMsg('');
+    setIsSubmitting(true);
+    try {
+      const stage = isPrediction ? 'prediction' : (isInitial ? 'initial' : 'revision');
+      await onConfirm({
+        changeSummary: changeSummary.trim() || (isPrediction ? 'Bản dự đoán trước đọc' : isInitial ? 'Nộp bản đầu tiên' : 'Chỉnh sửa bài viết'),
+        revisionReason: revisionReason.trim() || (isInitial ? 'Bản đầu tiên' : 'Chỉnh sửa theo yêu cầu'),
+        linkedFeedbackIds,
+        changeSource: isInitial ? (isPrediction ? 'initial_prediction' : 'initial_response') : changeSource,
+        confidence,
+        stage
       });
       onClose();
-    }, 500);
+    } catch {
+      setErrorMsg('Không thể nộp phiên bản. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Tạo Phiên Bản Nghiên Cứu Mới"
-      description="Lưu bản ghi hiện tại thành một mốc phiên bản để phục vụ so sánh và nhận xét tiến trình."
+      title={isPrediction ? 'Nộp Bản Dự Đoán Trước Đọc' : isInitial ? `Nộp Bài Lần Đầu (${nextVersionNumber})` : `Nộp Phiên Bản Mới (${nextVersionNumber})`}
+      description="Bài nộp sẽ được lưu thành phiên bản cố định để theo dõi tiến trình và gửi vào hàng đợi nhận xét."
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Hủy bỏ
           </Button>
           <Button
             variant="primary"
-            isLoading={isLoading}
-            onClick={handleConfirm}
+            isLoading={isSubmitting}
+            onClick={handleSubmit}
             className="bg-indigo-900 text-white font-bold"
           >
-            Tạo phiên bản {nextVersionNumber}
+            {isPrediction ? 'Nộp bản dự đoán' : isInitial ? 'Nộp bài (gửi phản hồi)' : `Nộp phiên bản ${nextVersionNumber}`}
           </Button>
         </>
       }
     >
       <div className="space-y-4 text-xs text-slate-700">
-        {/* Version Badge & Notice */}
-        <div className="p-3 bg-indigo-50/70 rounded-md border border-indigo-200 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-indigo-700 block">
-              Phiên bản tiếp theo:
-            </span>
-            <span className="text-sm font-bold text-indigo-950">
-              Phiên bản {nextVersionNumber}
-            </span>
+        {errorMsg && (
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5 text-rose-700 font-medium">
+            {errorMsg}
           </div>
-          <Badge variant="purple" size="sm">
-            Mốc lưu
+        )}
+
+        <div className="flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50/70 p-3">
+          <div>
+            <span className="block text-[11px] font-semibold text-indigo-700">Mốc phiên bản</span>
+            <span className="font-bold text-indigo-950 text-sm">{nextVersionNumber}</span>
+          </div>
+          <Badge variant="indigo">
+            {isPrediction ? 'Dự đoán trước đọc' : isInitial ? 'Bản khởi đầu' : 'Bản sửa đổi (Revision)'}
           </Badge>
         </div>
 
-        {/* Change Statistics Preview */}
-        <div className="space-y-1.5">
-          <label className="block font-semibold text-slate-700 text-xs">
-            Thay đổi từ lần lưu gần nhất:
-          </label>
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="p-2 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center justify-center gap-1">
-              <PlusIcon className="w-3.5 h-3.5" />
-              <span>+{stats.addedWords} từ</span>
-            </div>
-            <div className="p-2 rounded-md bg-rose-50 border border-rose-200 text-rose-800 font-semibold flex items-center justify-center gap-1">
-              <MinusIcon className="w-3.5 h-3.5" />
-              <span>-{stats.deletedWords} từ</span>
-            </div>
-            <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center justify-center gap-1">
-              <PencilSquareIcon className="w-3.5 h-3.5" />
-              <span>~{stats.changedBlocks} đoạn sửa</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Reason Selector */}
-        <div className="space-y-1">
-          <label className="block font-semibold text-slate-700 text-xs">
-            Lý do tạo phiên bản:
-          </label>
-          <select
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-md text-xs py-1.5 px-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            {availableReasons.map((r, idx) => (
-              <option key={idx} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Pedagogical Change Labels */}
-        <div className="space-y-1.5">
-          <label className="block font-semibold text-slate-700 text-xs">
-            Gắn nhãn thay đổi nội dung:
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {changeLabels.map(label => {
-              const isSelected = selectedLabels.includes(label);
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => toggleLabel(label)}
-                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition ${
-                    isSelected
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  {isSelected ? `✓ ${label}` : `+ ${label}`}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Notes / Changelog */}
-        <div className="space-y-1">
-          <label className="block font-bold text-slate-800">
-            Ghi chú chi tiết về phiên bản này:
+        {/* Change Summary */}
+        <div>
+          <label className="block font-semibold text-slate-800 mb-1">
+            {isInitial ? 'Ghi chú bài nộp:' : 'Tôi đã sửa gì? *'}
           </label>
           <textarea
             rows={3}
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Mô tả cụ thể những điểm mới đã hoàn thiện, phản hồi đã tiếp thu..."
-            className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-800"
+            value={changeSummary}
+            onChange={e => setChangeSummary(e.target.value)}
+            placeholder={isInitial ? 'Ghi chú các trọng tâm phân tích của bạn…' : 'Ví dụ: Đã bổ sung 2 dẫn chứng về người kể chuyện, sửa lại đoạn kết…'}
+            className="w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
+        </div>
+
+        {/* V2+ specific fields */}
+        {!isInitial && (
+          <>
+            <div>
+              <label className="block font-semibold text-slate-800 mb-1">Vì sao em sửa? *</label>
+              <textarea
+                rows={2}
+                value={revisionReason}
+                onChange={e => setRevisionReason(e.target.value)}
+                placeholder="Giải thích lí do sửa (do phát hiện thiếu dẫn chứng, theo nhận xét giáo viên…)"
+                className="w-full rounded-md border border-slate-300 p-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-800 mb-1">Nguồn thay đổi:</label>
+              <select
+                value={changeSource}
+                onChange={e => setChangeSource(e.target.value)}
+                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs outline-none focus:border-indigo-500"
+              >
+                <option value="self">Tự phát hiện & chỉnh sửa</option>
+                <option value="teacher_feedback">Dựa trên phản hồi giáo viên</option>
+                <option value="peer_feedback">Dựa trên phản hồi bạn học</option>
+                <option value="mixed">Hỗn hợp (cả tự sửa và phản hồi)</option>
+              </select>
+            </div>
+
+            {feedbacks.length > 0 && (
+              <div>
+                <label className="block font-semibold text-slate-800 mb-1.5">
+                  Em sửa dựa trên phản hồi nào? (Chọn các góp ý liên quan)
+                </label>
+                <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-md border border-slate-200 bg-slate-50 p-2">
+                  {feedbacks.map(f => (
+                    <label
+                      key={f.id}
+                      className="flex items-start gap-2 cursor-pointer rounded p-1 hover:bg-white text-[11px]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={linkedFeedbackIds.includes(f.id)}
+                        onChange={() => toggleFeedback(f.id)}
+                        className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold text-slate-800">
+                          {f.authorRole === 'teacher' ? 'Giáo viên' : (f.authorRole === 'peer' ? 'Bạn học' : 'AI')}:
+                        </span>{' '}
+                        <span className="text-slate-600 truncate">{f.comment}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Confidence scale 1-5 */}
+        <div>
+          <label className="block font-semibold text-slate-800 mb-1">
+            Mức độ tự tin với bài viết này (1: Chưa tự tin — 5: Rất tự tin):
+          </label>
+          <div className="flex items-center gap-3">
+            {[1, 2, 3, 4, 5].map(val => (
+              <button
+                type="button"
+                key={val}
+                onClick={() => setConfidence(val)}
+                className={`flex h-8 w-8 items-center justify-center rounded-md border text-xs font-bold transition-all ${
+                  confidence === val
+                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
+            <span className="text-[11px] text-slate-500 ml-1">
+              {confidence === 1 ? 'Chưa chắc chắn' : confidence === 3 ? 'Bình thường' : confidence === 5 ? 'Rất tự tin' : ''}
+            </span>
+          </div>
         </div>
       </div>
     </Modal>

@@ -6,6 +6,7 @@ import { usePortfolio } from '../contexts/PortfolioContext';
 import { POETIC_AXES } from '../data/seedData';
 import type { EvidenceQuote, PoeticAxisId } from '../types';
 import { Badge, Button } from '../components/ui';
+import { CreateVersionModal } from '../components/versioning/CreateVersionModal';
 import {
   ArrowLeftIcon,
   BookOpenIcon,
@@ -41,8 +42,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const { updateDraft, manualSaveDraft, createSnapshot, autosaveStatus, lastSavedTime } = usePortfolioStore();
   const { addToast } = useNotificationStore();
   const [activeAxisId, setActiveAxisId] = useState<PoeticAxisId>('plot_situation');
-  const [versionNote, setVersionNote] = useState('');
-  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isPredictionMode, setIsPredictionMode] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
 
   const editorFontSizeClass = {
@@ -61,6 +62,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const axisFeedbacks = useMemo(
     () => assignment ? feedbacks.filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id && item.axisId === activeAxisId) : [],
     [assignment, feedbacks, currentUser.id, activeAxisId]
+  );
+  const allStudentFeedbacks = useMemo(
+    () => assignment ? feedbacks.filter(item => item.assignmentId === assignment.id && item.studentId === currentUser.id) : [],
+    [assignment, feedbacks, currentUser.id]
   );
   const wordCount = useMemo(() => {
     if (!portfolio) return 0;
@@ -87,7 +92,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   }
 
   const evidenceText = (currentAxis?.evidenceQuotes || []).map(item => item.text).join('\n');
-  const nextVersion = nextVersionNumber(portfolio.versions || []);
+  const versions = portfolio.versions || [];
+  const isInitial = versions.length === 0;
+  const nextVersion = isPredictionMode ? 'v0.0' : nextVersionNumber(versions);
   const currentAxisMeta = POETIC_AXES.find(axis => axis.id === activeAxisId) || POETIC_AXES[0];
 
   const updateAnalysis = (text: string) => {
@@ -105,18 +112,38 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       addToast({type:'error',title:'Chưa lưu được',message:'Không thể lưu bản nháp. Kiểm tra kết nối và thử lại.'});
     }
   };
-  const freezeVersion = async () => {
-    setIsCreatingVersion(true);
-    try {
-      await manualSaveDraft(currentUser.id, assignment.id);
-      const ok = await createSnapshot(currentUser.id, assignment.id, nextVersion, versionNote.trim() || (nextVersion === 'v1.0' ? 'Nộp bản đầu tiên để nhận phản hồi.' : `Đóng băng ${nextVersion}.`), currentUser.name);
-      if (!ok) throw new Error('CREATE_VERSION_FAILED');
-      setVersionNote('');
-      await refreshAcademicData();
-      addToast({type:'success',title:nextVersion === 'v1.0' ? 'Đã nộp V1' : `Đã tạo ${nextVersion}`,message:nextVersion === 'v1.0' ? 'Bài đã được đưa vào hàng đợi phản hồi AI.' : 'Phiên bản đã được lưu thành công.'});
-    } catch {
-      addToast({type:'error',title:'Không thể tạo phiên bản',message:'Vui lòng lưu lại bản nháp và thử lại.'});
-    } finally { setIsCreatingVersion(false); }
+
+  const handleConfirmSubmit = async (data: {
+    changeSummary: string;
+    revisionReason: string;
+    linkedFeedbackIds: string[];
+    changeSource: string;
+    confidence: number;
+    stage?: 'prediction' | 'initial' | 'revision';
+  }) => {
+    await manualSaveDraft(currentUser.id, assignment.id);
+    const ok = await createSnapshot(
+      currentUser.id,
+      assignment.id,
+      nextVersion,
+      data.changeSummary,
+      currentUser.name,
+      {
+        submissionKey: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined,
+        stage: data.stage,
+        confidence: data.confidence,
+        changeSource: data.changeSource,
+        revisionReason: data.revisionReason,
+        linkedFeedbackIds: data.linkedFeedbackIds
+      }
+    );
+    if (!ok) throw new Error('CREATE_VERSION_FAILED');
+    await refreshAcademicData();
+    addToast({
+      type: 'success',
+      title: `Đã nộp phiên bản ${nextVersion}`,
+      message: 'Bài đang chờ phản hồi.'
+    });
   };
 
   return (
@@ -207,11 +234,62 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="flex items-center gap-2"><DocumentDuplicateIcon className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">Lịch sử và lưu phiên bản</h2></div>
+            <div className="flex items-center gap-2"><DocumentDuplicateIcon className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">Lịch sử và nộp phiên bản</h2></div>
             <p className="mt-1 text-xs leading-5 text-slate-500">Mỗi lần nộp sẽ lưu lại một phiên bản hoàn chỉnh để bạn và giáo viên theo dõi tiến trình chỉnh sửa.</p>
-            <textarea value={versionNote} onChange={e=>setVersionNote(e.target.value)} rows={2} placeholder="Ghi chú những thay đổi chính của phiên bản này…" className="mt-3 w-full rounded-md border border-slate-300 p-2.5 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"/>
-            <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" isLoading={isCreatingVersion} onClick={freezeVersion}>{nextVersion === 'v1.0' ? 'Nộp V1 (gửi phản hồi)' : `Lưu phiên bản ${nextVersion}`}</Button>{portfolio.versions.length >= 2 && <Button variant="outline" onClick={()=>onNavigate('version-diff',{assignmentId:assignment.id})}>So sánh phiên bản</Button>}</div>
-            {portfolio.versions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{portfolio.versions.map(version=><button key={version.id} onClick={()=>portfolio.versions.length>=2&&onNavigate('version-diff',{assignmentId:assignment.id,v1Number:portfolio.versions[0].versionNumber,v2Number:version.versionNumber})} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs hover:bg-slate-100"><strong>{version.versionNumber}</strong><span className="ml-2 text-slate-400">{new Date(version.createdAt).toLocaleString('vi-VN')}</span></button>)}</div>}
+            
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setIsPredictionMode(false);
+                  setIsSubmitModalOpen(true);
+                }}
+              >
+                {isInitial ? 'Nộp bài V1 (gửi nhận xét)' : `Nộp phiên bản ${nextVersion}`}
+              </Button>
+              {isInitial && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsPredictionMode(true);
+                    setIsSubmitModalOpen(true);
+                  }}
+                >
+                  Nộp bản dự đoán trước đọc (V0)
+                </Button>
+              )}
+              {portfolio.versions.length >= 2 && (
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigate('version-diff', { assignmentId: assignment.id })}
+                >
+                  So sánh phiên bản
+                </Button>
+              )}
+            </div>
+
+            {portfolio.versions.length > 0 && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-2">Các phiên bản đã nộp</span>
+                <div className="flex flex-wrap gap-2">
+                  {portfolio.versions.map(version => (
+                    <button
+                      key={version.id}
+                      onClick={() => portfolio.versions.length >= 2 && onNavigate('version-diff', {
+                        assignmentId: assignment.id,
+                        v1Number: portfolio.versions[0].versionNumber,
+                        v2Number: version.versionNumber
+                      })}
+                      className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs hover:bg-slate-100"
+                    >
+                      <strong>{version.versionNumber}</strong>
+                      <span className="ml-2 text-slate-400">{new Date(version.createdAt).toLocaleString('vi-VN')}</span>
+                      {version.changeSummary && <div className="mt-0.5 text-[11px] text-slate-500 truncate max-w-xs">{version.changeSummary}</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </main>
 
@@ -227,6 +305,18 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           </section>
         </aside>
       </div>
+
+      {isSubmitModalOpen && (
+        <CreateVersionModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
+          nextVersionNumber={nextVersion}
+          isInitial={isInitial && !isPredictionMode}
+          isPrediction={isPredictionMode}
+          feedbacks={allStudentFeedbacks}
+          onConfirm={handleConfirmSubmit}
+        />
+      )}
     </div>
   );
 };

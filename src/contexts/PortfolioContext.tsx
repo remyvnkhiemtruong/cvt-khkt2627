@@ -9,10 +9,11 @@ import type {
   RubricAssessmentSubmission,
   AuditLog,
   PoeticAxisId,
-  EvidenceQuote
+  EvidenceQuote,
+  AiReviewRequest
 } from '../types';
 import { useAuth } from './AuthContext';
-import { usePortfolioStore } from '../app/store/usePortfolioStore';
+import { usePortfolioStore, type CreateSnapshotOptions } from '../app/store/usePortfolioStore';
 import { mockDb } from '../services/mockApi/mockDb';
 
 interface PortfolioContextType {
@@ -23,6 +24,7 @@ interface PortfolioContextType {
   feedbacks: FeedbackItem[];
   rubricSubmissions: RubricAssessmentSubmission[];
   auditLogs: AuditLog[];
+  aiReviews: AiReviewRequest[];
   autosaveStatus: 'saved' | 'saving' | 'dirty';
   lastSavedTime: string | null;
   isLoading: boolean;
@@ -30,11 +32,11 @@ interface PortfolioContextType {
   refreshAcademicData: () => Promise<void>;
   updateDraftAxis: (assignmentId: string, axisId: PoeticAxisId, analysisText: string, evidenceQuotes?: EvidenceQuote[]) => void;
   saveDraftImmediately: (assignmentId: string) => void;
-  createVersionSnapshot: (assignmentId: string, versionNumber: string, changeSummary: string) => Promise<boolean>;
-  addAnchoredFeedback: (feedback: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => void;
-  resolveFeedback: (feedbackId: string) => void;
-  submitRubric: (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => void;
-  createAssignment: (newAssignment: Assignment) => void;
+  createVersionSnapshot: (assignmentId: string, versionNumber: string, changeSummary: string, options?: CreateSnapshotOptions) => Promise<boolean>;
+  addAnchoredFeedback: (feedback: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => Promise<{ ok: boolean; id?: string }>;
+  resolveFeedback: (feedbackId: string) => Promise<void>;
+  submitRubric: (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => Promise<{ ok: boolean; id?: string }>;
+  createAssignment: (newAssignment: Assignment) => Promise<void>;
   getPortfolioForStudentAndAssignment: (studentId: string, assignmentId: string) => StudentPortfolio;
   resetAllData: () => void;
 }
@@ -68,6 +70,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [rubricSubmissions, setRubricSubmissions] = useState<RubricAssessmentSubmission[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [aiReviews, setAiReviews] = useState<AiReviewRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
 
@@ -80,6 +83,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setFeedbacks(snapshot.feedbacks || []);
     setRubricSubmissions(snapshot.rubricSubmissions || []);
     setAuditLogs(snapshot.auditLogs || []);
+    setAiReviews((snapshot as any).aiReviews || []);
   }, [hydratePortfolios]);
 
   const refreshAcademicData = useCallback(async () => {
@@ -106,36 +110,52 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const saveDraftImmediately = (assignmentId: string) => { void manualSaveDraft(currentUser.id, assignmentId); };
 
-  const createVersionSnapshot = async (assignmentId: string, versionNumber: string, changeSummary: string) => {
-    const ok = await createSnapshot(currentUser.id, assignmentId, versionNumber, changeSummary, currentUser.name);
+  const createVersionSnapshot = async (assignmentId: string, versionNumber: string, changeSummary: string, options?: CreateSnapshotOptions) => {
+    const ok = await createSnapshot(currentUser.id, assignmentId, versionNumber, changeSummary, currentUser.name, options);
     if (ok) void refreshAcademicData();
     return ok;
   };
 
-  const addAnchoredFeedback = (feedbackData: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => {
+  const addAnchoredFeedback = async (feedbackData: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => {
     const optimistic: FeedbackItem = { ...feedbackData, id:`pending-${Date.now()}`, createdAt:new Date().toISOString(), resolved:false };
     setFeedbacks(previous => [optimistic, ...previous]);
-    void postAction({ action:'add_feedback', ...feedbackData }).then(() => refreshAcademicData()).catch(() => setFeedbacks(previous => previous.filter(item => item.id !== optimistic.id)));
+    try {
+      const res = await postAction({ action:'add_feedback', ...feedbackData });
+      await refreshAcademicData();
+      return { ok: true, id: res.id };
+    } catch (error) {
+      setFeedbacks(previous => previous.filter(item => item.id !== optimistic.id));
+      throw error;
+    }
   };
 
-  const resolveFeedback = (feedbackId: string) => {
+  const resolveFeedback = async (feedbackId: string) => {
     setFeedbacks(previous => previous.map(item => item.id === feedbackId ? { ...item, resolved:true } : item));
-    void postAction({ action:'resolve_feedback', feedbackId }).then(() => refreshAcademicData()).catch(() => refreshAcademicData());
+    try {
+      await postAction({ action:'resolve_feedback', feedbackId });
+      await refreshAcademicData();
+    } catch (error) {
+      await refreshAcademicData();
+      throw error;
+    }
   };
 
-  const submitRubric = (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => {
-    void postAction({ action:'submit_rubric', ...evaluation }).then(() => refreshAcademicData()).catch(() => refreshAcademicData());
+  const submitRubric = async (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => {
+    const res = await postAction({ action:'submit_rubric', ...evaluation });
+    await refreshAcademicData();
+    return { ok: true, id: res.id };
   };
 
-  const createAssignment = (newAssignment: Assignment) => {
+  const createAssignment = async (newAssignment: Assignment) => {
     setAssignments(previous => [newAssignment, ...previous.filter(item => item.id !== newAssignment.id)]);
-    void postAction({ action:'create_assignment', ...newAssignment }).then(() => refreshAcademicData()).catch(() => refreshAcademicData());
+    await postAction({ action:'create_assignment', ...newAssignment });
+    await refreshAcademicData();
   };
 
   const resetAllData = () => { void refreshAcademicData(); };
 
   return <PortfolioContext.Provider value={{
-    portfolios, assignments, literatureTexts, rubric, feedbacks, rubricSubmissions, auditLogs,
+    portfolios, assignments, literatureTexts, rubric, feedbacks, rubricSubmissions, auditLogs, aiReviews,
     autosaveStatus, lastSavedTime:lastSavedTime || null, isLoading, dataError, refreshAcademicData,
     updateDraftAxis, saveDraftImmediately, createVersionSnapshot, addAnchoredFeedback, resolveFeedback,
     submitRubric, createAssignment, getPortfolioForStudentAndAssignment, resetAllData

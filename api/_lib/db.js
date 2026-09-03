@@ -15,3 +15,17 @@ export function databaseUrl() {
   if (!value) throw new Error('DATABASE_URL is not configured');
   return value;
 }
+
+let poolPromise = null;
+
+export async function getPool() {
+  if (!poolPromise) {
+    poolPromise = import('pg').then(({ Pool }) => new Pool({
+      connectionString: databaseUrl(),
+      max: 4,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 10000
+    }));
+  }
+  return poolPromise;
+}

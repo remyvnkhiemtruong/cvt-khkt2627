@@ -3,6 +3,15 @@ import type { StudentPortfolio, PoeticAxisId, PortfolioVersion, EvidenceQuote } 
 import { mockDb } from '../../services/mockApi/mockDb';
 import { POETIC_AXES } from '../../data/seedData';
 
+export interface CreateSnapshotOptions {
+  submissionKey?: string;
+  stage?: 'prediction' | 'initial' | 'revision';
+  confidence?: number | null;
+  changeSource?: string;
+  revisionReason?: string;
+  linkedFeedbackIds?: string[];
+}
+
 interface PortfolioState {
   portfolios: Record<string, StudentPortfolio>;
   autosaveStatus: 'saved' | 'saving' | 'dirty';
@@ -12,7 +21,7 @@ interface PortfolioState {
   getPortfolio: (studentId: string, assignmentId: string, studentName?: string, className?: string) => StudentPortfolio;
   updateDraft: (studentId: string, assignmentId: string, axisId: PoeticAxisId, text: string, quotes?: EvidenceQuote[]) => void;
   manualSaveDraft: (studentId: string, assignmentId: string) => Promise<void>;
-  createSnapshot: (studentId: string, assignmentId: string, versionNumber: string, changeSummary: string, authorName: string) => Promise<boolean>;
+  createSnapshot: (studentId: string, assignmentId: string, versionNumber: string, changeSummary: string, authorName: string, options?: CreateSnapshotOptions) => Promise<boolean>;
 }
 
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -76,13 +85,53 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     catch(error){set({autosaveStatus:'dirty'});throw error;}
   },
 
-  createSnapshot: async (studentId, assignmentId, versionNumber, changeSummary, authorName) => {
+  createSnapshot: async (studentId, assignmentId, versionNumber, changeSummary, authorName, options = {}) => {
     const key=`port-${studentId}-${assignmentId}`; const port=get().getPortfolio(studentId,assignmentId);
     try {
-      const result=await postAction({action:'create_version',assignmentId,versionNumber,changeSummary,content:port.currentDraft});
-      const newVer:PortfolioVersion={id:result.version?.id||`ver-${Date.now()}`,versionNumber:versionNumber.trim(),createdAt:result.version?.createdAt||new Date().toISOString(),createdBy:studentId,authorName,changeSummary:changeSummary.trim(),responses:JSON.parse(JSON.stringify(port.currentDraft)),isFrozen:true,isSubmitted:true};
-      const updated:StudentPortfolio={...port,currentActiveVersion:newVer.versionNumber,status:/^v1(\.0)?$/i.test(versionNumber)?'v1_submitted':'v2_in_revision',versions:[...port.versions,newVer]};
-      mockDb.savePortfolio(updated); set(state=>({portfolios:{...state.portfolios,[key]:updated},autosaveStatus:'saved'})); return true;
-    } catch { return false; }
+      const payload = {
+        action: 'create_version',
+        assignmentId,
+        versionNumber,
+        changeSummary,
+        content: port.currentDraft,
+        submissionKey: options.submissionKey || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined),
+        stage: options.stage,
+        confidence: options.confidence,
+        changeSource: options.changeSource,
+        revisionReason: options.revisionReason,
+        linkedFeedbackIds: options.linkedFeedbackIds
+      };
+      const result = await postAction(payload);
+      const serverVer = result.version;
+      const vNum = serverVer?.versionNumber || versionNumber.trim();
+      const newVer: PortfolioVersion = {
+        id: serverVer?.id || `ver-${Date.now()}`,
+        versionNumber: vNum,
+        sequenceNo: serverVer?.sequenceNo,
+        stage: serverVer?.stage || options.stage || 'initial',
+        confidence: options.confidence,
+        changeSource: options.changeSource,
+        revisionReason: options.revisionReason,
+        createdAt: serverVer?.createdAt || new Date().toISOString(),
+        createdBy: studentId,
+        authorName,
+        changeSummary: changeSummary.trim(),
+        responses: JSON.parse(JSON.stringify(port.currentDraft)),
+        isFrozen: true,
+        isSubmitted: true
+      };
+      const newStatus = result.portfolioStatus || 'submitted_waiting_ai';
+      const updated: StudentPortfolio = {
+        ...port,
+        currentActiveVersion: newVer.versionNumber,
+        status: newStatus,
+        versions: [...port.versions, newVer]
+      };
+      mockDb.savePortfolio(updated);
+      set(state => ({ portfolios: { ...state.portfolios, [key]: updated }, autosaveStatus: 'saved' }));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }));

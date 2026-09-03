@@ -80,6 +80,14 @@ export interface PoeticAxisResponse {
 export interface PortfolioVersion {
   id: string;
   versionNumber: string;
+  sequenceNo?: number;
+  stage?: 'prediction' | 'initial' | 'revision';
+  confidence?: number | null;
+  changeSource?: string | null;
+  revisionReason?: string | null;
+  previousVersionId?: string | null;
+  contentChecksum?: string | null;
+  submissionKey?: string | null;
   createdAt: string;
   createdBy: string;
   authorName: string;
@@ -93,6 +101,7 @@ export interface FeedbackItem {
   id: string;
   assignmentId: string;
   studentId: string;
+  versionId?: string;
   versionNumber: string;
   axisId: PoeticAxisId;
   selectedSnippet: string;
@@ -102,6 +111,9 @@ export interface FeedbackItem {
   authorRole: 'teacher' | 'peer' | 'ai';
   createdAt: string;
   resolved: boolean;
+  resolvedAt?: string | null;
+  resolvedByVersionId?: string | null;
+  sourceAiReviewId?: string | null;
 }
 
 export interface RubricLevel {
@@ -123,6 +135,7 @@ export interface RubricCriterion {
 export interface RubricMatrix {
   id: string;
   title: string;
+  description?: string;
   criteria: RubricCriterion[];
 }
 
@@ -130,6 +143,7 @@ export interface RubricAssessmentSubmission {
   id: string;
   assignmentId: string;
   studentId: string;
+  versionId?: string;
   versionNumber: string;
   evaluatorId: string;
   evaluatorName: string;
@@ -154,7 +168,23 @@ export interface Assignment {
   guidingSteps: string[];
   rubricId: string;
   starterTemplate?: Partial<Record<PoeticAxisId, string>>;
+  aiGuidance?: string;
+  commonMistakes?: string;
+  referenceGuide?: string;
+  predictionTemplate?: Record<string, any>;
+  workflowConfig?: Record<string, any>;
 }
+
+export type PortfolioStatus =
+  | 'drafting'
+  | 'submitted_waiting_ai'
+  | 'ai_proposed_waiting_teacher'
+  | 'feedback_received'
+  | 'revising'
+  | 'waiting_official_rubric'
+  | 'completed'
+  | 'v1_submitted'
+  | 'v2_in_revision';
 
 export interface StudentPortfolio {
   id: string;
@@ -167,7 +197,7 @@ export interface StudentPortfolio {
   lastAutosavedAt: string;
   versions: PortfolioVersion[];
   currentActiveVersion: string;
-  status: 'drafting' | 'v1_submitted' | 'feedback_received' | 'v2_in_revision' | 'completed';
+  status: PortfolioStatus;
 }
 
 export interface AiReviewRequest {
@@ -179,8 +209,12 @@ export interface AiReviewRequest {
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
   prompt: string;
   response: string;
+  final_response?: string;
+  stage?: string;
   teacher_review_status: 'pending' | 'approved' | 'revised' | 'rejected';
   teacher_note: string;
+  teacher_id?: string | null;
+  teacher_reviewed_at?: string | null;
   created_at: string;
   completed_at?: string | null;
 }

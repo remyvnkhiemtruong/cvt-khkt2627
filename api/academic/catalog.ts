@@ -1,4 +1,4 @@
-import { assertSameOrigin, body, getUser, send } from '../auth/auth.js';
+import { assertSameOrigin, authenticate, body, send } from '../auth/auth.js';
 import { ensureAcademicSchema } from '../_lib/academic.js';
 
 let poolPromise:any;
@@ -9,7 +9,7 @@ const slug=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
 export default async function handler(req:any,res:any){
   if(req.method!=='POST')return send(res,405,{code:'METHOD_NOT_ALLOWED'});
   try{
-    assertSameOrigin(req);const user=getUser(req);if(!user)return send(res,401,{code:'UNAUTHENTICATED'});if(!['teacher','admin'].includes(user.role))return send(res,403,{code:'FORBIDDEN'});
+    assertSameOrigin(req);const user=await authenticate(req);if(!user)return send(res,401,{code:'UNAUTHENTICATED'});if(!['teacher','admin'].includes(user.role))return send(res,403,{code:'FORBIDDEN'});
     await ensureAcademicSchema();const p=await db(),input=body(req),action=String(input.action||'');
     if(action==='save_literature'){
       const title=String(input.title||'').trim().slice(0,240),author=String(input.author||'').trim().slice(0,160);if(!title||!author)return send(res,400,{code:'VALIDATION_ERROR'});

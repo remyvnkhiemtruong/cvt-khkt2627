@@ -125,7 +125,7 @@ export const DesignSystemKitView: React.FC = () => {
           <section aria-labelledby="typography-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="typography-heading" className="text-h3 font-bold text-slate-900">
-                Thang Bậc Typography (Poppins Font - Tiếng Việt Hoàn Chỉnh)
+                Thang Bậc Typography (Be Vietnam Pro / Inter - Sans-serif Tiếng Việt Hoàn Chỉnh)
               </h2>
               <p className="text-caption text-slate-500">Cấu hình chuẩn xác kích thước và khoảng cách dòng</p>
             </header>
@@ -169,7 +169,7 @@ export const DesignSystemKitView: React.FC = () => {
               {/* Literary Reading Content Block */}
               <div className="pt-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
                 <span className="text-caption font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                  Chuyên mục Đọc Văn Bản Nghệ Thuật (Newsreader Serif • Line-height 1.72 • Max-width 68ch)
+                  Chuyên mục Đọc Văn Bản Nghệ Thuật (Be Vietnam Pro / Inter Sans-serif • Line-height 1.75 • Max-width 68ch)
                 </span>
                 <div className="lit-reader-content">
                   <p>

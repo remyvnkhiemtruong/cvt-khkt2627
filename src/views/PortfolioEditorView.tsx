@@ -43,6 +43,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const [activeAxisId, setActiveAxisId] = useState<PoeticAxisId>('plot_situation');
   const [versionNote, setVersionNote] = useState('');
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
+  const [fontSizeLevel, setFontSizeLevel] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+
+  const editorFontSizeClass = {
+    sm: 'text-sm leading-6',
+    base: 'text-[15px] sm:text-base leading-7',
+    lg: 'text-base sm:text-lg leading-8',
+    xl: 'text-lg sm:text-xl leading-9',
+  }[fontSizeLevel];
 
   const assignment = assignments.find(item => item.id === assignmentId);
   const portfolioKey = assignment && currentUser.id ? `port-${currentUser.id}-${assignment.id}` : '';
@@ -131,14 +139,27 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
       <div className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)_300px]">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">6 trục thi pháp</div>
-          <div className="space-y-1">
+          <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">6 trục thi pháp</div>
+          <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:pb-0">
             {POETIC_AXES.map(axis => {
               const response=portfolio.currentDraft?.[axis.id];
               const done=Boolean(response?.analysisText?.trim());
-              return <button key={axis.id} onClick={()=>setActiveAxisId(axis.id)} className={`w-full rounded-xl px-3 py-2.5 text-left text-xs transition ${activeAxisId===axis.id?'bg-slate-900 text-white':'text-slate-700 hover:bg-slate-100'}`}>
-                <div className="font-semibold">{axis.shortName}</div><div className={`mt-0.5 text-[10px] ${activeAxisId===axis.id?'text-slate-300':'text-slate-400'}`}>{done?'Đã có nội dung':'Chưa viết'}</div>
-              </button>;
+              return (
+                <button
+                  key={axis.id}
+                  onClick={()=>setActiveAxisId(axis.id)}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-xs transition lg:w-full lg:py-2.5 ${
+                    activeAxisId===axis.id
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100 lg:bg-transparent'
+                  }`}
+                >
+                  <div className="font-semibold whitespace-nowrap lg:whitespace-normal">{axis.shortName}</div>
+                  <div className={`mt-0.5 text-[10px] hidden sm:block ${activeAxisId===axis.id?'text-slate-300':'text-slate-400'}`}>
+                    {done?'Đã có nội dung':'Chưa viết'}
+                  </div>
+                </button>
+              );
             })}
           </div>
         </aside>
@@ -150,10 +171,39 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <div><div className="text-xs font-semibold text-indigo-700">{currentAxisMeta.title}</div><h1 className="mt-1 text-xl font-bold text-slate-900">Viết phân tích</h1><p className="mt-1 text-sm leading-6 text-slate-500">{currentAxisMeta.description}</p></div>
               <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">Tổng bài: <strong className="text-slate-800">{wordCount} từ</strong></div>
             </div>
-            <label className="block text-xs font-semibold text-slate-700">Phân tích của bạn</label>
-            <textarea value={currentAxis?.analysisText || ''} onChange={e=>updateAnalysis(e.target.value)} rows={16} placeholder="Viết luận điểm, phân tích nghệ thuật, lí giải tác dụng và liên hệ với chủ đề tác phẩm…" className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white p-4 font-serif text-[15px] leading-7 text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"/>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="block text-xs font-semibold text-slate-700">Phân tích của bạn</label>
+              <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs">
+                <span className="px-1.5 text-[11px] font-semibold text-slate-400">Cỡ chữ:</span>
+                {(['sm', 'base', 'lg', 'xl'] as const).map(level => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setFontSizeLevel(level)}
+                    className={`rounded px-2 py-0.5 text-xs font-semibold transition ${
+                      fontSizeLevel === level ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {level === 'sm' ? 'Nhỏ' : level === 'base' ? 'Vừa' : level === 'lg' ? 'Lớn' : 'Rất lớn'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={currentAxis?.analysisText || ''}
+              onChange={e=>updateAnalysis(e.target.value)}
+              rows={16}
+              placeholder="Viết luận điểm, phân tích nghệ thuật, lí giải tác dụng và liên hệ với chủ đề tác phẩm…"
+              className={`mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 ${editorFontSizeClass}`}
+            />
             <label className="mt-5 block text-xs font-semibold text-slate-700">Dẫn chứng — mỗi dòng một dẫn chứng</label>
-            <textarea value={evidenceText} onChange={e=>updateEvidence(e.target.value)} rows={5} placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật dùng làm dẫn chứng…" className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm leading-6 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"/>
+            <textarea
+              value={evidenceText}
+              onChange={e=>updateEvidence(e.target.value)}
+              rows={5}
+              placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật dùng làm dẫn chứng…"
+              className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 p-3 font-sans text-sm leading-6 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">

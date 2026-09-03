@@ -16,7 +16,7 @@ export function exportPortfolioAsHTML(
         <h3 style="color: #0f172a; margin-top: 0; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
           ${axis.title}
         </h3>
-        <p style="white-space: pre-wrap; font-family: 'Newsreader', serif; font-size: 15px; line-height: 1.7; color: #334155;">
+        <p style="white-space: pre-wrap; font-family: 'Be Vietnam Pro', 'Inter', sans-serif; font-size: 15px; line-height: 1.7; color: #334155;">
           ${resp?.analysisText || '<i>Chưa có nội dung phân tích</i>'}
         </p>
         ${resp?.evidenceQuotes && resp.evidenceQuotes.length > 0 ? `

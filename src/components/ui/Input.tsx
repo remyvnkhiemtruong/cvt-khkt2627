@@ -18,6 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
   className,
   id,
   disabled,
+  autoComplete = "off",
   ...props
 }, ref) => {
   const generatedId = React.useId();
@@ -40,6 +41,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           ref={ref}
           id={inputId}
           disabled={disabled}
+          autoComplete={autoComplete}
           className={cn(
             "w-full bg-white border border-slate-300 rounded-lg text-xs py-2 px-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all disabled:bg-slate-50 disabled:text-slate-400",
             leftIcon && "pl-9",

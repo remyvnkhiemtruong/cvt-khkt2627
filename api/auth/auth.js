@@ -1,12 +1,12 @@
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { databaseUrl } from "../_lib/db.js";
 
 let poolPromise;
 
 async function pool() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured");
   if (!poolPromise) poolPromise = import("pg").then(({ Pool }) => new Pool({
-    connectionString: process.env.DATABASE_URL, max: 3, idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 10000, ssl: { rejectUnauthorized: false }
+    connectionString: databaseUrl(), max: 3, idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 10000
   }));
   return poolPromise;
 }

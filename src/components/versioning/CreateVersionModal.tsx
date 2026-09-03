@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Modal, Badge } from '../ui';
 import {
-  SparklesIcon,
   PlusIcon,
   MinusIcon,
   PencilSquareIcon
@@ -77,7 +76,7 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Tạo Phiên Bản Nghiên Cứu Mới"
-      description="Đóng băng bản ghi hiện tại thành mốc bất biến (Immutable Snapshot) để phục vụ so sánh Visual Diff và đánh giá tiến trình."
+      description="Lưu bản ghi hiện tại thành một mốc phiên bản để phục vụ so sánh và nhận xét tiến trình."
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -96,35 +95,35 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
     >
       <div className="space-y-4 text-xs text-slate-700">
         {/* Version Badge & Notice */}
-        <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-200 flex items-center justify-between">
+        <div className="p-3 bg-indigo-50/70 rounded-md border border-indigo-200 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
+            <span className="text-[11px] font-semibold text-indigo-700 block">
               Phiên bản tiếp theo:
             </span>
             <span className="text-sm font-bold text-indigo-950">
               Phiên bản {nextVersionNumber}
             </span>
           </div>
-          <Badge variant="purple" size="md">
-            Mốc nghiên cứu
+          <Badge variant="purple" size="sm">
+            Mốc lưu
           </Badge>
         </div>
 
         {/* Change Statistics Preview */}
         <div className="space-y-1.5">
-          <label className="block font-bold text-slate-800 text-[11px] uppercase tracking-wider">
+          <label className="block font-semibold text-slate-700 text-xs">
             Thay đổi từ lần lưu gần nhất:
           </label>
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center justify-center gap-1">
+            <div className="p-2 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center justify-center gap-1">
               <PlusIcon className="w-3.5 h-3.5" />
               <span>+{stats.addedWords} từ</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold flex items-center justify-center gap-1">
+            <div className="p-2 rounded-md bg-rose-50 border border-rose-200 text-rose-800 font-semibold flex items-center justify-center gap-1">
               <MinusIcon className="w-3.5 h-3.5" />
               <span>-{stats.deletedWords} từ</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold flex items-center justify-center gap-1">
+            <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-semibold flex items-center justify-center gap-1">
               <PencilSquareIcon className="w-3.5 h-3.5" />
               <span>~{stats.changedBlocks} đoạn sửa</span>
             </div>
@@ -133,13 +132,13 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
 
         {/* Reason Selector */}
         <div className="space-y-1">
-          <label className="block font-bold text-slate-800">
+          <label className="block font-semibold text-slate-700 text-xs">
             Lý do tạo phiên bản:
           </label>
           <select
             value={reason}
             onChange={e => setReason(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg text-xs py-2 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-800"
+            className="w-full bg-slate-50 border border-slate-300 rounded-md text-xs py-1.5 px-2.5 text-slate-800 focus:outline-none focus:border-indigo-500"
           >
             {availableReasons.map((r, idx) => (
               <option key={idx} value={r}>{r}</option>
@@ -149,9 +148,8 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
 
         {/* Pedagogical Change Labels */}
         <div className="space-y-1.5">
-          <label className="block font-bold text-slate-800 flex items-center gap-1">
-            <SparklesIcon className="w-3.5 h-3.5 text-indigo-600" />
-            Gắn nhãn thay đổi sư phạm (Change Labels):
+          <label className="block font-semibold text-slate-700 text-xs">
+            Gắn nhãn thay đổi nội dung:
           </label>
           <div className="flex flex-wrap gap-1.5">
             {changeLabels.map(label => {
@@ -161,9 +159,9 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
                   key={label}
                   type="button"
                   onClick={() => toggleLabel(label)}
-                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition ${
+                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition ${
                     isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                      ? 'bg-slate-900 text-white border-slate-900'
                       : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >

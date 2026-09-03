@@ -12,14 +12,14 @@ import {
   FilterBar,
   Pagination,
   Drawer,
-  EmptyState
+  EmptyState,
+  PageHeader
 } from '../components/ui';
 import {
   BookOpenIcon,
   ClockIcon,
   ArrowRightIcon,
   ChatBubbleLeftRightIcon,
-  SparklesIcon,
   ArrowPathIcon,
   DocumentDuplicateIcon,
   EyeIcon,
@@ -154,41 +154,32 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
   const selectedStatusInfo = selectedAssignment ? getAssignmentStatusInfo(selectedAssignment) : null;
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16">
+    <div className="space-y-6 pb-16">
       {/* Header */}
-      <header className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-semibold border border-indigo-200 mb-2">
-            <BookOpenIcon className="w-4 h-4" />
-            Hệ Thống Nhiệm Vụ Đọc Hiểu Theo Trục Thi Pháp
-          </div>
-          <h1 className="text-h2 font-bold text-slate-900 tracking-tight">
-            Danh Mục Nhiệm Vụ Học Tập
-          </h1>
-          <p className="text-small text-slate-500 mt-1">
-            Giao diện quản lý và tiếp cận các bài tập đọc hiểu truyện ngắn hiện đại THPT
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => onNavigate('portfolio-list')}
-            leftIcon={<DocumentDuplicateIcon className="w-4 h-4" />}
-          >
-            Xem Danh sách Hồ sơ đọc
-          </Button>
-          {assignments[0] && (
+      <PageHeader
+        title="Nhiệm vụ học tập"
+        description="Danh mục các bài đọc hiểu và phân tích văn học theo hệ thống trục thi pháp."
+        actions={
+          <div className="flex items-center gap-2.5">
             <Button
-              variant="academic"
-              onClick={() => onNavigate('editor', { assignmentId: assignments[0].id })}
-              rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+              variant="outline"
+              onClick={() => onNavigate('portfolio-list')}
+              leftIcon={<DocumentDuplicateIcon className="w-4 h-4" />}
             >
-              Làm bài trọng tâm
+              Xem Hồ sơ học tập
             </Button>
-          )}
-        </div>
-      </header>
+            {assignments[0] && (
+              <Button
+                variant="primary"
+                onClick={() => onNavigate('editor', { assignmentId: assignments[0].id })}
+                rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+              >
+                Làm bài trọng tâm
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Tabs */}
       <Tabs
@@ -309,13 +300,15 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
                         Tác phẩm: <strong className="text-slate-800">{textObj?.title}</strong> ({textObj?.author})
                       </span>
 
-                      <span className="text-caption text-slate-400">• Giáo viên: {(item as any).teacherName || 'Cô Nguyễn Thị Mai'}</span>
+                      {(item as any).teacherName && (
+                        <span className="text-caption text-slate-400">• Giáo viên: {(item as any).teacherName}</span>
+                      )}
                     </div>
 
                     <div>
                       <h2
                         onClick={() => handleOpenDetail(item)}
-                        className="text-base font-bold text-slate-900 tracking-tight hover:text-indigo-600 cursor-pointer transition truncate"
+                        className="text-sm sm:text-base font-semibold text-slate-900 hover:text-indigo-600 cursor-pointer transition-colors truncate"
                       >
                         {item.title}
                       </h2>
@@ -458,15 +451,15 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
               <h2 className="text-sm font-bold text-slate-900">{selectedAssignment.title}</h2>
               <div className="text-caption text-slate-600 flex items-center gap-2">
                 <span>Tác phẩm: <strong>{selectedTextObj?.title}</strong> ({selectedTextObj?.author})</span>
-                <span>• Giáo viên: {(selectedAssignment as any).teacherName || 'Cô Nguyễn Thị Mai'}</span>
+                {(selectedAssignment as any).teacherName && <span>• Giáo viên: {(selectedAssignment as any).teacherName}</span>}
               </div>
             </div>
 
             {/* Mục tiêu học tập */}
             <div className="space-y-2">
-              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <AcademicCapIcon className="w-4 h-4 text-indigo-600" />
-                1. Mục Tiêu Năng Lực Cần Đạt
+              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
+                <AcademicCapIcon className="w-4 h-4 text-slate-600" />
+                1. Mục tiêu năng lực cần đạt
               </h3>
               <ul className="list-disc pl-4 space-y-1 text-slate-600 leading-relaxed">
                 <li>Nhận diện và phân tích đặc trưng của thể loại truyện ngắn hiện đại qua hệ thống 6 trục thi pháp.</li>
@@ -477,9 +470,9 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
 
             {/* Trục thi pháp trọng tâm */}
             <div className="space-y-2">
-              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <SparklesIcon className="w-4 h-4 text-indigo-600" />
-                2. Trục Thi Pháp & Câu Hỏi Scaffolding
+              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
+                <BookOpenIcon className="w-4 h-4 text-slate-600" />
+                2. Trục thi pháp & câu hỏi định hướng
               </h3>
               <div className="space-y-2">
                 {selectedAssignment.targetAxes.map(axisId => {
@@ -496,9 +489,9 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
 
             {/* Yêu cầu sản phẩm & Rubric Preview */}
             <div className="space-y-2">
-              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
                 <ShieldCheckIcon className="w-4 h-4 text-indigo-600" />
-                3. Yêu Cầu Sản Phẩm & Thang Đánh Giá
+                3. Yêu cầu sản phẩm & Thang đánh giá
               </h3>
               <div className="p-3 rounded-lg bg-indigo-50/50 border border-indigo-200 space-y-2">
                 <p className="text-indigo-950 font-medium">
@@ -517,9 +510,9 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
 
             {/* Timeline các mốc */}
             <div className="space-y-2">
-              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
                 <ClockIcon className="w-4 h-4 text-indigo-600" />
-                4. Tiến Trình Các Mốc Thời Gian
+                4. Tiến trình các mốc thời gian
               </h3>
               <div className="relative pl-5 space-y-3 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
                 <div className="relative">

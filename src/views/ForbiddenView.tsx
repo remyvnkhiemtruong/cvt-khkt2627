@@ -13,8 +13,8 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate, requir
 
   return (
     <div className="max-w-lg mx-auto py-16 px-4 text-center space-y-6 animate-fade-in">
-      <div className="w-16 h-16 bg-rose-50 border border-rose-200 text-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-        <ShieldExclamationIcon className="w-9 h-9" />
+      <div className="w-14 h-14 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg flex items-center justify-center mx-auto">
+        <ShieldExclamationIcon className="w-7 h-7" />
       </div>
 
       <div className="space-y-2">

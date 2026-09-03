@@ -122,7 +122,7 @@ const AppContent: React.FC = () => {
     setCurrentView(view); setNavParams(params); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-center shadow-sm"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
+  if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
   if (!isAuthenticated || currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} />;
 
   const routeConfig = APP_ROUTES[currentView];

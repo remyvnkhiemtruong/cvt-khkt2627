@@ -27,7 +27,7 @@ const nextVersionNumber = (versions: { versionNumber: string }[]) => {
 };
 
 const StatePanel: React.FC<{title:string;message:string;actionLabel?:string;onAction?:()=>void;loading?:boolean}> = ({title,message,actionLabel,onAction,loading}) => (
-  <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+  <div className="mx-auto mt-10 max-w-xl rounded-lg border border-slate-200 bg-white p-8 text-center">
     {loading ? <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/> : <ExclamationTriangleIcon className="mx-auto mb-4 h-9 w-9 text-slate-400"/>}
     <h2 className="text-lg font-bold text-slate-900">{title}</h2>
     <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
@@ -113,7 +113,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       if (!ok) throw new Error('CREATE_VERSION_FAILED');
       setVersionNote('');
       await refreshAcademicData();
-      addToast({type:'success',title:nextVersion === 'v1.0' ? 'Đã nộp V1' : `Đã tạo ${nextVersion}`,message:nextVersion === 'v1.0' ? 'Bài đã được đưa vào hàng đợi phản hồi AI.' : 'Phiên bản đã được lưu bất biến.'});
+      addToast({type:'success',title:nextVersion === 'v1.0' ? 'Đã nộp V1' : `Đã tạo ${nextVersion}`,message:nextVersion === 'v1.0' ? 'Bài đã được đưa vào hàng đợi phản hồi AI.' : 'Phiên bản đã được lưu thành công.'});
     } catch {
       addToast({type:'error',title:'Không thể tạo phiên bản',message:'Vui lòng lưu lại bản nháp và thử lại.'});
     } finally { setIsCreatingVersion(false); }
@@ -121,13 +121,13 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-3 py-3 shadow-xs sm:px-5">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-3 py-3 sm:px-5">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4"/>}>Quay lại</Button>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2"><strong className="truncate text-sm text-slate-900">{assignment.title}</strong><Badge variant="blue" size="sm">{portfolio.currentActiveVersion || 'v1.0 (nháp)'}</Badge></div>
-              <div className="mt-0.5 text-[11px] text-slate-500">{literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu chưa khả dụng'}</div>
+              <div className="mt-0.5 text-xs text-slate-500">{literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Ngữ liệu chưa khả dụng'}</div>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -138,9 +138,9 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)_300px]">
-        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">6 trục thi pháp</div>
-          <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:pb-0">
+        <aside className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="mb-2 text-xs font-semibold text-slate-500">6 trục thi pháp</div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:pb-0">
             {POETIC_AXES.map(axis => {
               const response=portfolio.currentDraft?.[axis.id];
               const done=Boolean(response?.analysisText?.trim());
@@ -148,14 +148,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 <button
                   key={axis.id}
                   onClick={()=>setActiveAxisId(axis.id)}
-                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-xs transition lg:w-full lg:py-2.5 ${
+                  className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs transition-colors lg:w-full ${
                     activeAxisId===axis.id
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100 lg:bg-transparent'
+                      ? 'bg-slate-100 text-slate-900 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50 lg:bg-transparent'
                   }`}
                 >
-                  <div className="font-semibold whitespace-nowrap lg:whitespace-normal">{axis.shortName}</div>
-                  <div className={`mt-0.5 text-[10px] hidden sm:block ${activeAxisId===axis.id?'text-slate-300':'text-slate-400'}`}>
+                  <div className="whitespace-nowrap lg:whitespace-normal">{axis.shortName}</div>
+                  <div className={`mt-0.5 text-[11px] hidden sm:block ${activeAxisId===axis.id?'text-slate-600':'text-slate-400'}`}>
                     {done?'Đã có nội dung':'Chưa viết'}
                   </div>
                 </button>
@@ -165,23 +165,23 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         </aside>
 
         <main className="space-y-4">
-          {dataError && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">Dữ liệu đang hiển thị có thể chưa phải bản mới nhất: {dataError}</div>}
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div><div className="text-xs font-semibold text-indigo-700">{currentAxisMeta.title}</div><h1 className="mt-1 text-xl font-bold text-slate-900">Viết phân tích</h1><p className="mt-1 text-sm leading-6 text-slate-500">{currentAxisMeta.description}</p></div>
-              <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">Tổng bài: <strong className="text-slate-800">{wordCount} từ</strong></div>
+          {dataError && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">Dữ liệu đang hiển thị có thể chưa phải bản mới nhất: {dataError}</div>}
+          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div><div className="text-xs font-medium text-indigo-700">{currentAxisMeta.title}</div><h1 className="mt-1 text-lg font-semibold text-slate-900">Viết phân tích</h1><p className="mt-1 text-xs leading-5 text-slate-500">{currentAxisMeta.description}</p></div>
+              <div className="rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500">Tổng bài: <strong className="text-slate-800">{wordCount} từ</strong></div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="block text-xs font-semibold text-slate-700">Phân tích của bạn</label>
-              <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs">
-                <span className="px-1.5 text-[11px] font-semibold text-slate-400">Cỡ chữ:</span>
+              <div className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs">
+                <span className="px-1.5 text-xs text-slate-400">Cỡ chữ:</span>
                 {(['sm', 'base', 'lg', 'xl'] as const).map(level => (
                   <button
                     key={level}
                     type="button"
                     onClick={() => setFontSizeLevel(level)}
-                    className={`rounded px-2 py-0.5 text-xs font-semibold transition ${
-                      fontSizeLevel === level ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+                      fontSizeLevel === level ? 'bg-white text-indigo-700 font-semibold' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     {level === 'sm' ? 'Nhỏ' : level === 'base' ? 'Vừa' : level === 'lg' ? 'Lớn' : 'Rất lớn'}
@@ -194,36 +194,36 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               onChange={e=>updateAnalysis(e.target.value)}
               rows={16}
               placeholder="Viết luận điểm, phân tích nghệ thuật, lí giải tác dụng và liên hệ với chủ đề tác phẩm…"
-              className={`mt-2 w-full resize-y rounded-xl border border-slate-300 bg-white p-4 font-sans text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 ${editorFontSizeClass}`}
+              className={`mt-2 w-full resize-y rounded-md border border-slate-300 bg-white p-3 font-sans text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${editorFontSizeClass}`}
             />
-            <label className="mt-5 block text-xs font-semibold text-slate-700">Dẫn chứng — mỗi dòng một dẫn chứng</label>
+            <label className="mt-4 block text-xs font-semibold text-slate-700">Dẫn chứng — mỗi dòng một dẫn chứng</label>
             <textarea
               value={evidenceText}
               onChange={e=>updateEvidence(e.target.value)}
-              rows={5}
+              rows={4}
               placeholder="Nhập các câu văn hoặc chi tiết nghệ thuật dùng làm dẫn chứng…"
-              className="mt-2 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 p-3 font-sans text-sm leading-6 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1.5 w-full resize-y rounded-md border border-slate-300 bg-slate-50 p-2.5 font-sans text-xs leading-5 text-slate-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-2"><DocumentDuplicateIcon className="h-5 w-5 text-indigo-600"/><h2 className="font-bold text-slate-900">Phiên bản bất biến</h2></div>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Mỗi lần tạo phiên bản, nội dung được đóng băng trong PostgreSQL. Phiên bản đầu tiên v1.0 sẽ tự động tạo yêu cầu phản hồi AI.</p>
-            <textarea value={versionNote} onChange={e=>setVersionNote(e.target.value)} rows={2} placeholder="Ghi chú những thay đổi chính của phiên bản này…" className="mt-3 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"/>
-            <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" isLoading={isCreatingVersion} onClick={freezeVersion}>{nextVersion === 'v1.0' ? 'Nộp V1 & gửi hàng đợi AI' : `Đóng băng ${nextVersion}`}</Button>{portfolio.versions.length >= 2 && <Button variant="outline" onClick={()=>onNavigate('version-diff',{assignmentId:assignment.id})}>So sánh phiên bản</Button>}</div>
-            {portfolio.versions.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{portfolio.versions.map(version=><button key={version.id} onClick={()=>portfolio.versions.length>=2&&onNavigate('version-diff',{assignmentId:assignment.id,v1Number:portfolio.versions[0].versionNumber,v2Number:version.versionNumber})} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs"><strong>{version.versionNumber}</strong><span className="ml-2 text-slate-400">{new Date(version.createdAt).toLocaleString('vi-VN')}</span></button>)}</div>}
+          <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="flex items-center gap-2"><DocumentDuplicateIcon className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">Lịch sử và lưu phiên bản</h2></div>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Mỗi lần nộp sẽ lưu lại một phiên bản hoàn chỉnh để bạn và giáo viên theo dõi tiến trình chỉnh sửa.</p>
+            <textarea value={versionNote} onChange={e=>setVersionNote(e.target.value)} rows={2} placeholder="Ghi chú những thay đổi chính của phiên bản này…" className="mt-3 w-full rounded-md border border-slate-300 p-2.5 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"/>
+            <div className="mt-3 flex flex-wrap gap-2"><Button variant="primary" isLoading={isCreatingVersion} onClick={freezeVersion}>{nextVersion === 'v1.0' ? 'Nộp V1 (gửi phản hồi)' : `Lưu phiên bản ${nextVersion}`}</Button>{portfolio.versions.length >= 2 && <Button variant="outline" onClick={()=>onNavigate('version-diff',{assignmentId:assignment.id})}>So sánh phiên bản</Button>}</div>
+            {portfolio.versions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{portfolio.versions.map(version=><button key={version.id} onClick={()=>portfolio.versions.length>=2&&onNavigate('version-diff',{assignmentId:assignment.id,v1Number:portfolio.versions[0].versionNumber,v2Number:version.versionNumber})} className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left text-xs hover:bg-slate-100"><strong>{version.versionNumber}</strong><span className="ml-2 text-slate-400">{new Date(version.createdAt).toLocaleString('vi-VN')}</span></button>)}</div>}
           </section>
         </main>
 
         <aside className="space-y-4">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2"><BookOpenIcon className="h-5 w-5 text-slate-600"/><h2 className="text-sm font-bold text-slate-900">Nhiệm vụ</h2></div>
-            <p className="mt-3 text-xs leading-6 text-slate-600">{assignment.prompt || 'Chưa có yêu cầu chi tiết.'}</p>
-            {assignment.guidingSteps?.length > 0 && <ol className="mt-3 list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-500">{assignment.guidingSteps.map((step,index)=><li key={`${index}-${step}`}>{step}</li>)}</ol>}
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2"><BookOpenIcon className="h-4 w-4 text-slate-600"/><h2 className="text-xs font-semibold text-slate-900">Nhiệm vụ</h2></div>
+            <p className="mt-2 text-xs leading-5 text-slate-600">{assignment.prompt || 'Chưa có yêu cầu chi tiết.'}</p>
+            {assignment.guidingSteps?.length > 0 && <ol className="mt-2.5 list-decimal space-y-1 pl-4 text-xs leading-5 text-slate-500">{assignment.guidingSteps.map((step,index)=><li key={`${index}-${step}`}>{step}</li>)}</ol>}
           </section>
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2"><ChatBubbleLeftRightIcon className="h-5 w-5 text-indigo-600"/><h2 className="text-sm font-bold text-slate-900">Phản hồi trục này</h2></div>
-            {axisFeedbacks.length===0 ? <p className="mt-3 text-xs text-slate-500">Chưa có phản hồi cho trục này.</p> : <div className="mt-3 space-y-3">{axisFeedbacks.map(item=><div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs"><div className="font-semibold text-slate-800">{item.authorName} • {item.authorRole.toUpperCase()}</div>{item.selectedSnippet&&<div className="mt-2 border-l-2 border-indigo-300 pl-2 italic text-slate-500">{item.selectedSnippet}</div>}<p className="mt-2 leading-5 text-slate-700">{item.comment}</p><div className={`mt-2 font-semibold ${item.resolved?'text-emerald-600':'text-amber-600'}`}>{item.resolved?'Đã xử lý':'Cần xem lại'}</div></div>)}</div>}
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2"><ChatBubbleLeftRightIcon className="h-4 w-4 text-slate-600"/><h2 className="text-xs font-semibold text-slate-900">Phản hồi trục này</h2></div>
+            {axisFeedbacks.length===0 ? <p className="mt-2 text-xs text-slate-500">Chưa có phản hồi cho trục này.</p> : <div className="mt-2.5 space-y-2.5">{axisFeedbacks.map(item=><div key={item.id} className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs"><div className="font-medium text-slate-800">{item.authorName} • {item.authorRole.toUpperCase()}</div>{item.selectedSnippet&&<div className="mt-1.5 border-l-2 border-indigo-300 pl-2 italic text-slate-500">{item.selectedSnippet}</div>}<p className="mt-1.5 leading-5 text-slate-700">{item.comment}</p><div className={`mt-1.5 font-medium ${item.resolved?'text-emerald-700':'text-amber-700'}`}>{item.resolved?'Đã xử lý':'Cần xem lại'}</div></div>)}</div>}
           </section>
         </aside>
       </div>

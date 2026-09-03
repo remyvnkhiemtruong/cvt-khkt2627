@@ -25,27 +25,27 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const variants = {
     default: "bg-white border-slate-200 text-slate-900",
-    accent: "bg-indigo-950 text-white border-indigo-900",
-    success: "bg-emerald-950 text-white border-emerald-900",
+    accent: "bg-slate-50 border-slate-200 text-slate-900",
+    success: "bg-slate-50 border-slate-200 text-slate-900",
   };
 
   return (
-    <div className={cn("p-5 rounded-2xl border shadow-card flex items-start justify-between gap-4", variants[variant], className)}>
-      <div className="space-y-1">
-        <span className={cn("text-xs font-medium block", variant === 'default' ? "text-slate-500" : "text-slate-300")}>
+    <div className={cn("p-4 rounded-lg border bg-white flex items-start justify-between gap-3", variants[variant], className)}>
+      <div className="space-y-1 min-w-0">
+        <span className="text-xs font-medium text-slate-500 block truncate">
           {label}
         </span>
-        <div className="text-2xl font-bold tracking-tight">
+        <div className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
           {value}
         </div>
         {subValue && (
-          <p className={cn("text-[11px]", variant === 'default' ? "text-slate-500" : "text-slate-400")}>
+          <p className="text-xs text-slate-500 truncate">
             {subValue}
           </p>
         )}
         {trend && (
-          <div className="flex items-center gap-1 text-[11px] font-semibold mt-1">
-            <span className={trend.isPositive ? "text-emerald-600" : "text-rose-600"}>
+          <div className="flex items-center gap-1 text-xs font-medium mt-1">
+            <span className={trend.isPositive ? "text-emerald-700" : "text-rose-700"}>
               {trend.isPositive ? "▲" : "▼"} {trend.value}
             </span>
           </div>
@@ -53,10 +53,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       {icon && (
-        <div className={cn(
-          "p-2.5 rounded-xl border flex items-center justify-center shrink-0",
-          variant === 'default' ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-white/10 border-white/20 text-white"
-        )}>
+        <div className="p-2 rounded-md border border-slate-200 bg-slate-50 text-slate-600 flex items-center justify-center shrink-0">
           {icon}
         </div>
       )}

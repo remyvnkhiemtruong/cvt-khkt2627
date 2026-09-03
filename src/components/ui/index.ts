@@ -27,3 +27,5 @@ export * from './FilterBar';
 export * from './Progress';
 export * from './StatCard';
 export * from './ChartContainer';
+export * from './PageHeader';
+export * from './SectionHeader';

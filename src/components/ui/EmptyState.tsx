@@ -19,14 +19,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className={cn("p-8 text-center flex flex-col items-center justify-center space-y-3", className)}>
-      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center">
+      <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center">
         {icon}
       </div>
-      <div className="max-w-xs space-y-1">
-        <h4 className="text-xs font-bold text-slate-800">{title}</h4>
-        {description && <p className="text-[11px] text-slate-500 leading-relaxed">{description}</p>}
+      <div className="max-w-sm space-y-1">
+        <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+        {description && <p className="text-xs text-slate-500 leading-relaxed">{description}</p>}
       </div>
-      {action && <div className="pt-1">{action}</div>}
+      {action && <div className="pt-2">{action}</div>}
     </div>
   );
 };

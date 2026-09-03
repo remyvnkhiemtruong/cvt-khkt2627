@@ -51,15 +51,15 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
       <div
         className={cn(
-          "w-full bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]",
+          "w-full bg-white rounded-lg border border-slate-200 shadow-modal overflow-hidden flex flex-col max-h-[90vh]",
           maxWidths[maxWidth]
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between">
             <div>
-              {title && <h2 className="text-base font-bold text-slate-900">{title}</h2>}
+              {title && <h2 className="text-base font-semibold text-slate-900">{title}</h2>}
               {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
             </div>
             <button

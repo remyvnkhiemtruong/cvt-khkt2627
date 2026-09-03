@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { PoeticAxisId } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
-import { MessageSquarePlus, CheckCheck, User, Users, Sparkles } from 'lucide-react';
+import { MessageSquarePlus, CheckCheck, User, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePortfolio } from '../../contexts/PortfolioContext';
 
@@ -55,22 +55,22 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-card overflow-hidden">
-      <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
-            <MessageSquarePlus className="w-4 h-4" />
+          <div className="w-6 h-6 rounded bg-indigo-50 text-indigo-700 flex items-center justify-center">
+            <MessageSquarePlus className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm">Phản hồi Neo Ngữ cảnh (In-line Feedback)</h3>
-            <p className="text-[11px] text-slate-500">Gắn đúng đoạn văn bản thuộc phiên bản <strong>{versionNumber}</strong></p>
+            <h3 className="font-semibold text-slate-900 text-xs">Phản hồi neo ngữ cảnh</h3>
+            <p className="text-[11px] text-slate-500">Gắn vào văn bản thuộc phiên bản <strong>{versionNumber}</strong></p>
           </div>
         </div>
 
         {canAddFeedback && !isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium transition-colors"
           >
             <MessageSquarePlus className="w-3.5 h-3.5" />
             Thêm nhận xét neo
@@ -81,10 +81,10 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
       <div className="p-4 space-y-4">
         {/* Form add new comment */}
         {isAdding && (
-          <form onSubmit={handleCreateFeedback} className="bg-indigo-50/60 rounded-xl p-4 border border-indigo-200 space-y-3 animate-fade-in">
-            <div className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              Tạo phản hồi sư phạm cho phiên bản {versionNumber}
+          <form onSubmit={handleCreateFeedback} className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-3">
+            <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+              <MessageSquarePlus className="w-3.5 h-3.5 text-indigo-600" />
+              Tạo phản hồi cho phiên bản {versionNumber}
             </div>
 
             <div>
@@ -94,7 +94,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
               <select
                 value={targetAxisId}
                 onChange={e => setTargetAxisId(e.target.value as PoeticAxisId)}
-                className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2 focus:border-indigo-500 focus:outline-none"
               >
                 {POETIC_AXES.map(a => (
                   <option key={a.id} value={a.id}>{a.title}</option>
@@ -111,7 +111,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                 value={selectedSnippet}
                 onChange={e => setSelectedSnippet(e.target.value)}
                 placeholder="Dán hoặc nhập cụm từ / câu văn cần góp ý..."
-                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none"
               />
             </div>
 
@@ -124,7 +124,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 placeholder="Ví dụ: Chỗ này em cần bổ sung thêm dẫn chứng về lời nửa trực tiếp..."
-                className="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2.5 focus:border-indigo-500 focus:outline-none"
                 required
               />
             </div>
@@ -133,13 +133,13 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-200/60 rounded-lg font-medium"
+                className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200/60 rounded-md font-medium"
               >
                 Hủy
               </button>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs"
+                className="px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-md"
               >
                 Lưu phản hồi neo
               </button>
@@ -149,11 +149,11 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
 
         {/* Feedback List */}
         {relevantFeedbacks.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
+          <div className="py-6 text-center text-xs text-slate-400">
             Chưa có phản hồi nào được neo vào phiên bản {versionNumber}.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {relevantFeedbacks.map(item => {
               const axisObj = POETIC_AXES.find(a => a.id === item.axisId);
               const isTeacher = item.authorRole === 'teacher';
@@ -161,27 +161,27 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
               return (
                 <div
                   key={item.id}
-                  className={`p-3.5 rounded-xl border transition-all ${
+                  className={`p-3 rounded-lg border transition-all ${
                     item.resolved
                       ? 'bg-slate-50 border-slate-200 opacity-75'
                       : isTeacher
-                      ? 'bg-amber-50/40 border-amber-200 shadow-xs'
-                      : 'bg-indigo-50/40 border-indigo-200'
+                      ? 'bg-amber-50/40 border-amber-200'
+                      : 'bg-slate-50 border-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                           isTeacher
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                            : 'bg-indigo-100 text-indigo-800 border border-indigo-300'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
                         }`}
                       >
                         {isTeacher ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}
                         {item.authorName} ({isTeacher ? 'Giáo viên' : 'Bạn học'})
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
                         {axisObj?.shortName || item.axisId}
                       </span>
                     </div>
@@ -193,14 +193,14 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
 
                   {/* Highlight snippet quote */}
                   {item.selectedSnippet && (
-                    <div className="mt-2 text-xs bg-white/80 p-2 rounded-lg border-l-2 border-amber-400 text-slate-700 italic">
-                      <span className="font-semibold text-amber-700 not-italic text-[10px] block uppercase">Văn bản được neo:</span>
+                    <div className="mt-2 text-xs bg-white p-2 rounded-md border-l-2 border-amber-400 text-slate-700 italic">
+                      <span className="font-semibold text-amber-700 not-italic text-[10px] block">Văn bản được neo:</span>
                       "{item.selectedSnippet}"
                     </div>
                   )}
 
                   {/* Feedback text */}
-                  <p className="mt-2 text-xs text-slate-800 leading-relaxed font-normal">
+                  <p className="mt-1.5 text-xs text-slate-800 leading-relaxed font-normal">
                     {item.comment}
                   </p>
 

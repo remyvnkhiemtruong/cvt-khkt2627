@@ -24,7 +24,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   className
 }) => {
   return (
-    <div className={cn("p-3 bg-white rounded-xl border border-slate-200 shadow-card flex flex-wrap items-center justify-between gap-3", className)}>
+    <div className={cn("p-2.5 bg-white rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2.5", className)}>
       <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[240px]">
         {onSearchChange && (
           <div className="relative w-full max-w-xs">
@@ -41,7 +41,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               data-lpignore="true"
               data-1p-ignore="true"
               data-form-type="other"
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs py-1.5 pl-9 pr-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:bg-white transition"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md text-xs py-1.5 pl-9 pr-3 text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white transition"
             />
             {searchQuery && (
               <button

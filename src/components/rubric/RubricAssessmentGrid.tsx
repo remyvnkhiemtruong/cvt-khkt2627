@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { RubricMatrix, RubricAssessmentSubmission } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
-import { CheckCircle, Award, MessageSquare, ShieldCheck, UserCheck, Sparkles } from 'lucide-react';
+import { CheckCircle, Award, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface RubricAssessmentGridProps {
@@ -109,24 +109,24 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Summary & Multi-Evaluator Comparisons */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card">
+      <div className="bg-white rounded-lg border border-slate-200 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-bold mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-50 text-sky-800 text-xs font-medium border border-sky-200 mb-1.5">
               <Award className="w-3.5 h-3.5" />
-              Đánh giá Đa chiều theo Ma trận Rubric
+              Đánh giá theo ma trận rubric
             </div>
-            <h2 className="text-lg font-bold text-slate-900">{rubric.title}</h2>
+            <h2 className="text-base font-bold text-slate-900">{rubric.title}</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Đánh giá cho phiên bản: <span className="font-bold text-slate-800">{versionNumber}</span> • Thang điểm chuẩn 4 mức độ
+              Đánh giá cho phiên bản: <span className="font-semibold text-slate-800">{versionNumber}</span> • Thang điểm chuẩn 4 mức độ
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-slate-900 text-white rounded-2xl px-5 py-3 text-center shadow-sm">
-              <div className="text-[11px] text-slate-300 font-medium">Tổng điểm Đánh giá</div>
-              <div className="text-2xl font-black text-sky-400">
-                {totalScore} <span className="text-sm font-normal text-slate-400">/ {maxScore}</span>
+            <div className="bg-slate-900 text-white rounded-lg px-4 py-2.5 text-center">
+              <div className="text-[11px] text-slate-300 font-medium">Tổng điểm rubric</div>
+              <div className="text-xl font-bold text-sky-400">
+                {totalScore} <span className="text-xs font-normal text-slate-400">/ {maxScore}</span>
               </div>
             </div>
           </div>
@@ -134,34 +134,25 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
 
         {/* 3 Perspectives Comparison Badges (Self, Peer, Teacher) */}
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className={`p-3 rounded-xl border ${selfSub ? 'bg-sky-50/70 border-sky-200' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-2.5 rounded-md border ${selfSub ? 'bg-sky-50/70 border-sky-200' : 'bg-slate-50 border-slate-200'}`}>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700 flex items-center gap-1">
-                <UserCheck className="w-3.5 h-3.5 text-sky-600" /> Tự đánh giá (Học sinh)
-              </span>
-              <span className="font-bold text-sky-700">{selfSub ? `${selfSub.totalScore}/${selfSub.maxScore}` : 'Chưa chấm'}</span>
+              <span className="font-semibold text-slate-700">Tự đánh giá</span>
+              <span className="font-bold text-slate-900">{selfSub ? `${selfSub.totalScore}/${selfSub.maxScore}` : 'Chưa nộp'}</span>
             </div>
-            {selfSub && <p className="text-[11px] text-slate-500 italic mt-1 line-clamp-1">"{selfSub.overallFeedback}"</p>}
           </div>
 
-          <div className={`p-3 rounded-xl border ${peerSub ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-2.5 rounded-md border ${peerSub ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Đồng đẳng (Bạn học)
-              </span>
-              <span className="font-bold text-indigo-700">{peerSub ? `${peerSub.totalScore}/${peerSub.maxScore}` : 'Chưa chấm'}</span>
+              <span className="font-semibold text-slate-700">Bạn học chấm</span>
+              <span className="font-bold text-slate-900">{peerSub ? `${peerSub.totalScore}/${peerSub.maxScore}` : 'Chưa nộp'}</span>
             </div>
-            {peerSub && <p className="text-[11px] text-slate-500 italic mt-1 line-clamp-1">"{peerSub.overallFeedback}"</p>}
           </div>
 
-          <div className={`p-3 rounded-xl border ${teacherSub ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-2.5 rounded-md border ${teacherSub ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Chính thức (Giáo viên)
-              </span>
-              <span className="font-bold text-emerald-700">{teacherSub ? `${teacherSub.totalScore}/${teacherSub.maxScore}` : 'Chưa chấm'}</span>
+              <span className="font-semibold text-slate-700">Giáo viên chấm</span>
+              <span className="font-bold text-emerald-800">{teacherSub ? `${teacherSub.totalScore}/${teacherSub.maxScore}` : 'Chưa nộp'}</span>
             </div>
-            {teacherSub && <p className="text-[11px] text-slate-500 italic mt-1 line-clamp-1">"{teacherSub.overallFeedback}"</p>}
           </div>
         </div>
       </div>
@@ -173,20 +164,20 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
           const axisObj = POETIC_AXES.find(a => a.id === crit.axisId);
 
           return (
-            <div key={crit.id} className="bg-white rounded-2xl border border-slate-200 shadow-card overflow-hidden">
-              <div className="bg-slate-50 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+            <div key={crit.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center">
+                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center">
                       {cIdx + 1}
                     </span>
-                    <h3 className="font-bold text-slate-900 text-sm">{crit.title}</h3>
+                    <h3 className="font-semibold text-slate-900 text-xs">{crit.title}</h3>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5 ml-7">{axisObj?.description}</p>
                 </div>
 
-                <div className="text-xs font-bold px-3 py-1 bg-sky-100 text-sky-800 rounded-lg">
-                  Điểm chọn: {selected.score} / 4.0
+                <div className="text-xs font-semibold px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-md">
+                  Điểm: {selected.score} / 4.0
                 </div>
               </div>
 
@@ -221,7 +212,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
                         </p>
 
                         <div className="mt-2.5 pt-2 border-t border-slate-200/40 space-y-1">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Chỉ báo quan sát:</span>
+                          <span className="text-[10px] font-semibold text-slate-600 block">Chỉ báo quan sát:</span>
                           {lvl.observableIndicators.map((ind, i) => (
                             <div key={i} className="text-[11px] text-slate-600 flex items-start gap-1">
                               <span className="text-slate-400">•</span> {ind}
@@ -263,10 +254,10 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
 
         {/* Overall Assessment Comment & Submit Action */}
         {!isReadOnly && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-4">
-            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+            <h3 className="font-semibold text-slate-900 text-xs flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-sky-600" />
-              Nhận xét Tổng thể & Khuyến nghị Phát triển Sư phạm
+              Nhận xét tổng thể & Định hướng sư phạm
             </h3>
 
             <textarea
@@ -274,7 +265,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
               value={overallFeedback}
               onChange={e => setOverallFeedback(e.target.value)}
               placeholder="Nhận xét tổng quát về mức độ tiến bộ, điểm sáng và định hướng hoàn thiện ở phiên bản tiếp theo..."
-              className="w-full text-xs border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              className="w-full text-xs border border-slate-300 rounded-md p-2.5 focus:border-sky-500 focus:outline-none"
               required
             />
 

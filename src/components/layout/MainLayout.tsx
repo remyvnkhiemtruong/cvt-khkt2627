@@ -33,7 +33,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ currentView, onNavigate,
       <footer className="hidden border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 md:block">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
           <span><strong>Học tốt Ngữ Văn</strong> • Học tập, phản hồi và phát triển năng lực đọc hiểu Ngữ văn</span>
-          <span className="text-[11px] text-slate-400">Phiên bản chính thức • Tài khoản đang được xác thực</span>
+          <span className="text-xs text-slate-400">Nền tảng học tập theo quy trình và phản hồi đa chiều</span>
         </div>
       </footer>
     </div>

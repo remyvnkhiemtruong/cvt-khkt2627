@@ -8,11 +8,11 @@ import {
   Card,
   FilterBar,
   Pagination,
-  EmptyState
+  EmptyState,
+  PageHeader
 } from '../components/ui';
 import {
   BookOpenIcon,
-  DocumentDuplicateIcon,
   ArrowRightIcon,
   ClockIcon,
   ArrowsRightLeftIcon,
@@ -121,41 +121,32 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
   const paginatedList = filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16">
+    <div className="space-y-6 pb-16">
       {/* Header */}
-      <header className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-semibold border border-indigo-200 mb-2">
-            <DocumentDuplicateIcon className="w-4 h-4" />
-            Hồ Sơ Học Tập Cá Nhân Có Lưu Phiên Bản
-          </div>
-          <h1 className="text-h2 font-bold text-slate-900 tracking-tight">
-            Danh Sách Hồ Sơ Học Tập (Portfolio List)
-          </h1>
-          <p className="text-small text-slate-500 mt-1">
-            Tổng hợp toàn bộ quá trình đọc hiểu, bản thảo, snapshot phiên bản và nhận xét sư phạm
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => onNavigate('student-dashboard')}
-            leftIcon={<BookOpenIcon className="w-4 h-4" />}
-          >
-            Quay lại Nhiệm vụ
-          </Button>
-          {(filteredList[0]?.assignmentId || assignments[0]?.id) && (
+      <PageHeader
+        title="Hồ sơ học tập"
+        description="Tổng hợp quá trình đọc hiểu, các phiên bản bài viết và nhận xét đánh giá."
+        actions={
+          <div className="flex items-center gap-2.5">
             <Button
-              variant="academic"
-              onClick={() => onNavigate('editor', { assignmentId: filteredList[0]?.assignmentId || assignments[0]?.id })}
-              rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+              variant="outline"
+              onClick={() => onNavigate('student-dashboard')}
+              leftIcon={<BookOpenIcon className="w-4 h-4" />}
             >
-              Viết tiếp bài gần nhất
+              Quay lại Nhiệm vụ
             </Button>
-          )}
-        </div>
-      </header>
+            {(filteredList[0]?.assignmentId || assignments[0]?.id) && (
+              <Button
+                variant="primary"
+                onClick={() => onNavigate('editor', { assignmentId: filteredList[0]?.assignmentId || assignments[0]?.id })}
+                rightIcon={<ArrowRightIcon className="w-4 h-4" />}
+              >
+                Viết tiếp bài gần nhất
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Filter and Grouping Bar */}
       <FilterBar
@@ -225,8 +216,8 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
           {paginatedList.map(item => (
             <Card
               key={item.id}
-              padding="lg"
-              className="border border-slate-200 hover:border-slate-300 hover:shadow-elevated transition-all flex flex-col justify-between space-y-4 bg-white"
+              padding="md"
+              className="border border-slate-200 flex flex-col justify-between space-y-4 bg-white"
             >
               <div className="space-y-3">
                 {/* Header tags */}
@@ -242,31 +233,31 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
 
                 {/* Literary Work & Assignment Title */}
                 <div>
-                  <span className="text-caption font-bold text-indigo-900 uppercase tracking-wider block">
+                  <span className="text-xs font-medium text-slate-600 block">
                     {item.textTitle} ({item.textAuthor})
                   </span>
-                  <h2 className="text-sm font-bold text-slate-900 tracking-tight mt-0.5 line-clamp-2">
+                  <h2 className="text-sm font-semibold text-slate-900 mt-0.5 line-clamp-2">
                     {item.assignmentTitle}
                   </h2>
                 </div>
 
                 {/* Metrics: Version, Unresolved Feedback, Rubric Score */}
-                <div className="grid grid-cols-3 gap-2 py-3 px-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-slate-50 rounded-md border border-slate-200 text-center">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Phiên bản</span>
-                    <span className="font-bold text-xs text-slate-800">{item.currentVersion}</span>
+                    <span className="text-xs text-slate-500 block">Phiên bản</span>
+                    <span className="font-semibold text-xs text-slate-900">{item.currentVersion}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Phản hồi</span>
-                    <span className={`font-bold text-xs ${item.unresolvedFbCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                    <span className="text-xs text-slate-500 block">Phản hồi</span>
+                    <span className={`font-semibold text-xs ${item.unresolvedFbCount > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                       {item.unresolvedFbCount > 0 ? `${item.unresolvedFbCount} góp ý` : '0'}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Điểm Rubric</span>
-                    <span className="font-bold text-xs text-indigo-700">{item.scoreDisplay}</span>
+                    <span className="text-xs text-slate-500 block">Điểm Rubric</span>
+                    <span className="font-semibold text-xs text-indigo-700">{item.scoreDisplay}</span>
                   </div>
                 </div>
               </div>

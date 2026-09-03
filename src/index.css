@@ -53,10 +53,10 @@
   --color-neutral-950: #020617;
 
   /* Radii tokens */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
 
   /* Sidebar width token */
   --sidebar-width: 256px;

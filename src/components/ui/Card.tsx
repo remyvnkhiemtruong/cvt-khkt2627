@@ -18,23 +18,23 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variants = {
-    default: "bg-white rounded-2xl border border-slate-200 shadow-card",
-    subtle: "bg-slate-50/70 rounded-2xl border border-slate-200",
-    elevated: "bg-white rounded-2xl border border-slate-200 shadow-elevated",
-    bordered: "bg-white rounded-2xl border-2 border-slate-200",
+    default: "bg-white rounded-lg border border-slate-200",
+    subtle: "bg-slate-50 rounded-lg border border-slate-200",
+    elevated: "bg-white rounded-lg border border-slate-200 shadow-sm",
+    bordered: "bg-white rounded-lg border border-slate-300",
   };
 
   const paddings = {
     none: "",
     sm: "p-3",
-    md: "p-5",
-    lg: "p-6 sm:p-8",
+    md: "p-4 sm:p-5",
+    lg: "p-5 sm:p-6",
   };
 
   return (
-    <div className={cn(variants[variant], "overflow-hidden transition-all", className)} {...props}>
+    <div className={cn(variants[variant], "overflow-hidden", className)} {...props}>
       {header && (
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
           {header}
         </div>
       )}
@@ -42,7 +42,7 @@ export const Card: React.FC<CardProps> = ({
         {children}
       </div>
       {footer && (
-        <div className="px-5 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           {footer}
         </div>
       )}

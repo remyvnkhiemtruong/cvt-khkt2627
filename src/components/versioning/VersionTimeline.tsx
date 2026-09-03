@@ -20,19 +20,19 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
   canCreateSnapshot = true
 }) => {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-card">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+    <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <History className="w-5 h-5 text-sky-600" />
-          <h3 className="font-semibold text-slate-900 text-sm">Lịch sử Phiên bản Đọc hiểu</h3>
+          <History className="w-4 h-4 text-sky-600" />
+          <h3 className="font-semibold text-slate-900 text-xs">Lịch sử phiên bản</h3>
         </div>
         {canCreateSnapshot && (
           <button
             onClick={onOpenNewSnapshotModal}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white rounded-md text-xs font-medium transition-colors"
           >
             <GitCommit className="w-3.5 h-3.5" />
-            Tạo Phiên bản Mới (Snapshot)
+            Tạo phiên bản mới
           </button>
         )}
       </div>

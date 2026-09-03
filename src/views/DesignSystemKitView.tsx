@@ -24,7 +24,8 @@ import {
   DataTable,
   Progress,
   StatCard,
-  ChartContainer
+  ChartContainer,
+  PageHeader
 } from '../components/ui';
 import { useNotificationStore } from '../app/store/useNotificationStore';
 import {
@@ -73,38 +74,29 @@ export const DesignSystemKitView: React.FC = () => {
         ]}
       />
 
-      {/* Header */}
-      <header className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-semibold border border-indigo-200">
-            <SparklesIcon className="w-3.5 h-3.5" />
-            Design System Kit v2.0 • Academic Research & Learning Analytics Workspace
+      <PageHeader
+        title="Thư viện chuẩn hóa Design System & UI Kit"
+        description="Tổng hợp toàn bộ Semantic Tokens, Typography, Color Palette và Base Components phục vụ hệ thống Học tốt Ngữ Văn."
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDrawerOpen(true)}
+              leftIcon={<EyeIcon className="w-4 h-4" />}
+            >
+              Mở Drawer Preview
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Mở Modal Dialog
+            </Button>
           </div>
-          <h1 className="text-h1 text-slate-900 font-bold tracking-tight">
-            Thư Viện Chuẩn Hóa Design System & UI Kit
-          </h1>
-          <p className="text-small text-slate-500">
-            Tổng hợp toàn bộ Semantic Tokens, Typography, Color Palette, Base Components, và Interactive States phục vụ hệ thống Học tốt Ngữ Văn.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsDrawerOpen(true)}
-            leftIcon={<EyeIcon className="w-4 h-4" />}
-          >
-            Mở Drawer Preview
-          </Button>
-          <Button
-            variant="academic"
-            onClick={() => setIsModalOpen(true)}
-            leftIcon={<SparklesIcon className="w-4 h-4" />}
-          >
-            Mở Modal Dialog
-          </Button>
-        </div>
-      </header>
+        }
+      />
 
       {/* Tabs Navigation for Sections */}
       <Tabs
@@ -122,7 +114,7 @@ export const DesignSystemKitView: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="space-y-8">
           {/* Typography Scale */}
-          <section aria-labelledby="typography-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="typography-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="typography-heading" className="text-h3 font-bold text-slate-900">
                 Thang Bậc Typography (Be Vietnam Pro / Inter - Sans-serif Tiếng Việt Hoàn Chỉnh)
@@ -181,7 +173,7 @@ export const DesignSystemKitView: React.FC = () => {
           </section>
 
           {/* Semantic Color Palette */}
-          <section aria-labelledby="colors-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="colors-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="colors-heading" className="text-h3 font-bold text-slate-900">
                 Bảng Màu Semantic Tokens (Không Lạm Dụng Màu Bão Hòa)
@@ -243,7 +235,7 @@ export const DesignSystemKitView: React.FC = () => {
       {activeTab === 'components' && (
         <div className="space-y-8">
           {/* Button Matrix */}
-          <section aria-labelledby="buttons-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="buttons-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="buttons-heading" className="text-h3 font-bold text-slate-900">
                 Hệ Thống Nút Bấm & Trạng Thái Tương Tác (Button Variants & States)
@@ -319,7 +311,7 @@ export const DesignSystemKitView: React.FC = () => {
           </section>
 
           {/* Form Controls */}
-          <section aria-labelledby="forms-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="forms-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="forms-heading" className="text-h3 font-bold text-slate-900">
                 Biểu Mẫu & Trường Dữ Liệu (Form Controls & Validation States)
@@ -392,7 +384,7 @@ export const DesignSystemKitView: React.FC = () => {
           </section>
 
           {/* Badges, Alerts, Tooltips, Toasts, Avatars */}
-          <section aria-labelledby="feedback-ui-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="feedback-ui-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="feedback-ui-heading" className="text-h3 font-bold text-slate-900">
                 Hệ Thống Phản Hồi, Huy Hiệu & Cảnh Báo (Alerts, Badges, Avatars)
@@ -496,7 +488,7 @@ export const DesignSystemKitView: React.FC = () => {
       {activeTab === 'diff-rubric' && (
         <div className="space-y-8">
           {/* Non-Color Diff Tokens */}
-          <section aria-labelledby="diff-tokens-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="diff-tokens-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="diff-tokens-heading" className="text-h3 font-bold text-slate-900">
                 Quy Chuẩn So Sánh Sai Khác (Visual Diff Tokens Có Ký Hiệu Rõ Ràng)
@@ -550,7 +542,7 @@ export const DesignSystemKitView: React.FC = () => {
           </section>
 
           {/* Rubric 4-level scale */}
-          <section aria-labelledby="rubric-scale-heading" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-card space-y-6">
+          <section aria-labelledby="rubric-scale-heading" className="bg-white rounded-lg border border-slate-200 p-5 space-y-6">
             <header className="border-b border-slate-100 pb-3">
               <h2 id="rubric-scale-heading" className="text-h3 font-bold text-slate-900">
                 Thang Đo Rubric 4 Mức Độ Chuẩn Hóa
@@ -669,12 +661,12 @@ export const DesignSystemKitView: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Đóng Băng Phiên Bản Snapshot Mới (Modal Preview)"
-        description="Lưu giữ mốc phát triển năng lực đọc hiểu bất biến trong hồ sơ học tập."
+        title="Lưu phiên bản mới (Modal Preview)"
+        description="Lưu giữ mốc phát triển năng lực đọc hiểu trong hồ sơ học tập."
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Hủy bỏ</Button>
-            <Button variant="primary" onClick={() => setIsModalOpen(false)}>Xác nhận đóng băng</Button>
+            <Button variant="primary" onClick={() => setIsModalOpen(false)}>Lưu phiên bản</Button>
           </>
         }
       >

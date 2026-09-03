@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { PoeticAxisId } from '../types';
-import { Badge, Button, Card, StatCard } from '../components/ui';
-import { ArrowRightIcon, ChartBarIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { Badge, Button, Card, StatCard, PageHeader } from '../components/ui';
+import { ArrowLeftIcon, ArrowRightIcon, ChartBarIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 interface StudentAnalyticsViewProps { studentId:string;assignmentId:string;onNavigate:(view:string,extraParams?:any)=>void; }
 const labels:Record<PoeticAxisId,string>={plot_situation:'Tình huống',character_detail:'Nhân vật',narrator_pov:'Điểm nhìn',space_time:'Không-thời gian',language_tone_symbol:'Ngôn ngữ',form_argument:'Lập luận'};
@@ -19,13 +19,89 @@ export const StudentAnalyticsView:React.FC<StudentAnalyticsViewProps>=({studentI
   const weakest=axisRows.filter(x=>x.last>0).sort((a,b)=>a.last-b.last)[0];
   const resolved=studentFeedback.filter(f=>f.resolved).length;const ai=studentFeedback.filter(f=>f.authorRole==='ai').length;
 
-  if(!portfolio)return <div className="rounded-2xl border bg-white p-8 text-center"><h2 className="font-bold">Chưa có hồ sơ học tập</h2><p className="mt-2 text-sm text-slate-500">Hồ sơ sẽ xuất hiện sau khi học sinh được gán nhiệm vụ.</p></div>;
+  if(!portfolio)return <div className="rounded-lg border border-slate-200 bg-white p-6 text-center"><h2 className="font-semibold text-slate-900">Chưa có hồ sơ học tập</h2><p className="mt-1 text-xs text-slate-500">Hồ sơ sẽ xuất hiện sau khi bạn bắt đầu nhiệm vụ.</p></div>;
+  const currentAssignmentTitle = assignments.find(a=>a.id===assignmentId)?.title||assignmentId;
+
   return <div className="mx-auto max-w-6xl space-y-6 pb-16">
-    <header className="rounded-2xl border bg-white p-5 sm:p-6"><div className="text-xs font-bold uppercase tracking-wider text-indigo-700">Learning Analytics có truy nguyên</div><h1 className="mt-1 text-2xl font-bold">Tiến bộ — {portfolio.studentName}</h1><p className="mt-2 text-sm text-slate-600">{assignments.find(a=>a.id===assignmentId)?.title||assignmentId}. Mọi chỉ số bên dưới được nối với version, rubric và feedback thật.</p></header>
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4"><StatCard label="Phiên bản" value={String(portfolio.versions.length)} subValue={portfolio.currentActiveVersion} icon={<DocumentTextIcon className="h-5 w-5"/>}/><StatCard label="Phản hồi" value={String(studentFeedback.length)} subValue={`${resolved} đã xử lý`} icon={<ChatBubbleLeftRightIcon className="h-5 w-5"/>}/><StatCard label="Phản hồi AI" value={String(ai)} subValue="Trong tiến trình thật" icon={<SparklesIcon className="h-5 w-5"/>}/><StatCard label="Rubric submissions" value={String(submissions.length)} subValue={latest?`Gần nhất: ${latest.sub.totalScore}/${latest.sub.maxScore}`:'Chưa chấm'} icon={<ChartBarIcon className="h-5 w-5"/>}/></section>
+    <div>
+      <div className="mb-2 flex items-center gap-2">
+        <Button size="sm" variant="ghost" onClick={()=>onNavigate('portfolio-list')} leftIcon={<ArrowLeftIcon className="h-4 w-4"/>}>Quay lại</Button>
+        <span className="text-xs text-slate-300">/</span>
+        <span className="text-xs text-slate-500">{currentAssignmentTitle}</span>
+      </div>
+      <PageHeader
+        title={`Tiến bộ năng lực — ${portfolio.studentName}`}
+        description={`Đánh giá sự tiến bộ qua các phiên bản và nhận xét phản hồi cho bài tập.`}
+        actions={
+          portfolio.versions.length >= 2 ? (
+            <Button size="sm" variant="outline" onClick={()=>onNavigate('version-diff',{assignmentId})}>
+              So sánh phiên bản
+            </Button>
+          ) : undefined
+        }
+      />
+    </div>
 
-    <Card padding="lg"><div className="mb-4"><h2 className="font-bold">Tiến bộ theo 6 trục</h2><p className="mt-1 text-xs text-slate-500">So sánh rubric đầu tiên và gần nhất. Không suy diễn khi chưa có điểm.</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{axisRows.map(r=><div key={r.axis} className="rounded-xl border p-4"><div className="flex items-center justify-between"><b className="text-sm">{labels[r.axis]}</b>{r.last>0&&<Badge variant={r.delta>0?'emerald':r.delta<0?'rose':'slate'}>{r.delta>0?'+':''}{r.delta.toFixed(1)}</Badge>}</div><div className="mt-3 flex items-end gap-3"><span className="text-xs text-slate-500">Đầu: <b className="text-slate-800">{r.first?r.first.toFixed(1):'—'}</b></span><ArrowRightIcon className="h-4 w-4 text-slate-300"/><span className="text-xs text-slate-500">Gần nhất: <b className="text-slate-800">{r.last?r.last.toFixed(1):'—'}</b></span></div></div>)}</div>{weakest&&<div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><b>Gợi ý có giải trình:</b> Trục {labels[weakest.axis]} hiện thấp nhất ({weakest.last.toFixed(1)}/4). Nên ưu tiên xem lại feedback và dẫn chứng liên quan đến trục này.</div>}</Card>
+    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatCard label="Phiên bản" value={String(portfolio.versions.length)} subValue={portfolio.currentActiveVersion} icon={<DocumentTextIcon className="h-4 w-4"/>}/>
+      <StatCard label="Phản hồi" value={String(studentFeedback.length)} subValue={`${resolved} đã xử lý`} icon={<ChatBubbleLeftRightIcon className="h-4 w-4"/>}/>
+      <StatCard label="Gợi ý AI" value={String(ai)} subValue="Đã nhận" icon={<SparklesIcon className="h-4 w-4"/>}/>
+      <StatCard label="Đánh giá rubric" value={String(submissions.length)} subValue={latest?`Gần nhất: ${latest.sub.totalScore}/${latest.sub.maxScore}`:'Chưa chấm'} icon={<ChartBarIcon className="h-4 w-4"/>}/>
+    </section>
 
-    <Card padding="lg"><div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Dòng thời gian feedback → sửa bài</h2><p className="text-xs text-slate-500">Click version để mở Visual Diff.</p></div><Button size="sm" variant="outline" onClick={()=>onNavigate('version-diff',{assignmentId})}>Mở Diff</Button></div><div className="space-y-3">{portfolio.versions.map(v=>{const linked=studentFeedback.filter(f=>f.versionNumber===v.versionNumber);return <div key={v.id} className="rounded-xl border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><b>{v.versionNumber}</b><span className="ml-2 text-xs text-slate-500">{new Date(v.createdAt).toLocaleString('vi-VN')}</span></div><Badge variant="blue">{linked.length} feedback</Badge></div><p className="mt-2 text-sm text-slate-600">{v.changeSummary||'Không có mô tả thay đổi.'}</p>{linked.map(f=><div key={f.id} className="mt-2 rounded-lg bg-slate-50 p-2 text-xs"><b>{f.authorRole==='ai'?'AI':f.authorName}:</b> {f.comment} {f.resolved&&<span className="font-semibold text-emerald-700">• Đã xử lý</span>}</div>)}</div>})}{portfolio.versions.length===0&&<p className="text-sm text-slate-500">Chưa có version đã nộp.</p>}</div></Card>
+    <Card padding="md">
+      <div className="mb-3">
+        <h2 className="text-sm font-semibold text-slate-900">Tiến bộ theo 6 trục thi pháp</h2>
+        <p className="mt-0.5 text-xs text-slate-500">So sánh điểm rubric giữa lần nộp đầu tiên và gần nhất.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {axisRows.map(r=>(
+          <div key={r.axis} className="rounded-md border border-slate-200 p-3">
+            <div className="flex items-center justify-between">
+              <b className="text-xs font-semibold text-slate-800">{labels[r.axis]}</b>
+              {r.last>0&&<Badge variant={r.delta>0?'emerald':r.delta<0?'rose':'slate'}>{r.delta>0?'+':''}{r.delta.toFixed(1)}</Badge>}
+            </div>
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="text-xs text-slate-500">Đầu: <b className="text-slate-800">{r.first?r.first.toFixed(1):'—'}</b></span>
+              <ArrowRightIcon className="h-3.5 w-3.5 text-slate-300"/>
+              <span className="text-xs text-slate-500">Gần nhất: <b className="text-slate-800">{r.last?r.last.toFixed(1):'—'}</b></span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {weakest&&<div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"><b>Gợi ý trọng tâm:</b> Trục {labels[weakest.axis]} hiện đạt {weakest.last.toFixed(1)}/4. Bạn nên ưu tiên xem lại nhận xét và dẫn chứng liên quan đến trục này.</div>}
+    </Card>
+
+    <Card padding="md">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Lịch sử phiên bản & phản hồi</h2>
+          <p className="mt-0.5 text-xs text-slate-500">Ghi nhận các góp ý theo từng phiên bản bài nộp.</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {portfolio.versions.map(v=>{
+          const linked=studentFeedback.filter(f=>f.versionNumber===v.versionNumber);
+          return (
+            <div key={v.id} className="rounded-md border border-slate-200 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <b className="text-xs font-semibold text-slate-900">{v.versionNumber}</b>
+                  <span className="ml-2 text-xs text-slate-400">{new Date(v.createdAt).toLocaleString('vi-VN')}</span>
+                </div>
+                <Badge variant="blue">{linked.length} góp ý</Badge>
+              </div>
+              <p className="mt-1.5 text-xs text-slate-600">{v.changeSummary||'Không có ghi chú thay đổi.'}</p>
+              {linked.map(f=>(
+                <div key={f.id} className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs">
+                  <span className="font-semibold text-slate-800">{f.authorRole==='ai'?'AI':f.authorName}:</span> {f.comment} {f.resolved&&<span className="font-medium text-emerald-700 ml-1">• Đã xử lý</span>}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        {portfolio.versions.length===0&&<p className="text-xs text-slate-500 py-3">Chưa có phiên bản nào được lưu.</p>}
+      </div>
+    </Card>
   </div>;
 };

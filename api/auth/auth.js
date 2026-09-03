@@ -30,16 +30,18 @@ function sign(payload) {
   const header=b64({alg:"HS256",typ:"JWT"}), body=b64(payload);
   return `${header}.${body}.${createHmac("sha256",jwtSecret()).update(`${header}.${body}`).digest("base64url")}`;
 }
-function verify(token) {
+function verifyPayload(token) {
   try {
     const [header,payload,signature]=String(token||"").split("."); if(!header||!payload||!signature)return null;
     const expected=createHmac("sha256",jwtSecret()).update(`${header}.${payload}`).digest("base64url");
     const a=Buffer.from(signature),b=Buffer.from(expected); if(a.length!==b.length||!timingSafeEqual(a,b))return null;
     const data=JSON.parse(Buffer.from(payload,"base64url").toString());
-    if(!data?.user||Number(data.exp)<Date.now()/1000)return null; return data.user;
+    if(!data?.user||Number(data.exp)<Date.now()/1000)return null;
+    return data;
   } catch { return null; }
 }
 function sessionForUser(user) { const now=Math.floor(Date.now()/1000); return {user,token:sign({user,iat:now,exp:now+28800})}; }
+function cookieToken(req) { return String(req.headers?.cookie||"").match(/cvt_token=([^;]+)/)?.[1] || ""; }
 
 export function requestIp(req) { return String(req.headers?.["x-forwarded-for"]||req.socket?.remoteAddress||"").split(",")[0].trim(); }
 export function assertSameOrigin(req) {
@@ -110,8 +112,9 @@ export async function login(email,password) {
   await ensureSchema(); const db=await pool();
   const result=await db.query("SELECT id,email,name,role,must_change_password,password_hash,account_status FROM app_users WHERE lower(email)=lower($1)",[email]);
   const row=result.rows[0]; if(!row||row.account_status!=='active'||!passwordVerify(password,row.password_hash))return null;
-  await db.query("UPDATE app_users SET last_login=now(),updated_at=now() WHERE id=$1",[row.id]);
-  return sessionForUser({id:row.id,email:row.email,name:row.name,role:row.role,mustChangePassword:row.must_change_password,accountStatus:row.account_status});
+  const updated=await db.query("UPDATE app_users SET last_login=now(),updated_at=now() WHERE id=$1 RETURNING id,email,name,role,must_change_password,account_status",[row.id]);
+  const current=updated.rows[0];
+  return sessionForUser({id:current.id,email:current.email,name:current.name,role:current.role,mustChangePassword:current.must_change_password,accountStatus:current.account_status});
 }
 
 export async function register(email,name,password) {
@@ -142,9 +145,22 @@ export async function listUsers() {
 }
 
 export function getUser(req) {
-  const cookieToken=String(req.headers?.cookie||"").match(/cvt_token=([^;]+)/)?.[1];
-  return verify(cookieToken||"");
+  return verifyPayload(cookieToken(req))?.user || null;
 }
+
+export async function authenticate(req) {
+  const payload=verifyPayload(cookieToken(req));
+  if(!payload?.user?.id)return null;
+  await ensureSchema(); const db=await pool();
+  const result=await db.query(`SELECT id,email,name,role,must_change_password,account_status,updated_at FROM app_users WHERE id=$1`,[payload.user.id]);
+  const row=result.rows[0];
+  if(!row||row.account_status!=='active')return null;
+  const tokenIssuedAt=Number(payload.iat||0)*1000;
+  const accountUpdatedAt=new Date(row.updated_at).getTime();
+  if(!Number.isFinite(tokenIssuedAt)||accountUpdatedAt>tokenIssuedAt+2000)return null;
+  return {id:row.id,email:row.email,name:row.name,role:row.role,mustChangePassword:row.must_change_password,accountStatus:row.account_status};
+}
+
 export function send(res,status,data,token) {
   if(token)res.setHeader("Set-Cookie",`cvt_token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`);
   res.setHeader("Content-Type","application/json"); return res.status(status).json(data);

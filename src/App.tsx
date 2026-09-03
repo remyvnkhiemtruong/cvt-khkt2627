@@ -80,8 +80,15 @@ const AppContent: React.FC = () => {
         if (!data?.user?.id || !data?.user?.role) throw new Error('SESSION_INVALID');
         if (!active) return;
         setAuthenticatedUser({
-          id:data.user.id,name:data.user.name,email:data.user.email,role:data.user.role,
-          mustChangePassword:Boolean(data.user.mustChangePassword)
+          id:data.user.id,
+          name:data.user.name,
+          email:data.user.email,
+          role:data.user.role,
+          mustChangePassword:Boolean(data.user.mustChangePassword),
+          accountStatus:data.user.accountStatus,
+          lastLogin:data.user.lastLogin || null,
+          className:data.user.className || '',
+          profile:data.user.profile || {}
         });
         const current = locationState();
         if (current.view === 'login' || current.view === 'not-found') replaceToView(homeViewForRole(data.user.role));

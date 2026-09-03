@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 const results = [];
 
 function test(name, fn) {
@@ -11,6 +13,10 @@ function test(name, fn) {
 
 function assert(condition, message = 'Assertion failed') {
   if (!condition) throw new Error(message);
+}
+
+function read(path) {
+  return fs.readFileSync(path, 'utf8');
 }
 
 function normalizeVietnameseNFC(text) {
@@ -29,10 +35,10 @@ function calculateVisualDiff(v1, v2) {
 const permissions = {
   student: ['create_draft', 'freeze_version', 'view_diff', 'self_assess', 'resolve_feedback'],
   peer: ['view_diff', 'peer_feedback', 'peer_rubric'],
-  teacher: ['view_diff', 'create_assignment', 'teacher_feedback', 'teacher_rubric', 'view_class_analytics', 'ai_notes'],
+  teacher: ['view_diff', 'create_assignment', 'teacher_feedback', 'teacher_rubric', 'view_class_analytics', 'ai_review_queue'],
   researcher: ['view_diff', 'view_anonymous_study', 'export_anonymized_data'],
-  admin: ['view_diff', 'view_admin_users', 'view_research', 'ai_notes'],
-  ai: ['ai_notes']
+  admin: ['view_diff', 'view_admin_users', 'view_research', 'ai_review_queue'],
+  ai: ['ai_review_queue']
 };
 
 function can(role, action) {
@@ -77,14 +83,64 @@ test('Admin có quyền đọc danh sách user thật', () => {
   assert(can('admin', 'view_admin_users'));
 });
 
-test('Teacher và AI được dùng kho ghi chú AI, student không được', () => {
-  assert(can('teacher', 'ai_notes'));
-  assert(can('ai', 'ai_notes'));
-  assert(!can('student', 'ai_notes'));
+test('Teacher, Admin và AI được dùng hàng đợi AI; student không được', () => {
+  assert(can('teacher', 'ai_review_queue'));
+  assert(can('admin', 'ai_review_queue'));
+  assert(can('ai', 'ai_review_queue'));
+  assert(!can('student', 'ai_review_queue'));
 });
 
 test('Peer không có quyền quản trị hệ thống', () => {
   assert(!can('peer', 'view_admin_users'));
+});
+
+test('Auth client không lưu JWT trong localStorage', () => {
+  const authStore = read('src/app/store/useAuthStore.ts');
+  const loginView = read('src/views/LoginView.tsx');
+  assert(!authStore.includes('localStorage'));
+  assert(!loginView.includes('localStorage'));
+});
+
+test('Cookie session có HttpOnly, Secure và SameSite', () => {
+  const auth = read('api/auth/auth.js');
+  assert(auth.includes('HttpOnly'));
+  assert(auth.includes('Secure'));
+  assert(auth.includes('SameSite=Lax'));
+});
+
+test('API nhạy cảm xác thực lại trạng thái tài khoản từ PostgreSQL', () => {
+  const protectedFiles = [
+    'api/admin/users.ts',
+    'api/admin/manage.ts',
+    'api/academic/action.ts',
+    'api/academic/snapshot.ts',
+    'api/academic/catalog.ts',
+    'api/auth/change-password.ts'
+  ];
+  for (const path of protectedFiles) {
+    assert(read(path).includes('authenticate('), `${path} chưa dùng live-session authentication`);
+  }
+});
+
+test('Portfolio version được khóa bất biến ở PostgreSQL', () => {
+  const academic = read('api/_lib/academic.js');
+  assert(academic.includes('prevent_portfolio_version_mutation'));
+  assert(academic.includes('BEFORE UPDATE OR DELETE ON portfolio_versions'));
+});
+
+test('PostgreSQL connection ép TLS verify-full', () => {
+  const db = read('api/_lib/db.js');
+  assert(db.includes('sslmode=verify-full'));
+});
+
+test('Không còn simulated API service cũ', () => {
+  const removed = [
+    'src/services/api/assignmentService.ts',
+    'src/services/api/portfolioService.ts',
+    'src/services/api/rubricService.ts',
+    'src/services/api/analyticsService.ts'
+  ];
+  assert(removed.every((path) => !fs.existsSync(path)));
 });
 
 const failed = results.filter((result) => result.status === 'FAIL');

@@ -24,6 +24,14 @@ test('Thương hiệu chính thức là Học tốt Ngữ Văn trên các bề m
   assert(read('package.json').includes('"name": "hoc-tot-ngu-van"'));
 });
 
+test('F5 ở route SPA luôn fallback về index.html nhưng không nuốt API',()=>{
+  const config=JSON.parse(read('vercel.json'));
+  const rewrites=Array.isArray(config.rewrites)?config.rewrites:[];
+  const spa=rewrites.find(rule=>rule?.destination==='/index.html');
+  assert(spa,'Thiếu SPA fallback về /index.html');
+  assert(typeof spa.source==='string'&&spa.source.includes('(?!api'),'SPA fallback phải loại trừ /api');
+});
+
 test('Auth client không lưu JWT trong localStorage',()=>{assert(!read('src/app/store/useAuthStore.ts').includes('localStorage'));assert(!read('src/views/LoginView.tsx').includes('localStorage'));});
 test('Cookie session có HttpOnly, Secure và SameSite',()=>{const auth=read('api/auth/auth.js');assert(auth.includes('HttpOnly'));assert(auth.includes('Secure'));assert(auth.includes('SameSite=Lax'));});
 test('API nhạy cảm xác thực lại trạng thái tài khoản từ PostgreSQL',()=>{for(const path of ['api/admin/users.ts','api/admin/manage.ts','api/academic/action.ts','api/academic/snapshot.ts','api/academic/catalog.ts','api/auth/change-password.ts'])assert(read(path).includes('authenticate('),`${path} chưa dùng live-session authentication`);});

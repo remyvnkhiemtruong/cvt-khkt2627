@@ -43,6 +43,47 @@ function verifyPayload(token) {
 function sessionForUser(user) { const now=Math.floor(Date.now()/1000); return {user,token:sign({user,iat:now,exp:now+28800})}; }
 function cookieToken(req) { return String(req.headers?.cookie||"").match(/cvt_token=([^;]+)/)?.[1] || ""; }
 
+const cleanText=(value,max=240)=>String(value||"").trim().slice(0,max);
+const cleanList=(value,maxItems=12,maxLength=80)=>{
+  const items=Array.isArray(value)?value:String(value||"").split(/[\n,]/);
+  return [...new Set(items.map(item=>cleanText(item,maxLength)).filter(Boolean))].slice(0,maxItems);
+};
+function sanitizeProfile(input={}) {
+  const dateOfBirth=cleanText(input.dateOfBirth,10);
+  return {
+    phone: cleanText(input.phone,30),
+    dateOfBirth: /^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ? dateOfBirth : "",
+    school: cleanText(input.school,160),
+    schoolYear: cleanText(input.schoolYear,20),
+    grade: cleanText(input.grade,30),
+    studentCode: cleanText(input.studentCode,50),
+    staffCode: cleanText(input.staffCode,50),
+    department: cleanText(input.department,120),
+    bio: cleanText(input.bio,600),
+    learningGoal: cleanText(input.learningGoal,600),
+    favoriteGenres: cleanList(input.favoriteGenres),
+    favoriteAuthors: cleanList(input.favoriteAuthors),
+    favoriteWorks: cleanList(input.favoriteWorks)
+  };
+}
+function rowToUser(row) {
+  return {
+    id:row.id,email:row.email,name:row.name,role:row.role,
+    mustChangePassword:Boolean(row.must_change_password),accountStatus:row.account_status,
+    lastLogin:row.last_login||null,className:row.class_name||"",profile:row.profile_json||{}
+  };
+}
+async function loadFullUser(db,userId) {
+  const base=await db.query(`SELECT id,email,name,role,must_change_password,account_status,last_login,updated_at,profile_json FROM app_users WHERE id=$1`,[userId]);
+  const row=base.rows[0]; if(!row)return null;
+  try {
+    const classResult=await db.query(`SELECT string_agg(DISTINCT c.code, ', ' ORDER BY c.code) class_name
+      FROM class_members cm JOIN classes c ON c.id=cm.class_id WHERE cm.user_id=$1`,[userId]);
+    row.class_name=classResult.rows[0]?.class_name||"";
+  } catch { row.class_name=""; }
+  return row;
+}
+
 export function requestIp(req) { return String(req.headers?.["x-forwarded-for"]||req.socket?.remoteAddress||"").split(",")[0].trim(); }
 export function assertSameOrigin(req) {
   const origin=String(req.headers?.origin||""); if(!origin)return;
@@ -56,11 +97,12 @@ export async function ensureSchema() {
   await db.query(`CREATE TABLE IF NOT EXISTS app_users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(), email text UNIQUE NOT NULL, name text NOT NULL,
     role text NOT NULL CHECK (role IN ('admin','teacher','student','peer','researcher','ai')), password_hash text NOT NULL,
-    must_change_password boolean NOT NULL DEFAULT true, account_status text NOT NULL DEFAULT 'active',
+    must_change_password boolean NOT NULL DEFAULT true, account_status text NOT NULL DEFAULT 'active', profile_json jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), last_login timestamptz)`);
   await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS last_login timestamptz");
   await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS account_status text NOT NULL DEFAULT 'active'");
   await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()");
+  await db.query("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS profile_json jsonb NOT NULL DEFAULT '{}'::jsonb");
   await db.query(`CREATE TABLE IF NOT EXISTS auth_rate_events (id bigserial PRIMARY KEY,event_key text NOT NULL,created_at timestamptz NOT NULL DEFAULT now())`);
   await db.query("CREATE INDEX IF NOT EXISTS idx_auth_rate_events_key_time ON auth_rate_events(event_key,created_at DESC)");
 
@@ -89,8 +131,8 @@ export async function ensureSchema() {
 
   const seeds=[
     ["admin@cvt.edu.vn","Quản trị hệ thống","admin",process.env.BOOTSTRAP_ADMIN_PASSWORD],
-    ["giaovien@cvt.edu.vn","Giáo viên CVT","teacher",process.env.BOOTSTRAP_TEACHER_PASSWORD],
-    ["hocsinh@cvt.edu.vn","Học sinh CVT","student",process.env.BOOTSTRAP_STUDENT_PASSWORD],
+    ["giaovien@cvt.edu.vn","Giáo viên Ngữ văn","teacher",process.env.BOOTSTRAP_TEACHER_PASSWORD],
+    ["hocsinh@cvt.edu.vn","Học sinh","student",process.env.BOOTSTRAP_STUDENT_PASSWORD],
     ["ai@cvt.edu.vn","AI","ai",process.env.BOOTSTRAP_AI_PASSWORD]
   ];
   for(const [email,name,role,password] of seeds){
@@ -110,26 +152,34 @@ export async function checkRateLimit(key, limit=10, windowSeconds=900) {
 
 export async function login(email,password) {
   await ensureSchema(); const db=await pool();
-  const result=await db.query("SELECT id,email,name,role,must_change_password,password_hash,account_status FROM app_users WHERE lower(email)=lower($1)",[email]);
+  const result=await db.query("SELECT id,password_hash,account_status FROM app_users WHERE lower(email)=lower($1)",[email]);
   const row=result.rows[0]; if(!row||row.account_status!=='active'||!passwordVerify(password,row.password_hash))return null;
-  const updated=await db.query("UPDATE app_users SET last_login=now(),updated_at=now() WHERE id=$1 RETURNING id,email,name,role,must_change_password,account_status",[row.id]);
-  const current=updated.rows[0];
-  return sessionForUser({id:current.id,email:current.email,name:current.name,role:current.role,mustChangePassword:current.must_change_password,accountStatus:current.account_status});
+  await db.query("UPDATE app_users SET last_login=now(),updated_at=now() WHERE id=$1",[row.id]);
+  const current=await loadFullUser(db,row.id); if(!current)return null;
+  return sessionForUser(rowToUser(current));
 }
 
 export async function register(email,name,password) {
   await ensureSchema(); const db=await pool();
-  const result=await db.query(`INSERT INTO app_users(email,name,role,password_hash,must_change_password,last_login,account_status)
-    VALUES(lower($1),$2,'student',$3,false,now(),'active') RETURNING id,email,name,role,must_change_password,account_status`,[email,name,passwordHash(password)]);
-  const row=result.rows[0]; return sessionForUser({id:row.id,email:row.email,name:row.name,role:row.role,mustChangePassword:row.must_change_password,accountStatus:row.account_status});
+  const result=await db.query(`INSERT INTO app_users(email,name,role,password_hash,must_change_password,last_login,account_status,profile_json)
+    VALUES(lower($1),$2,'student',$3,false,now(),'active','{}'::jsonb) RETURNING id`,[email,name,passwordHash(password)]);
+  const row=await loadFullUser(db,result.rows[0].id); return sessionForUser(rowToUser(row));
 }
 
 export async function changePassword(userId,newPassword) {
   await ensureSchema(); const db=await pool();
-  const result=await db.query(`UPDATE app_users SET password_hash=$2,must_change_password=false,updated_at=now() WHERE id=$1
-    RETURNING id,email,name,role,must_change_password,account_status`,[userId,passwordHash(newPassword)]);
-  const row=result.rows[0]; if(!row)return null;
-  return sessionForUser({id:row.id,email:row.email,name:row.name,role:row.role,mustChangePassword:row.must_change_password,accountStatus:row.account_status});
+  const result=await db.query(`UPDATE app_users SET password_hash=$2,must_change_password=false,updated_at=now() WHERE id=$1 RETURNING id`,[userId,passwordHash(newPassword)]);
+  if(!result.rows[0])return null;
+  const row=await loadFullUser(db,userId); return sessionForUser(rowToUser(row));
+}
+
+export async function updateProfile(userId,input) {
+  await ensureSchema(); const db=await pool();
+  const name=cleanText(input?.name,120); if(name.length<2)throw new Error("INVALID_NAME");
+  const profile=sanitizeProfile(input?.profile||{});
+  const result=await db.query(`UPDATE app_users SET name=$2,profile_json=$3::jsonb,updated_at=now() WHERE id=$1 AND account_status='active' RETURNING id`,[userId,name,JSON.stringify(profile)]);
+  if(!result.rows[0])return null;
+  const row=await loadFullUser(db,userId); return sessionForUser(rowToUser(row));
 }
 
 export async function setTemporaryPassword(userId,newPassword) {
@@ -140,7 +190,7 @@ export async function setTemporaryPassword(userId,newPassword) {
 
 export async function listUsers() {
   await ensureSchema(); const db=await pool();
-  const result=await db.query(`SELECT id,email,name,role,account_status,must_change_password,created_at,last_login FROM app_users ORDER BY created_at DESC,email ASC`);
+  const result=await db.query(`SELECT id,email,name,role,account_status,must_change_password,created_at,last_login,profile_json FROM app_users ORDER BY created_at DESC,email ASC`);
   return result.rows;
 }
 
@@ -152,13 +202,12 @@ export async function authenticate(req) {
   const payload=verifyPayload(cookieToken(req));
   if(!payload?.user?.id)return null;
   await ensureSchema(); const db=await pool();
-  const result=await db.query(`SELECT id,email,name,role,must_change_password,account_status,updated_at FROM app_users WHERE id=$1`,[payload.user.id]);
-  const row=result.rows[0];
+  const row=await loadFullUser(db,payload.user.id);
   if(!row||row.account_status!=='active')return null;
   const tokenIssuedAt=Number(payload.iat||0)*1000;
   const accountUpdatedAt=new Date(row.updated_at).getTime();
   if(!Number.isFinite(tokenIssuedAt)||accountUpdatedAt>tokenIssuedAt+2000)return null;
-  return {id:row.id,email:row.email,name:row.name,role:row.role,mustChangePassword:row.must_change_password,accountStatus:row.account_status};
+  return rowToUser(row);
 }
 
 export function send(res,status,data,token) {

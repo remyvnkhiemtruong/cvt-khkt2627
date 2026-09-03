@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../../app/store/useAuthStore';
-import { AcademicCapIcon, ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, BookOpenIcon, ChartBarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon, FolderIcon, HomeIcon, PlusCircleIcon, ShieldCheckIcon, SparklesIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { AcademicCapIcon, ArrowRightOnRectangleIcon, BookOpenIcon, ChartBarIcon, ClipboardDocumentCheckIcon, FolderIcon, HomeIcon, PlusCircleIcon, ShieldCheckIcon, SparklesIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
 import { Avatar } from '../ui/Avatar';
 
@@ -9,7 +9,7 @@ type Nav={id:string;label:string;icon:React.ElementType;params?:any};
 
 export const MobileDrawer:React.FC<MobileDrawerProps>=({isOpen,onClose,currentView,onNavigate,onLogout})=>{
   const user=useAuthStore(s=>s.currentUser);if(!isOpen)return null;
-  const items:Nav[]=user.role==='student'?[{id:'dashboard',label:'Trang chủ',icon:HomeIcon},{id:'assignment-list',label:'Nhiệm vụ',icon:BookOpenIcon},{id:'portfolio-list',label:'Hồ sơ',icon:FolderIcon},{id:'editor',label:'Bài đang viết',icon:DocumentTextIcon,params:{assignmentId:'assign-vo-nhat'}},{id:'version-diff',label:'So sánh',icon:ArrowsRightLeftIcon,params:{assignmentId:'assign-vo-nhat'}},{id:'student-analytics',label:'Tiến bộ',icon:ChartBarIcon}]:
+  const items:Nav[]=user.role==='student'?[{id:'dashboard',label:'Trang chủ',icon:HomeIcon},{id:'assignment-list',label:'Nhiệm vụ',icon:BookOpenIcon},{id:'portfolio-list',label:'Hồ sơ học tập',icon:FolderIcon}]:
   user.role==='teacher'?[{id:'teacher-dashboard',label:'Tổng quan',icon:HomeIcon},{id:'class-analytics',label:'Lớp & Heatmap',icon:UserGroupIcon},{id:'portfolio-list',label:'Hồ sơ học sinh',icon:FolderIcon},{id:'teacher-review',label:'Chấm bài',icon:ClipboardDocumentCheckIcon},{id:'ai-workspace',label:'Duyệt AI',icon:SparklesIcon},{id:'assignment-builder',label:'Tạo nhiệm vụ',icon:PlusCircleIcon},{id:'rubric-management',label:'Rubric',icon:AcademicCapIcon},{id:'literature-texts',label:'Kho tác phẩm',icon:BookOpenIcon}]:
   user.role==='admin'?[{id:'admin-view',label:'Quản trị',icon:ShieldCheckIcon},{id:'teacher-dashboard',label:'Giảng dạy',icon:HomeIcon},{id:'ai-workspace',label:'AI Review Queue',icon:SparklesIcon},{id:'class-analytics',label:'Analytics',icon:ChartBarIcon},{id:'researcher-view',label:'Nghiên cứu',icon:AcademicCapIcon}]:
   user.role==='ai'?[{id:'ai-workspace',label:'AI Review Queue',icon:SparklesIcon}]:

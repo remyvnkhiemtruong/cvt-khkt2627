@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "test": "node src/tests/runTests.mjs",
-    "build": "npm test && tsc -b && vite build",
+    "typecheck:web": "tsc -b",
+    "typecheck:api": "tsc --noEmit -p tsconfig.api.json",
     "lint": "oxlint",
+    "build": "npm test && npm run typecheck:web && npm run typecheck:api && npm run lint && vite build",
+    "verify": "npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { randomBytes, scryptSync } from 'node:crypto';
 import { assertSameOrigin, authenticate, body, send, setTemporaryPassword } from '../auth/auth.js';
 import { emptyDraft, ensureAcademicSchema } from '../_lib/academic.js';
@@ -66,23 +67,17 @@ export default async function handler(req: any, res: any) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        // Update user
         const result = await client.query(`
           UPDATE app_users SET role = $2, account_status = $3, updated_at = now()
           WHERE id = $1
           RETURNING id, email, name, role, account_status, must_change_password, created_at, last_login
         `, [targetId, role, status]);
 
-        // If role changed between student and teacher, reconcile class_members
         if (role !== before.role) {
           if (role === 'student' || role === 'teacher') {
-            await client.query(`
-              UPDATE class_members SET member_role = $2 WHERE user_id = $1
-            `, [targetId, role]);
+            await client.query(`UPDATE class_members SET member_role = $2 WHERE user_id = $1`, [targetId, role]);
           } else {
-            await client.query(`
-              DELETE FROM class_members WHERE user_id = $1
-            `, [targetId]);
+            await client.query(`DELETE FROM class_members WHERE user_id = $1`, [targetId]);
           }
         }
 
@@ -132,7 +127,6 @@ export default async function handler(req: any, res: any) {
       const memberRole = String(input.memberRole || 'student');
       if (!['student', 'teacher'].includes(memberRole)) return send(res, 400, { code: 'INVALID_MEMBER_ROLE' });
 
-      // Verify target user exists and role matches memberRole
       const targetUserRes = await pool.query('SELECT id, role, account_status FROM app_users WHERE id = $1', [targetId]);
       const targetUser = targetUserRes.rows[0];
       if (!targetUser) return send(res, 404, { code: 'USER_NOT_FOUND' });
@@ -153,7 +147,6 @@ export default async function handler(req: any, res: any) {
         }
         const classId = classRes.rows[0].id;
 
-        // Insert / update class member
         await client.query(`
           INSERT INTO class_members(class_id, user_id, member_role)
           VALUES($1, $2, $3)
@@ -161,7 +154,6 @@ export default async function handler(req: any, res: any) {
           DO UPDATE SET member_role = EXCLUDED.member_role
         `, [classId, targetId, memberRole]);
 
-        // If student, create portfolios AND drafts in the same transaction
         if (memberRole === 'student') {
           await client.query(`
             INSERT INTO portfolios(assignment_id, student_id)

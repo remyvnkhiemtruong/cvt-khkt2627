@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { academicHealth } from './_lib/academic-v2.js';
 
 export default async function handler(req: any, res: any) {

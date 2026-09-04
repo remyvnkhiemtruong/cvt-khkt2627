@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { randomUUID } from "node:crypto";
 import { authenticate, body, send } from "../auth/auth.js";
 import { academicAction } from "../_lib/academic-v2.js";

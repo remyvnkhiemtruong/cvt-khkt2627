@@ -8,7 +8,8 @@ export default async function handler(req:any,res:any) {
     if (actor.role !== "admin") return send(res,403,{code:"FORBIDDEN"});
     const users = await listUsers();
     return send(res,200,{users});
-  } catch(e:any) {
-    return send(res,500,{code:"ADMIN_USERS_ERROR",message:e?.message||"Không thể tải danh sách người dùng."});
+  } catch(error:any) {
+    console.error('[admin/users]', { code: String(error?.message || 'ADMIN_USERS_ERROR'), route: '/api/admin/users' });
+    return send(res,500,{code:"ADMIN_USERS_ERROR",message:"Không thể tải danh sách người dùng."});
   }
 }

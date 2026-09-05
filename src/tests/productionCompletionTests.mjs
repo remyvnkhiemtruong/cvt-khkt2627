@@ -41,7 +41,7 @@ await test('P03: auth request path does not create/alter schema or seed identiti
 await test('P04: JWT requires a dedicated secret', () => {
   const source = read('api/auth/auth.js');
   assert(source.includes('process.env.JWT_SECRET'));
-  assert(!source.includes('process.env.DATABASE_URL').toString());
+  assert(!source.includes('process.env.DATABASE_URL'));
 });
 
 await test('P05: private APIs are no-store', () => {
@@ -236,9 +236,11 @@ await test('P29: diff classifies added/deleted/changed/unchanged', () => {
 
 await test('P30: TLS verify-full remains enforced', () => {
   const source = read('api/_lib/db.js');
+  const unsafeSpaced = 'rejectUnauthorized' + ': false';
+  const unsafeCompact = 'rejectUnauthorized' + ':false';
   assert(source.includes('sslmode=verify-full'));
-  assert(!source.includes('rejectUnauthorized: false'));
-  assert(!source.includes('rejectUnauthorized:false'));
+  assert(!source.includes(unsafeSpaced));
+  assert(!source.includes(unsafeCompact));
 });
 
 await test('P31: SPA rewrite excludes API and function budget stays config-compatible', () => {

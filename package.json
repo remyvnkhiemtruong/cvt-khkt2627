@@ -1,11 +1,11 @@
 {
   "name": "hoc-tot-ngu-van",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node src/tests/runTests.mjs && node src/tests/hardeningTests.mjs",
+    "test": "node src/tests/runTests.mjs && node src/tests/hardeningTests.mjs && node src/tests/productionCompletionTests.mjs",
     "typecheck:web": "tsc -b",
     "typecheck:api": "tsc --noEmit -p tsconfig.api.json",
     "lint": "oxlint",

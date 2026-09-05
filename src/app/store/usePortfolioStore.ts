@@ -152,7 +152,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
 
     const operation = (async () => {
       const port = get().getPortfolio(studentId, assignmentId);
-      const submissionKey = options.submissionKey || pendingSubmissionKeys.get(key) || newSubmissionKey();
+      const submissionKey = pendingSubmissionKeys.get(key) || options.submissionKey || newSubmissionKey();
       pendingSubmissionKeys.set(key, submissionKey);
       try {
         const pendingSave = saveTimers.get(key);

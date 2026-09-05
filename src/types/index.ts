@@ -50,7 +50,13 @@ export interface PoeticAxis {
 }
 
 export interface LiteratureText {
+  /** Exact immutable revision id used by assignments. */
   id: string;
+  /** Stable logical identity across revisions. */
+  logicalId?: string;
+  revisionNo?: number;
+  isLatest?: boolean;
+  contentChecksum?: string;
   title: string;
   author: string;
   year: string;
@@ -177,6 +183,7 @@ export interface WorkflowConfig {
 export interface Assignment {
   id: string;
   title: string;
+  /** Exact immutable literature revision id. */
   textId: string;
   classId: string;
   assignedDate: string;

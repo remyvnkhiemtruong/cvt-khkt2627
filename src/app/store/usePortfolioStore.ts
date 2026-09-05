@@ -25,6 +25,14 @@ interface PortfolioState {
 }
 
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const dirtyPortfolioKeys = new Set<string>();
+const pendingSubmissionKeys = new Map<string, string>();
+const inFlightSubmissions = new Map<string, Promise<boolean>>();
+
+const newSubmissionKey = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  throw new Error('SECURE_RANDOM_UNAVAILABLE');
+};
 
 const postAction = async (payload: unknown) => {
   const response = await fetch('/api/academic/action', {
@@ -41,16 +49,36 @@ const postAction = async (payload: unknown) => {
 const blankPortfolio = (studentId: string, assignmentId: string, studentName: string, className: string): StudentPortfolio => {
   const initialDraft: Record<PoeticAxisId, any> = {} as any;
   POETIC_AXES.forEach(axis => { initialDraft[axis.id] = { axisId: axis.id, analysisText: '', evidenceQuotes: [] }; });
-  return { id:`port-${studentId}-${assignmentId}`, assignmentId, studentId, studentName, className,
-    lastAutosavedAt:new Date().toISOString(), currentActiveVersion:'v1.0 (nháp)', status:'drafting', currentDraft:initialDraft, versions:[] };
+  return {
+    id: `port-${studentId}-${assignmentId}`,
+    assignmentId,
+    studentId,
+    studentName,
+    className,
+    lastAutosavedAt: new Date().toISOString(),
+    currentActiveVersion: 'Bản nháp',
+    status: 'drafting',
+    currentDraft: initialDraft,
+    versions: []
+  };
 };
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
-  portfolios: {}, autosaveStatus: 'saved', lastSavedTime: '',
+  portfolios: {},
+  autosaveStatus: 'saved',
+  lastSavedTime: '',
 
-  hydratePortfolios: (portfolios) => {
-    Object.values(portfolios).forEach(portfolio => mockDb.savePortfolio(portfolio));
-    set({ portfolios, autosaveStatus: 'saved' });
+  hydratePortfolios: (serverPortfolios) => {
+    const local = get().portfolios;
+    const merged: Record<string, StudentPortfolio> = {};
+    for (const [key, serverPortfolio] of Object.entries(serverPortfolios)) {
+      const localPortfolio = local[key];
+      merged[key] = dirtyPortfolioKeys.has(key) && localPortfolio
+        ? { ...serverPortfolio, currentDraft: localPortfolio.currentDraft, lastAutosavedAt: localPortfolio.lastAutosavedAt }
+        : serverPortfolio;
+      mockDb.savePortfolio(merged[key]);
+    }
+    set({ portfolios: merged, autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved' });
   },
 
   loadPortfolios: () => set({ portfolios: mockDb.getPortfolios() }),
@@ -63,75 +91,138 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   updateDraft: (studentId, assignmentId, axisId, text, quotes) => {
     const key = `port-${studentId}-${assignmentId}`;
     const port = get().getPortfolio(studentId, assignmentId);
-    const updated: StudentPortfolio = { ...port, lastAutosavedAt:new Date().toISOString(), currentDraft:{ ...port.currentDraft,
-      [axisId]:{ axisId, analysisText:text, evidenceQuotes:quotes || port.currentDraft[axisId]?.evidenceQuotes || [] } } };
+    const updated: StudentPortfolio = {
+      ...port,
+      lastAutosavedAt: new Date().toISOString(),
+      currentDraft: {
+        ...port.currentDraft,
+        [axisId]: {
+          axisId,
+          analysisText: text,
+          evidenceQuotes: quotes || port.currentDraft[axisId]?.evidenceQuotes || []
+        }
+      }
+    };
+    dirtyPortfolioKeys.add(key);
+    pendingSubmissionKeys.delete(key);
     mockDb.savePortfolio(updated);
-    set(state => ({ portfolios:{...state.portfolios,[key]:updated}, autosaveStatus:'dirty' }));
-    const existing = saveTimers.get(key); if(existing) clearTimeout(existing);
-    saveTimers.set(key,setTimeout(async()=>{
-      set({ autosaveStatus:'saving' });
+    set(state => ({ portfolios: { ...state.portfolios, [key]: updated }, autosaveStatus: 'dirty' }));
+
+    const existing = saveTimers.get(key);
+    if (existing) clearTimeout(existing);
+    saveTimers.set(key, setTimeout(async () => {
+      saveTimers.delete(key);
+      set({ autosaveStatus: 'saving' });
       try {
-        await postAction({action:'save_draft',assignmentId,content:get().portfolios[key]?.currentDraft||updated.currentDraft});
-        set({autosaveStatus:'saved',lastSavedTime:new Date().toLocaleTimeString('vi-VN')});
-      } catch { set({autosaveStatus:'dirty'}); }
-    },800));
+        const latestDraft = get().portfolios[key]?.currentDraft || updated.currentDraft;
+        await postAction({ action: 'save_draft', assignmentId, content: latestDraft });
+        dirtyPortfolioKeys.delete(key);
+        set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
+      } catch {
+        dirtyPortfolioKeys.add(key);
+        set({ autosaveStatus: 'dirty' });
+      }
+    }, 800));
   },
 
   manualSaveDraft: async (studentId, assignmentId) => {
-    const key=`port-${studentId}-${assignmentId}`; const port=get().getPortfolio(studentId,assignmentId);
-    const pending=saveTimers.get(key); if(pending){clearTimeout(pending);saveTimers.delete(key);}
-    set({autosaveStatus:'saving'});
-    try { await postAction({action:'save_draft',assignmentId,content:port.currentDraft}); set({autosaveStatus:'saved',lastSavedTime:new Date().toLocaleTimeString('vi-VN')}); }
-    catch(error){set({autosaveStatus:'dirty'});throw error;}
+    const key = `port-${studentId}-${assignmentId}`;
+    const port = get().getPortfolio(studentId, assignmentId);
+    const pending = saveTimers.get(key);
+    if (pending) {
+      clearTimeout(pending);
+      saveTimers.delete(key);
+    }
+    set({ autosaveStatus: 'saving' });
+    try {
+      await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
+      dirtyPortfolioKeys.delete(key);
+      set({ autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved', lastSavedTime: new Date().toLocaleTimeString('vi-VN') });
+    } catch (error) {
+      dirtyPortfolioKeys.add(key);
+      set({ autosaveStatus: 'dirty' });
+      throw error;
+    }
   },
 
   createSnapshot: async (studentId, assignmentId, versionNumber, changeSummary, authorName, options = {}) => {
-    const key=`port-${studentId}-${assignmentId}`; const port=get().getPortfolio(studentId,assignmentId);
-    try {
-      const payload = {
-        action: 'create_version',
-        assignmentId,
-        versionNumber,
-        changeSummary,
-        content: port.currentDraft,
-        submissionKey: options.submissionKey || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined),
-        stage: options.stage,
-        confidence: options.confidence,
-        changeSource: options.changeSource,
-        revisionReason: options.revisionReason,
-        linkedFeedbackIds: options.linkedFeedbackIds
-      };
-      const result = await postAction(payload);
-      const serverVer = result.version;
-      const vNum = serverVer?.versionNumber || versionNumber.trim();
-      const newVer: PortfolioVersion = {
-        id: serverVer?.id || `ver-${Date.now()}`,
-        versionNumber: vNum,
-        sequenceNo: serverVer?.sequenceNo,
-        stage: serverVer?.stage || options.stage || 'initial',
-        confidence: options.confidence,
-        changeSource: options.changeSource,
-        revisionReason: options.revisionReason,
-        createdAt: serverVer?.createdAt || new Date().toISOString(),
-        createdBy: studentId,
-        authorName,
-        changeSummary: changeSummary.trim(),
-        responses: JSON.parse(JSON.stringify(port.currentDraft)),
-        isFrozen: true,
-        isSubmitted: true
-      };
-      const newStatus = result.portfolioStatus || 'submitted_waiting_ai';
-      const updated: StudentPortfolio = {
-        ...port,
-        currentActiveVersion: newVer.versionNumber,
-        status: newStatus,
-        versions: [...port.versions, newVer]
-      };
-      mockDb.savePortfolio(updated);
-      set(state => ({ portfolios: { ...state.portfolios, [key]: updated }, autosaveStatus: 'saved' }));
-      return true;
-    } catch {
-      return false;
-    }
+    const key = `port-${studentId}-${assignmentId}`;
+    const existingFlight = inFlightSubmissions.get(key);
+    if (existingFlight) return existingFlight;
+
+    const operation = (async () => {
+      const port = get().getPortfolio(studentId, assignmentId);
+      const submissionKey = options.submissionKey || pendingSubmissionKeys.get(key) || newSubmissionKey();
+      pendingSubmissionKeys.set(key, submissionKey);
+      try {
+        const pendingSave = saveTimers.get(key);
+        if (pendingSave) {
+          clearTimeout(pendingSave);
+          saveTimers.delete(key);
+        }
+        set({ autosaveStatus: 'saving' });
+        await postAction({ action: 'save_draft', assignmentId, content: port.currentDraft });
+        dirtyPortfolioKeys.delete(key);
+
+        const result = await postAction({
+          action: 'create_version',
+          assignmentId,
+          versionNumber,
+          changeSummary,
+          content: port.currentDraft,
+          submissionKey,
+          stage: options.stage,
+          confidence: options.confidence,
+          changeSource: options.changeSource,
+          revisionReason: options.revisionReason,
+          linkedFeedbackIds: options.linkedFeedbackIds
+        });
+        const serverVer = result.version;
+        if (!serverVer?.id || !serverVer?.versionNumber) throw new Error('INVALID_VERSION_RESPONSE');
+        const newVer: PortfolioVersion = {
+          id: serverVer.id,
+          versionNumber: serverVer.versionNumber,
+          sequenceNo: serverVer.sequenceNo,
+          stage: serverVer.stage || options.stage || 'initial',
+          confidence: options.confidence,
+          changeSource: options.changeSource,
+          revisionReason: options.revisionReason,
+          contentChecksum: serverVer.contentChecksum || null,
+          createdAt: serverVer.createdAt || new Date().toISOString(),
+          createdBy: studentId,
+          authorName,
+          changeSummary: changeSummary.trim(),
+          responses: JSON.parse(JSON.stringify(port.currentDraft)),
+          isFrozen: true,
+          isSubmitted: true
+        };
+        const previousVersions = port.versions.some(version => version.id === newVer.id)
+          ? port.versions
+          : [...port.versions, newVer];
+        const updated: StudentPortfolio = {
+          ...port,
+          currentActiveVersion: newVer.versionNumber,
+          status: result.portfolioStatus || 'submitted_waiting_ai',
+          versions: previousVersions
+        };
+        pendingSubmissionKeys.delete(key);
+        mockDb.savePortfolio(updated);
+        set(state => ({
+          portfolios: { ...state.portfolios, [key]: updated },
+          autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved',
+          lastSavedTime: new Date().toLocaleTimeString('vi-VN')
+        }));
+        return true;
+      } catch {
+        dirtyPortfolioKeys.add(key);
+        set({ autosaveStatus: 'dirty' });
+        return false;
+      } finally {
+        inFlightSubmissions.delete(key);
+      }
+    })();
+
+    inFlightSubmissions.set(key, operation);
+    return operation;
   }
 }));

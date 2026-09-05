@@ -30,7 +30,7 @@ export interface User {
   profile?: UserProfile;
 }
 
-export type PoeticAxisId = 
+export type PoeticAxisId =
   | 'plot_situation'
   | 'character_detail'
   | 'narrator_pov'
@@ -50,7 +50,13 @@ export interface PoeticAxis {
 }
 
 export interface LiteratureText {
+  /** Exact immutable revision id used by assignments. */
   id: string;
+  /** Stable logical identity across revisions. */
+  logicalId?: string;
+  revisionNo?: number;
+  isLatest?: boolean;
+  contentChecksum?: string;
   title: string;
   author: string;
   year: string;
@@ -77,13 +83,16 @@ export interface PoeticAxisResponse {
   conceptTags?: string[];
 }
 
+export type PortfolioVersionStage = 'prediction' | 'initial' | 'revision';
+export type ChangeSource = 'initial_prediction' | 'initial_response' | 'self' | 'teacher_feedback' | 'peer_feedback' | 'mixed' | string;
+
 export interface PortfolioVersion {
   id: string;
   versionNumber: string;
   sequenceNo?: number;
-  stage?: 'prediction' | 'initial' | 'revision';
+  stage?: PortfolioVersionStage;
   confidence?: number | null;
-  changeSource?: string | null;
+  changeSource?: ChangeSource | null;
   revisionReason?: string | null;
   previousVersionId?: string | null;
   contentChecksum?: string | null;
@@ -155,9 +164,26 @@ export interface RubricAssessmentSubmission {
   submittedAt: string;
 }
 
+export interface PredictionTemplate {
+  enabled?: boolean;
+  prompt?: string;
+  questions?: string[];
+  requireConfidence?: boolean;
+}
+
+export interface WorkflowConfig {
+  predictionEnabled?: boolean;
+  aiReviewRequired?: boolean;
+  teacherApprovalRequired?: boolean;
+  peerReviewEnabled?: boolean;
+  officialRubricRequired?: boolean;
+  [key: string]: unknown;
+}
+
 export interface Assignment {
   id: string;
   title: string;
+  /** Exact immutable literature revision id. */
   textId: string;
   classId: string;
   assignedDate: string;
@@ -171,14 +197,15 @@ export interface Assignment {
   aiGuidance?: string;
   commonMistakes?: string;
   referenceGuide?: string;
-  predictionTemplate?: Record<string, any>;
-  workflowConfig?: Record<string, any>;
+  predictionTemplate?: PredictionTemplate;
+  workflowConfig?: WorkflowConfig;
 }
 
 export type PortfolioStatus =
   | 'drafting'
   | 'submitted_waiting_ai'
   | 'ai_proposed_waiting_teacher'
+  | 'teacher_feedback_needed'
   | 'feedback_received'
   | 'revising'
   | 'waiting_official_rubric'
@@ -206,6 +233,8 @@ export interface AiReviewRequest {
   student_id: string;
   student_name: string;
   version_number: string;
+  version_id?: string;
+  portfolio_id?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
   prompt: string;
   response: string;
@@ -231,6 +260,7 @@ export interface AcademicSnapshot {
   assignments: Assignment[];
   literatureTexts: LiteratureText[];
   rubric: RubricMatrix;
+  rubrics?: Record<string, RubricMatrix>;
   portfolios: Record<string, StudentPortfolio>;
   feedbacks: FeedbackItem[];
   rubricSubmissions: RubricAssessmentSubmission[];

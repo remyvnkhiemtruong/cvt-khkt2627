@@ -8,162 +8,104 @@ interface ResearcherJudgeViewProps {
   onNavigate: (view: string, extraParams?: any) => void;
 }
 
-const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
-const sd = (a: number[]) => {
-  if (a.length < 2) return 0;
-  const m = mean(a);
-  return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1));
+const mean = (values: number[]) => (values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0);
+const sd = (values: number[]) => {
+  if (values.length < 2) return 0;
+  const average = mean(values);
+  return Math.sqrt(values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1));
 };
 
 export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavigate }) => {
-  const { portfolios, rubricSubmissions, rubric, feedbacks } = usePortfolio();
-  const criterionAxis = useMemo(
-    () => Object.fromEntries(rubric.criteria.map(c => [c.id, c.axisId])),
-    [rubric]
-  );
+  const { portfolios, rubricSubmissions, rubrics, assignments } = usePortfolio();
 
-  // Server provides stable pseudonyms: p.studentId is HS-ANON-XXXX, p.className is Nhóm XXXX
-  const samples = useMemo(() => {
-    return Object.values(portfolios).map(p => {
-      // Strictly official teacher evaluations for valid pedagogical research
-      const subs = rubricSubmissions
-        .filter(s => s.studentId === p.studentId && s.assignmentId === p.assignmentId && s.evaluatorRole === 'teacher')
-        .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+  const samples = useMemo(() => Object.values(portfolios).map(portfolio => {
+    const assignment = assignments.find(item => item.id === portfolio.assignmentId);
+    const assignmentRubric = assignment ? rubrics[assignment.rubricId] : undefined;
+    const criterionMeta = assignmentRubric ? Object.fromEntries(assignmentRubric.criteria.map(criterion => {
+      const max = criterion.levels.reduce((value, level) => Math.max(value, Number(level.score ?? level.level ?? 0)), 0);
+      return [criterion.id, { axisId: criterion.axisId, max }];
+    })) : {};
 
-      const score = (s: any) => (s && Number(s.maxScore) > 0 ? (Number(s.totalScore) / Number(s.maxScore)) * 4 : 0);
-      const isPairedEligible = subs.length >= 2;
-      const pre = isPairedEligible ? score(subs[0]) : 0;
-      const post = isPairedEligible ? score(subs[subs.length - 1]) : 0;
+    const submissions = rubricSubmissions
+      .filter(item => item.studentId === portfolio.studentId && item.assignmentId === portfolio.assignmentId && item.evaluatorRole === 'teacher')
+      .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
 
-      const latest = subs[subs.length - 1];
-      const axes: Partial<Record<PoeticAxisId, number>> = {};
-      if (latest) {
-        Object.entries(latest.criterionScores).forEach(([id, v]: any) => {
-          const axis = criterionAxis[id] as PoeticAxisId | undefined;
-          if (axis) axes[axis] = Number(v.score || v.level || 0);
-        });
-      }
+    const normalizedOverall = (submission: (typeof submissions)[number] | undefined) =>
+      submission && Number(submission.maxScore) > 0
+        ? (Number(submission.totalScore) / Number(submission.maxScore)) * 100
+        : null;
 
-      const resolved = feedbacks.filter(f => f.studentId === p.studentId && f.assignmentId === p.assignmentId && f.resolved).length;
-      const latestVersion = p.versions[p.versions.length - 1];
-      const evidence = latestVersion
-        ? Object.values(latestVersion.responses).map(r => r.analysisText).find(Boolean) || ''
-        : '';
+    const pairedEligible = submissions.length >= 2;
+    const pre = pairedEligible ? normalizedOverall(submissions[0]) : null;
+    const post = pairedEligible ? normalizedOverall(submissions.at(-1)) : null;
+    const latest = submissions.at(-1);
+    const axes: Partial<Record<PoeticAxisId, number>> = {};
+    if (latest && assignmentRubric) {
+      Object.entries(latest.criterionScores).forEach(([criterionId, value]) => {
+        const meta = criterionMeta[criterionId] as { axisId: PoeticAxisId; max: number } | undefined;
+        if (!meta || meta.max <= 0) return;
+        const raw = Number(value.score ?? value.level ?? 0);
+        if (Number.isFinite(raw)) axes[meta.axisId] = Math.max(0, Math.min(100, (raw / meta.max) * 100));
+      });
+    }
 
-      return {
-        code: p.studentId, // Stable server pseudonym
-        cohort: p.className || 'Nhóm nghiên cứu',
-        assignmentId: p.assignmentId,
-        pre,
-        post,
-        gain: pre > 0 && post > 0 ? post - pre : 0,
-        versionCount: p.versions.length,
-        resolved,
-        axes,
-        evidence: evidence.slice(0, 220)
-      };
-    });
-  }, [portfolios, rubricSubmissions, criterionAxis, feedbacks]);
+    return {
+      code: portfolio.studentId,
+      cohort: portfolio.className || 'Nhóm nghiên cứu',
+      assignmentCode: portfolio.assignmentId,
+      pre,
+      post,
+      gain: typeof pre === 'number' && typeof post === 'number' ? post - pre : null,
+      versionCount: portfolio.versions.length,
+      axes,
+      rubricAvailable: Boolean(assignmentRubric)
+    };
+  }), [portfolios, rubricSubmissions, rubrics, assignments]);
 
-  const paired = samples.filter(s => s.pre > 0 && s.post > 0);
-  const gains = paired.map(s => s.gain);
-  const effect = gains.length > 1 && sd(gains) > 0 ? mean(gains) / sd(gains) : 0;
-  const avgPre = mean(paired.map(s => s.pre));
-  const avgPost = mean(paired.map(s => s.post));
+  const paired = samples.filter(sample => typeof sample.pre === 'number' && typeof sample.post === 'number' && typeof sample.gain === 'number');
+  const gains = paired.map(sample => Number(sample.gain));
+  const effect = gains.length > 1 && sd(gains) > 0 ? mean(gains) / sd(gains) : null;
+  const avgPre = mean(paired.map(sample => Number(sample.pre)));
+  const avgPost = mean(paired.map(sample => Number(sample.post)));
+  const missingRubric = samples.filter(sample => !sample.rubricAvailable).length;
 
   return (
     <div className="max-w-7xl space-y-6 pb-16">
-      {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
         <div>
-          <div className="mb-1">
-            <Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
-              Tổng quan
-            </Button>
-          </div>
+          <div className="mb-1"><Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>Tổng quan</Button></div>
           <h1 className="text-2xl font-semibold text-slate-900">Phân tích nghiên cứu</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Dữ liệu đối chứng trước và sau chỉnh sửa theo thang đo Rubric (đã ẩn danh)
-          </p>
+          <p className="text-sm text-slate-500 mt-0.5">Chỉ dùng pseudonym server-side và rubric chính thức đúng theo từng nhiệm vụ</p>
         </div>
-        <div className="text-xs text-slate-500">
-          {samples.length} hồ sơ mẫu
-        </div>
+        <div className="text-xs text-slate-500">{samples.length} hồ sơ mẫu</div>
       </div>
 
-      {/* Summary Strip (No StatCards!) */}
+      {missingRubric > 0 && <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{missingRubric} hồ sơ thiếu rubric đúng của nhiệm vụ và được loại khỏi các trục điểm tương ứng.</div>}
+
       <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span><strong>{samples.length}</strong> hồ sơ nghiên cứu</span>
-        <span className="text-slate-300">·</span>
-        <span><strong>{paired.length}</strong> cặp đối chứng đủ điều kiện</span>
-        <span className="text-slate-300">·</span>
-        <span>
-          Trước TB: <strong>{paired.length ? `${avgPre.toFixed(2)}/4` : '—'}</strong>
-        </span>
-        <span className="text-slate-300">·</span>
-        <span>
-          Sau TB: <strong>{paired.length ? `${avgPost.toFixed(2)}/4` : '—'}</strong>
-        </span>
-        <span className="text-slate-300">·</span>
-        <span>
-          Cohen's d: <strong>{effect ? effect.toFixed(2) : '—'}</strong>
-        </span>
+        <span><strong>{samples.length}</strong> hồ sơ nghiên cứu</span><span className="text-slate-300">·</span>
+        <span><strong>{paired.length}</strong> cặp đối chứng đủ điều kiện</span><span className="text-slate-300">·</span>
+        <span>Trước TB: <strong>{paired.length ? `${avgPre.toFixed(1)}%` : '—'}</strong></span><span className="text-slate-300">·</span>
+        <span>Sau TB: <strong>{paired.length ? `${avgPost.toFixed(1)}%` : '—'}</strong></span><span className="text-slate-300">·</span>
+        <span>Cohen&apos;s d: <strong>{typeof effect === 'number' ? effect.toFixed(2) : '—'}</strong></span>
       </div>
 
-      {/* Clean Research Data Table */}
       <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900">Dữ liệu mẫu đối chứng</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Thông tin định danh học sinh được mã hóa phục vụ phân tích sư phạm.
-          </p>
-        </div>
-
+        <div className="p-4 border-b border-slate-200"><h2 className="text-base font-semibold text-slate-900">Dữ liệu mẫu đối chứng</h2><p className="text-xs text-slate-500 mt-0.5">Không trả tên, email, điện thoại, mã lớp thật, nội dung bài viết hay UUID định danh thật cho giao diện nghiên cứu.</p></div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600">
-              <tr>
-                <th className="py-3 px-4">Mã ẩn danh</th>
-                <th className="py-3 px-3 text-center">Nhóm</th>
-                <th className="py-3 px-3 text-center">Số bản</th>
-                <th className="py-3 px-3 text-center">Bản trước</th>
-                <th className="py-3 px-3 text-center">Bản sau</th>
-                <th className="py-3 px-3 text-center">Mức tăng</th>
-                <th className="py-3 px-3 text-center">Đã sửa</th>
-                <th className="py-3 px-4">Minh chứng</th>
-              </tr>
-            </thead>
+            <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600"><tr><th className="py-3 px-4">Mã ẩn danh</th><th className="py-3 px-3 text-center">Nhóm ẩn danh</th><th className="py-3 px-3 text-center">Số bản</th><th className="py-3 px-3 text-center">Bản trước</th><th className="py-3 px-3 text-center">Bản sau</th><th className="py-3 px-3 text-center">Mức tăng</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
-              {samples.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-xs text-slate-500">
-                    Chưa có dữ liệu nghiên cứu khả dụng.
-                  </td>
+              {samples.length === 0 ? <tr><td colSpan={6} className="py-8 text-center text-xs text-slate-500">Chưa có dữ liệu nghiên cứu khả dụng.</td></tr> : samples.map(sample => (
+                <tr key={`${sample.code}-${sample.assignmentCode}`} className="hover:bg-slate-50/60">
+                  <td className="py-3 px-4 text-xs font-mono text-slate-700">{sample.code}</td>
+                  <td className="py-3 px-3 text-center text-xs text-slate-600">{sample.cohort}</td>
+                  <td className="py-3 px-3 text-center text-xs text-slate-700">{sample.versionCount}</td>
+                  <td className="py-3 px-3 text-center text-xs text-slate-700">{typeof sample.pre === 'number' ? `${sample.pre.toFixed(1)}%` : '—'}</td>
+                  <td className="py-3 px-3 text-center text-xs font-medium text-slate-900">{typeof sample.post === 'number' ? `${sample.post.toFixed(1)}%` : '—'}</td>
+                  <td className="py-3 px-3 text-center text-xs">{typeof sample.gain === 'number' ? <span className={sample.gain > 0 ? 'text-emerald-700 font-medium' : sample.gain < 0 ? 'text-rose-700' : 'text-slate-500'}>{sample.gain > 0 ? `+${sample.gain.toFixed(1)}` : sample.gain.toFixed(1)} điểm %</span> : <span className="text-slate-300">—</span>}</td>
                 </tr>
-              ) : (
-                samples.map(s => (
-                  <tr key={s.code} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-4 text-xs font-mono text-slate-700">{s.code}</td>
-                    <td className="py-3 px-3 text-center text-xs text-slate-600">{s.cohort}</td>
-                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.versionCount}</td>
-                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.pre ? s.pre.toFixed(2) : '—'}</td>
-                    <td className="py-3 px-3 text-center text-xs font-medium text-slate-900">{s.post ? s.post.toFixed(2) : '—'}</td>
-                    <td className="py-3 px-3 text-center text-xs">
-                      {s.pre && s.post ? (
-                        <span className={s.gain > 0 ? 'text-emerald-700 font-medium' : s.gain < 0 ? 'text-rose-700' : 'text-slate-500'}>
-                          {s.gain > 0 ? `+${s.gain.toFixed(2)}` : s.gain.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-center text-xs text-slate-700">{s.resolved}</td>
-                    <td className="py-3 px-4 text-xs text-slate-600 italic max-w-xs truncate">
-                      {s.evidence ? `“${s.evidence}…”` : '—'}
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>

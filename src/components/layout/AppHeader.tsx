@@ -196,7 +196,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               className="flex shrink-0 items-center gap-2"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm overflow-hidden border border-slate-100">
-                <img src="/logo.jpg" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
+                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
               </span>
               <span className="hidden text-sm font-bold text-primary-900 sm:inline">Học Tốt Ngữ Văn</span>
             </button>

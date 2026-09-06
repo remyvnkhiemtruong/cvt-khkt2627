@@ -3,9 +3,24 @@ import { Button, Input, Alert } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
 
 
-export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
+interface LoginViewProps {
+  onLoginSuccess: () => void;
+  initialMode?: 'login' | 'register';
+  onNavigate?: (view: string) => void;
+}
+
+export const LoginView: React.FC<LoginViewProps> = ({
+  onLoginSuccess,
+  initialMode = 'login',
+  onNavigate
+}) => {
   const { setAuthenticatedUser } = useAuthStore();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  
+  React.useEffect(() => {
+    if (initialMode) setMode(initialMode);
+  }, [initialMode]);
+
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -77,15 +92,30 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
+      {onNavigate && (
+        <div className="mx-auto w-full max-w-md mb-4 text-left">
+          <button
+            type="button"
+            onClick={() => onNavigate('landing')}
+            className="text-xs font-medium text-slate-500 hover:text-primary-700 transition-colors"
+          >
+            ← Quay lại trang chủ
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto w-full max-w-md text-center space-y-2">
-        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-100">
+        <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-200">
           <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
         </div>
-        <h1 className="text-xl font-semibold text-slate-900">Học tốt Ngữ Văn</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-bold text-slate-900">Học tốt Ngữ Văn</h1>
+        <p className="text-xs font-medium text-primary-800">Trường THPT Vị Thanh</p>
+        <p className="text-xs text-slate-500">
           {mustChange
             ? 'Thiết lập mật khẩu riêng trước khi tiếp tục'
-            : 'Đăng nhập vào hệ thống học tập'}
+            : mode === 'login'
+            ? 'Đăng nhập vào hệ thống học tập'
+            : 'Đăng ký tài khoản học sinh mới'}
         </p>
       </div>
 

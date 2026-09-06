@@ -131,7 +131,7 @@ const AppContent: React.FC = () => {
 
   if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
   if (!isAuthenticated) {
-    if (currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} />;
+    if (currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} initialMode={navParams?.mode || 'login'} onNavigate={handleNavigate} />;
     return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
   }
   if (currentView === 'landing' || currentView === 'login') {

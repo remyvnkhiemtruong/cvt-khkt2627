@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface LandingViewProps {
-  onNavigate: (view: string) => void;
+  onNavigate: (view: string, extraParams?: any) => void;
 }
 
 export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
@@ -45,11 +45,11 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             </a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('login')}>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('login', { mode: 'login' })}>
               Đăng nhập
             </Button>
-            <Button variant="primary" size="sm" onClick={() => onNavigate('login')}>
-              Vào học ngay
+            <Button variant="primary" size="sm" onClick={() => onNavigate('login', { mode: 'register' })}>
+              Đăng ký tài khoản
             </Button>
           </div>
         </div>

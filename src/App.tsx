@@ -96,7 +96,14 @@ const AppContent: React.FC = () => {
         else { setCurrentView(current.view); setNavParams(current.params); }
       } catch {
         if (!active) return;
-        clearAuth(); replaceToView('login');
+        clearAuth();
+        const current = locationState();
+        if (current.view !== 'landing' && current.view !== 'login') {
+          replaceToView('login');
+        } else {
+          setCurrentView(current.view);
+          setNavParams(current.params);
+        }
       } finally { if(active) setSessionChecking(false); }
     };
     void verifySession();

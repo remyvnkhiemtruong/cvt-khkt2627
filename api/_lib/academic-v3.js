@@ -682,7 +682,7 @@ export async function getAcademicSnapshot(user) {
   return { assignments, literatureTexts, rubric: primaryRubric, rubrics, portfolios, feedbacks, rubricSubmissions, auditLogs, classes, users, aiReviews };
 }
 
-async function saveDraft(user, input, req) {
+async function saveDraft(user, input, _req) {
   if (user.role !== 'student') throw new Error('FORBIDDEN');
   const assignmentId = cleanTrimmed(input.assignmentId, 200);
   const content = normalizeDraft(input.content);

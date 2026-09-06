@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Badge, Button, Input, Modal, Tabs } from '../components/ui';
 import type { AcademicClass, AuditLog, UserRole } from '../types';
 import { ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline';
@@ -79,7 +79,7 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
   const [memberClass, setMemberClass] = useState('');
   const [memberRole, setMemberRole] = useState<'student' | 'teacher'>('student');
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -96,18 +96,18 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
       setUsers(nextUsers);
       setClasses(nextClasses);
       setLogs(sd.snapshot?.auditLogs || []);
-      if (!memberUser && nextUsers[0]) setMemberUser(nextUsers[0].id);
-      if (!memberClass && nextClasses[0]) setMemberClass(nextClasses[0].code);
+      setMemberUser(prev => (!prev && nextUsers[0] ? nextUsers[0].id : prev));
+      setMemberClass(prev => (!prev && nextClasses[0] ? nextClasses[0].code : prev));
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const openUserModal = (u: AdminUser) => {
     setSelected(u);

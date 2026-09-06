@@ -17,6 +17,8 @@ const axisLabels: Record<PoeticAxisId, string> = {
   form_argument: 'Lập luận'
 };
 
+const AXES = Object.keys(axisLabels) as PoeticAxisId[];
+
 export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNavigate }) => {
   const { portfolios, rubricSubmissions, rubrics, assignments } = usePortfolio();
   const list = useMemo(() => Object.values(portfolios), [portfolios]);
@@ -59,14 +61,13 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
     };
   }), [filtered, assignments, rubrics, rubricSubmissions]);
 
-  const axes = Object.keys(axisLabels) as PoeticAxisId[];
   const studentAggregates = useMemo(() => {
     const map = new Map<string, { studentId: string; axes: Partial<Record<PoeticAxisId, number[]>>; averages: number[] }>();
     for (const row of rows) {
       if (!map.has(row.portfolio.studentId)) map.set(row.portfolio.studentId, { studentId: row.portfolio.studentId, axes: {}, averages: [] });
       const target = map.get(row.portfolio.studentId)!;
       if (typeof row.average === 'number') target.averages.push(row.average);
-      for (const axis of axes) {
+      for (const axis of AXES) {
         const value = row.scores[axis];
         if (typeof value === 'number') {
           if (!target.axes[axis]) target.axes[axis] = [];
@@ -77,7 +78,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
     return [...map.values()];
   }, [rows]);
 
-  const axisStats = useMemo(() => Object.fromEntries(axes.map(axis => {
+  const axisStats = useMemo(() => Object.fromEntries(AXES.map(axis => {
     const perStudent = studentAggregates.map(student => {
       const values = student.axes[axis] || [];
       return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
@@ -85,7 +86,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
     return [axis, { n: perStudent.length, average: perStudent.length ? perStudent.reduce((sum, value) => sum + value, 0) / perStudent.length : null }];
   })), [studentAggregates]);
 
-  const weakAxis = axes
+  const weakAxis = AXES
     .filter(axis => axisStats[axis]?.n > 0)
     .sort((a, b) => Number(axisStats[a]?.average) - Number(axisStats[b]?.average))[0];
   const perStudentOverall = studentAggregates.map(student => student.averages.length
@@ -107,7 +108,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-slate-200 bg-slate-50 p-3.5 text-sm text-slate-700"><span><strong>{uniqueStudents}</strong> học sinh</span><span>·</span><span><strong>{submittedStudents}</strong> học sinh đã nộp</span><span>·</span><span>Điểm trung bình: <strong>{typeof overall === 'number' ? `${overall.toFixed(1)}%` : '—'}</strong> ({perStudentOverall.length} học sinh đã chấm)</span>{weakAxis && <><span>·</span><span>Cần lưu ý: <strong>{axisLabels[weakAxis]}</strong> ({Number(axisStats[weakAxis].average).toFixed(1)}%, n={axisStats[weakAxis].n})</span></>}</div>
 
-      <div className="overflow-hidden rounded-md border border-slate-200 bg-white"><div className="flex items-center justify-between border-b border-slate-200 p-4"><h2 className="text-base font-semibold text-slate-900">Bảng điểm theo tiêu chí</h2><span className="text-sm text-slate-500">“—” là chưa chấm hoặc thiếu rubric</span></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50/70 text-slate-600"><tr><th className="px-4 py-3">Học sinh</th><th className="px-3 py-3">Lớp</th><th className="px-3 py-3">Nhiệm vụ</th>{axes.map(axis => <th key={axis} className="px-2 py-3 text-center">{axisLabels[axis]}</th>)}<th className="px-3 py-3 text-center">TB</th><th className="px-4 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{rows.length === 0 ? <tr><td colSpan={axes.length + 5} className="py-8 text-center text-sm text-slate-500">Không có hồ sơ phù hợp bộ lọc.</td></tr> : rows.map(({ portfolio, scores, average, submission }) => <tr key={portfolio.id} className="hover:bg-slate-50/60"><td className="px-4 py-3 font-medium text-slate-900">{portfolio.studentName}</td><td className="px-3 py-3 text-slate-500">{portfolio.className || '—'}</td><td className="px-3 py-3 text-slate-500">{assignments.find(item => item.id === portfolio.assignmentId)?.title || '—'}</td>{axes.map(axis => <td key={axis} className="px-2 py-3 text-center">{typeof scores[axis] === 'number' ? `${Number(scores[axis]).toFixed(0)}%` : '—'}</td>)}<td className="px-3 py-3 text-center font-semibold text-slate-900">{typeof average === 'number' ? `${average.toFixed(1)}%` : '—'}</td><td className="px-4 py-3 text-right"><Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-review', { assignmentId: portfolio.assignmentId, studentId: portfolio.studentId })}>{submission ? 'Xem lại' : 'Chấm bài'}</Button></td></tr>)}</tbody></table></div></div>
+        <div className="overflow-hidden rounded-md border border-slate-200 bg-white"><div className="flex items-center justify-between border-slate-200 border-b p-4"><h2 className="text-base font-semibold text-slate-900">Bảng điểm theo tiêu chí</h2><span className="text-slate-500 text-sm">“—” là chưa chấm hoặc thiếu rubric</span></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-slate-200 border-b bg-slate-50/70 text-slate-600"><tr><th className="px-4 py-3">Học sinh</th><th className="px-3 py-3">Lớp</th><th className="px-3 py-3">Nhiệm vụ</th>{AXES.map(axis => <th key={axis} className="px-2 py-3 text-center">{axisLabels[axis]}</th>)}<th className="px-3 py-3 text-center">TB</th><th className="px-4 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{rows.length === 0 ? <tr><td colSpan={AXES.length + 5} className="py-8 text-center text-slate-500 text-sm">Không có hồ sơ phù hợp bộ lọc.</td></tr> : rows.map(({ portfolio, scores, average, submission }) => <tr key={portfolio.id} className="hover:bg-slate-50/60"><td className="px-4 py-3 font-medium text-slate-900">{portfolio.studentName}</td><td className="px-3 py-3 text-slate-500">{portfolio.className || '—'}</td><td className="px-3 py-3 text-slate-500">{assignments.find(item => item.id === portfolio.assignmentId)?.title || '—'}</td>{AXES.map(axis => <td key={axis} className="px-2 py-3 text-center">{typeof scores[axis] === 'number' ? `${Number(scores[axis]).toFixed(0)}%` : '—'}</td>)}<td className="px-3 py-3 text-center font-semibold text-slate-900">{typeof average === 'number' ? `${average.toFixed(1)}%` : '—'}</td><td className="px-4 py-3 text-right"><Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-review', { assignmentId: portfolio.assignmentId, studentId: portfolio.studentId })}>{submission ? 'Xem lại' : 'Chấm bài'}</Button></td></tr>)}</tbody></table></div></div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpenIcon, FolderIcon, HomeIcon, SwatchIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, ChartBarIcon, FolderIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
 
 interface StudentBottomNavProps {
@@ -9,10 +9,10 @@ interface StudentBottomNavProps {
 
 export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ currentView, onNavigate }) => {
   const items = [
-    { id: 'dashboard', label: 'Trang chủ', icon: HomeIcon },
+    { id: 'dashboard', label: 'Bàn học', icon: HomeIcon },
     { id: 'student-dashboard', label: 'Nhiệm vụ', icon: BookOpenIcon },
     { id: 'portfolio-list', label: 'Hồ sơ', icon: FolderIcon },
-    { id: 'ui-kit', label: 'UI Kit', icon: SwatchIcon }
+    { id: 'student-analytics', label: 'Tiến bộ', icon: ChartBarIcon }
   ];
 
   return (

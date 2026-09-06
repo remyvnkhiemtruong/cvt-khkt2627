@@ -125,7 +125,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       setRubricScores(reset);
       setOverallFeedback('');
     }
-  }, [currentPortfolio?.id, assignment?.id, selectedVersion, selectedSnapshot?.id, evaluatorRole, activeRubric.id, activeRubric.criteria, rubricSubmissions]);
+  }, [currentPortfolio, assignment, selectedVersion, selectedSnapshot, evaluatorRole, activeRubric.id, activeRubric.criteria, rubricSubmissions]);
 
   const currentFeedbacks = useMemo(() => {
     if (!currentPortfolio || !assignment || !selectedVersion) return [];

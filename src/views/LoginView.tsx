@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Input, Alert } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
+
 
 export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const { setAuthenticatedUser } = useAuthStore();
@@ -78,8 +78,8 @@ export const LoginView: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
   return (
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
       <div className="mx-auto w-full max-w-md text-center space-y-2">
-        <div className="w-10 h-10 rounded-md bg-slate-900 text-white flex items-center justify-center mx-auto">
-          <BookOpenIcon className="w-5 h-5" />
+        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-100">
+          <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
         </div>
         <h1 className="text-xl font-semibold text-slate-900">Học tốt Ngữ Văn</h1>
         <p className="text-sm text-slate-500">

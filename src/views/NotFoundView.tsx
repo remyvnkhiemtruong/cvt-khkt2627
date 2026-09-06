@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../components/ui';
-import { QuestionMarkCircleIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { HomeIcon } from '@heroicons/react/24/outline';
 
 interface NotFoundViewProps {
   onNavigate: (view: string) => void;
@@ -9,8 +9,8 @@ interface NotFoundViewProps {
 export const NotFoundView: React.FC<NotFoundViewProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-lg mx-auto py-16 px-4 text-center space-y-6 animate-fade-in">
-      <div className="w-14 h-14 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg flex items-center justify-center mx-auto">
-        <QuestionMarkCircleIcon className="w-7 h-7" />
+      <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-100 mb-2">
+        <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
       </div>
 
       <div className="space-y-2">

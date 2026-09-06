@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../components/ui';
-import { ShieldExclamationIcon, HomeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../app/store/useAuthStore';
 
 interface ForbiddenViewProps {
@@ -13,8 +13,8 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate, requir
 
   return (
     <div className="max-w-lg mx-auto py-16 px-4 text-center space-y-6 animate-fade-in">
-      <div className="w-14 h-14 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg flex items-center justify-center mx-auto">
-        <ShieldExclamationIcon className="w-7 h-7" />
+      <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-100 mb-2">
+        <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
       </div>
 
       <div className="space-y-2">

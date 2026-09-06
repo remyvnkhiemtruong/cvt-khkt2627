@@ -32,13 +32,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           </div>
           <nav className="hidden items-center gap-6 md:flex">
             <a href="#tinh-nang" className="text-sm font-medium text-slate-600 transition-colors hover:text-primary-700">
-              Tính năng
-            </a>
-            <a href="#quy-trinh" className="text-sm font-medium text-slate-600 transition-colors hover:text-primary-700">
-              Quy trình 3 bước
-            </a>
-            <a href="#truc-thi-phap" className="text-sm font-medium text-slate-600 transition-colors hover:text-primary-700">
-              6 Trục thi pháp
+              Tính năng nổi bật
             </a>
             <a href="#lien-he" className="text-sm font-medium text-slate-600 transition-colors hover:text-primary-700">
               Liên hệ
@@ -79,33 +73,19 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                   variant="primary"
                   size="lg"
                   className="w-full sm:w-auto px-6 py-3 font-semibold"
-                  onClick={() => onNavigate('login')}
+                  onClick={() => onNavigate('login', { mode: 'login' })}
                   rightIcon={<ArrowRightIcon className="h-4 w-4" />}
                 >
                   Bắt đầu làm bài viết
                 </Button>
-                <a
-                  href="#quy-trinh"
-                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto px-6 py-3 font-semibold"
+                  onClick={() => onNavigate('login', { mode: 'register' })}
                 >
-                  Tìm hiểu quy trình
-                </a>
-              </div>
-
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-8 border-t border-slate-100 text-left">
-                <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3">
-                  <div className="text-xs font-semibold text-primary-800">Ma trận Rubric 6 Trục</div>
-                  <div className="text-caption text-slate-500">Đánh giá đa chiều, minh bạch</div>
-                </div>
-                <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3">
-                  <div className="text-xs font-semibold text-primary-800">3 Phiên bản V0 / V1 / V2</div>
-                  <div className="text-caption text-slate-500">Ghi nhận tiến bộ qua từng lần sửa</div>
-                </div>
-                <div className="col-span-2 sm:col-span-1 rounded-lg border border-slate-100 bg-slate-50/70 p-3">
-                  <div className="text-xs font-semibold text-primary-800">Bảo mật & Ẩn danh</div>
-                  <div className="text-caption text-slate-500">Nghiên cứu khoa học chuẩn mực</div>
-                </div>
+                  Tạo tài khoản mới
+                </Button>
               </div>
             </div>
           </div>
@@ -162,88 +142,6 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           </div>
         </section>
 
-        {/* 3-Step Pedagogical Cycle */}
-        <section id="quy-trinh" className="bg-white py-16 sm:py-20 border-b border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center space-y-2 max-w-2xl mx-auto">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Quy Trình Sư Phạm</h2>
-              <p className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Chu trình 3 phiên bản hoàn thiện bài viết
-              </p>
-              <p className="text-sm text-slate-600">
-                Không chỉ chấm điểm cuối kỳ — Chúng tôi đồng hành cùng học sinh trong từng chặng đường cải thiện văn phong.
-              </p>
-            </div>
-
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="relative rounded-lg border border-slate-200 bg-slate-50/80 p-6 space-y-3">
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
-                  1
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Phiên bản V0 — Dự đoán</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Đọc trích đoạn ngữ liệu, ghi nhận cảm nhận ban đầu và dự đoán các trục thi pháp trọng tâm của tác phẩm.
-                </p>
-                <div className="pt-2 text-caption text-primary-700 font-medium">Khởi động tư duy cảm thụ</div>
-              </div>
-
-              <div className="relative rounded-lg border border-slate-200 bg-slate-50/80 p-6 space-y-3">
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">
-                  2
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Phiên bản V1 — Bài viết hoàn chỉnh</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Viết bài văn phân tích hoàn chỉnh, triển khai các luận điểm theo tiêu chí. Hệ thống tự động lưu nháp an toàn.
-                </p>
-                <div className="pt-2 text-caption text-primary-700 font-medium">AI & Giáo viên đưa ra phản hồi neo</div>
-              </div>
-
-              <div className="relative rounded-lg border border-slate-200 bg-slate-50/80 p-6 space-y-3">
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
-                  3
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Phiên bản V2 — Tinh chỉnh & Nâng cấp</h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Học sinh tiếp thu nhận xét, chỉnh sửa lập luận, giải thích lý do sửa và nộp lại phiên bản hoàn thiện nhất.
-                </p>
-                <div className="pt-2 text-caption text-amber-700 font-medium">Đánh giá sự tiến bộ vượt bậc</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 6 Poetic Axes */}
-        <section id="truc-thi-phap" className="bg-slate-50 py-16 sm:py-20 border-b border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center space-y-2 max-w-2xl mx-auto">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Khung Đánh Giá Chuẩn Mực</h2>
-              <p className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                6 Trục Thi Pháp & Nghệ Thuật
-              </p>
-              <p className="text-sm text-slate-600">
-                Ma trận Rubric bám sát đặc trưng thể loại theo yêu cầu của Bộ Giáo dục và Đào tạo.
-              </p>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {[
-                { title: 'Không gian nghệ thuật', sub: 'Bối cảnh & Trường thẩm mỹ' },
-                { title: 'Thời gian nghệ thuật', sub: 'Nhịp điệu & Trục tâm lý' },
-                { title: 'Điểm nhìn trần thuật', sub: 'Ngôi kể & Cự ly quan sát' },
-                { title: 'Nhân vật & Tâm lý', sub: 'Xung đột & Chiều sâu nội tâm' },
-                { title: 'Ngôn từ & Biện pháp', sub: 'Hình ảnh, Nhịp điệu, Tu từ' },
-                { title: 'Chủ đề & Tư tưởng', sub: 'Thông điệp nhân văn & Thời đại' },
-              ].map((axis, i) => (
-                <div key={axis.title} className="rounded-lg border border-slate-200 bg-white p-4 text-center space-y-1">
-                  <div className="text-caption font-bold text-primary-600">Trục {i + 1}</div>
-                  <div className="text-xs font-semibold text-slate-900">{axis.title}</div>
-                  <div className="text-caption text-slate-500">{axis.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="bg-primary-900 py-14 text-white">
           <div className="mx-auto max-w-5xl px-4 text-center space-y-5">
@@ -258,7 +156,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 variant="primary"
                 size="lg"
                 className="bg-white text-primary-950 hover:bg-slate-100 focus:ring-white font-bold"
-                onClick={() => onNavigate('login')}
+                onClick={() => onNavigate('login', { mode: 'login' })}
               >
                 Đăng nhập hệ thống
               </Button>
@@ -289,19 +187,18 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <div className="space-y-2">
               <div className="text-sm font-semibold text-white">Chức năng chính</div>
               <ul className="space-y-1.5">
-                <li><a href="#tinh-nang" className="hover:text-white transition-colors">Bàn học sinh</a></li>
-                <li><a href="#quy-trinh" className="hover:text-white transition-colors">Bàn làm việc Giáo viên</a></li>
-                <li><a href="#truc-thi-phap" className="hover:text-white transition-colors">Ma trận Rubric</a></li>
-                <li><a href="#tinh-nang" className="hover:text-white transition-colors">Hàng đợi phản hồi AI</a></li>
+                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login', { mode: 'login' })}>Bàn học sinh</span></li>
+                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login', { mode: 'login' })}>Bàn làm việc Giáo viên</span></li>
+                <li><a href="#tinh-nang" className="hover:text-white transition-colors">Tính năng nổi bật</a></li>
               </ul>
             </div>
 
             <div className="space-y-2">
               <div className="text-sm font-semibold text-white">Quy định & Hỗ trợ</div>
               <ul className="space-y-1.5">
-                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login')}>Hướng dẫn sử dụng</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login')}>Chính sách bảo mật</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login')}>Điều khoản học tập</span></li>
+                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login', { mode: 'login' })}>Hướng dẫn sử dụng</span></li>
+                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login', { mode: 'login' })}>Chính sách bảo mật</span></li>
+                <li><span className="hover:text-white transition-colors cursor-pointer" onClick={() => onNavigate('login', { mode: 'login' })}>Điều khoản học tập</span></li>
               </ul>
             </div>
           </div>

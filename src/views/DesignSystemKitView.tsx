@@ -183,12 +183,12 @@ export const DesignSystemKitView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {/* Primary */}
-              <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 space-y-2">
-                <div className="w-full h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+              <div className="p-4 rounded-xl bg-primary-50/50 border border-primary-100 space-y-2">
+                <div className="w-full h-12 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-xs">
                   Primary #4F46E5
                 </div>
-                <div className="text-xs font-bold text-indigo-950">Primary (Indigo)</div>
-                <p className="text-caption text-indigo-900">Active • Action • Information • Điều hướng chính</p>
+                <div className="text-xs font-bold text-primary-950">Primary (primary)</div>
+                <p className="text-caption text-primary-900">Active • Action • Information • Điều hướng chính</p>
               </div>
 
               {/* Success */}
@@ -248,7 +248,7 @@ export const DesignSystemKitView: React.FC = () => {
                   Primary (Slate 900)
                 </Button>
                 <Button variant="academic" leftIcon={<AcademicCapIcon className="w-4 h-4" />}>
-                  Academic (Indigo)
+                  Academic (primary)
                 </Button>
                 <Button variant="secondary">Secondary</Button>
                 <Button variant="outline">Outline</Button>
@@ -409,7 +409,7 @@ export const DesignSystemKitView: React.FC = () => {
                 </div>
 
                 <Tooltip content="Tooltip học thuật hiển thị giải thích chi tiết khi hover" position="top">
-                  <span className="text-xs font-semibold text-indigo-700 underline cursor-help ml-2">
+                  <span className="text-xs font-semibold text-primary-700 underline cursor-help ml-2">
                     [Hover xem Tooltip]
                   </span>
                 </Tooltip>
@@ -626,7 +626,7 @@ export const DesignSystemKitView: React.FC = () => {
           {/* Progress Demo */}
           <Card padding="md" className="space-y-3">
             <h3 className="text-xs font-bold text-slate-800">Tiến độ hoàn thành nhiệm vụ đọc hiểu</h3>
-            <Progress value={75} max={100} label="Tỷ lệ nộp bản v2.0 của lớp 11A1" showValueLabel variant="indigo" />
+            <Progress value={75} max={100} label="Tỷ lệ nộp bản v2.0 của lớp 11A1" showValueLabel variant="primary" />
           </Card>
 
           {/* Chart Container & DataTable */}
@@ -642,7 +642,7 @@ export const DesignSystemKitView: React.FC = () => {
                 { key: 'name', header: 'Học sinh', render: (r) => <span className="font-semibold text-slate-900">{r.name}</span> },
                 { key: 'version', header: 'Phiên bản mới nhất', render: (r) => <Badge variant="slate">{r.version}</Badge> },
                 { key: 'status', header: 'Trạng thái', render: (r) => <Badge variant={r.status.includes('Đã chấm') ? 'emerald' : 'amber'}>{r.status}</Badge> },
-                { key: 'score', header: 'Tổng điểm Rubric', render: (r) => <span className="font-bold text-indigo-700">{r.score}</span> },
+                { key: 'score', header: 'Tổng điểm Rubric', render: (r) => <span className="font-bold text-primary-700">{r.score}</span> },
                 {
                   key: 'action',
                   header: 'Thao tác',

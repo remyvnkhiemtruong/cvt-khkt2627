@@ -102,7 +102,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                     {prevVer && (
                       <button
                         onClick={() => onOpenDiff(prevVer.versionNumber, ver.versionNumber)}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary-600 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-2 py-0.5 rounded transition-colors"
                       >
                         So sánh Diff ({prevVer.versionNumber} <ArrowRight className="w-3 h-3" /> {ver.versionNumber})
                       </button>

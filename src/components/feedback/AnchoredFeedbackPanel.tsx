@@ -58,7 +58,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
       <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-indigo-50 text-indigo-700 flex items-center justify-center">
+          <div className="w-6 h-6 rounded bg-primary-50 text-primary-700 flex items-center justify-center">
             <MessageSquarePlus className="w-3.5 h-3.5" />
           </div>
           <div>
@@ -70,7 +70,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
         {canAddFeedback && !isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-xs font-medium transition-colors"
           >
             <MessageSquarePlus className="w-3.5 h-3.5" />
             Thêm nhận xét neo
@@ -83,7 +83,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
         {isAdding && (
           <form onSubmit={handleCreateFeedback} className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-3">
             <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-              <MessageSquarePlus className="w-3.5 h-3.5 text-indigo-600" />
+              <MessageSquarePlus className="w-3.5 h-3.5 text-primary-600" />
               Tạo phản hồi cho phiên bản {versionNumber}
             </div>
 
@@ -94,7 +94,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
               <select
                 value={targetAxisId}
                 onChange={e => setTargetAxisId(e.target.value as PoeticAxisId)}
-                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2 focus:border-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2 focus:border-primary-500 focus:outline-none"
               >
                 {POETIC_AXES.map(a => (
                   <option key={a.id} value={a.id}>{a.title}</option>
@@ -111,7 +111,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                 value={selectedSnippet}
                 onChange={e => setSelectedSnippet(e.target.value)}
                 placeholder="Dán hoặc nhập cụm từ / câu văn cần góp ý..."
-                className="w-full text-xs bg-white border border-slate-300 rounded-md px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md px-2.5 py-1.5 focus:border-primary-500 focus:outline-none"
               />
             </div>
 
@@ -124,7 +124,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 placeholder="Ví dụ: Chỗ này em cần bổ sung thêm dẫn chứng về lời nửa trực tiếp..."
-                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2.5 focus:border-indigo-500 focus:outline-none"
+                className="w-full text-xs bg-white border border-slate-300 rounded-md p-2.5 focus:border-primary-500 focus:outline-none"
                 required
               />
             </div>
@@ -139,7 +139,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-md"
+                className="px-3 py-1 text-xs font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-md"
               >
                 Lưu phản hồi neo
               </button>
@@ -175,7 +175,7 @@ export const AnchoredFeedbackPanel: React.FC<AnchoredFeedbackPanelProps> = ({
                         className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                           isTeacher
                             ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+                            : 'bg-primary-50 text-primary-800 border border-primary-200'
                         }`}
                       >
                         {isTeacher ? <User className="w-2.5 h-2.5" /> : <Users className="w-2.5 h-2.5" />}

@@ -21,8 +21,8 @@ export const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ currentView,
         const isActive = currentView === item.id;
         const Icon = item.icon;
         return (
-          <button key={item.id} type="button" onClick={() => onNavigate(item.id)} className={cn('flex min-h-[44px] min-w-[64px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[10px] font-semibold transition',isActive ? 'font-bold text-indigo-600' : 'text-slate-500 hover:text-slate-800')}>
-            <Icon className={cn('mb-0.5 h-5 w-5', isActive ? 'stroke-[2.2] text-indigo-600' : 'text-slate-400')} />
+          <button key={item.id} type="button" onClick={() => onNavigate(item.id)} className={cn('flex min-h-[44px] min-w-[64px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[10px] font-semibold transition',isActive ? 'font-bold text-primary-600' : 'text-slate-500 hover:text-slate-800')}>
+            <Icon className={cn('mb-0.5 h-5 w-5', isActive ? 'stroke-[2.2] text-primary-600' : 'text-slate-400')} />
             <span>{item.label}</span>
           </button>
         );

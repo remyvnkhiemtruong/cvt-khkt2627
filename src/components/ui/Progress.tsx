@@ -6,7 +6,7 @@ export interface ProgressProps {
   max?: number;
   label?: string;
   showValueLabel?: boolean;
-  variant?: 'default' | 'success' | 'warning' | 'indigo';
+  variant?: 'default' | 'success' | 'warning' | 'primary';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -24,7 +24,7 @@ export const Progress: React.FC<ProgressProps> = ({
 
   const variants = {
     default: "bg-slate-900",
-    indigo: "bg-indigo-600",
+    primary: "bg-primary-600",
     success: "bg-emerald-600",
     warning: "bg-amber-500",
   };

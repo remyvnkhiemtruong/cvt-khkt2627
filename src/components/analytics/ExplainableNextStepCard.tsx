@@ -15,7 +15,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
     <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
       {/* Top Badge */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200">
+        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200">
           <Sparkles className="w-3.5 h-3.5" />
           Đề xuất nhiệm vụ tiếp theo
         </div>
@@ -34,7 +34,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
       {/* Explicit Pedagogical Rationale */}
       <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-1 text-xs">
         <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-          <HelpCircle className="w-3.5 h-3.5 text-indigo-600" />
+          <HelpCircle className="w-3.5 h-3.5 text-primary-600" />
           <span>Cơ sở sư phạm đề xuất:</span>
         </div>
         <p className="text-slate-600 leading-relaxed">
@@ -54,7 +54,7 @@ export const ExplainableNextStepCard: React.FC<ExplainableNextStepCardProps> = (
       <div className="pt-1 flex items-center justify-end">
         <button
           onClick={() => onStartAssignment(recommendation.nextAssignmentId)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-medium transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-xs font-medium transition-colors"
         >
           <span>Làm nhiệm vụ này</span>
           <ArrowRight className="w-3.5 h-3.5" />

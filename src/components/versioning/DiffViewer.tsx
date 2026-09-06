@@ -38,7 +38,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ v1, v2, studentName }) =
       <div className="bg-white rounded-lg border border-slate-200 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200 mb-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200 mb-1.5">
               <GitCompare className="w-3.5 h-3.5" />
               So sánh chỉnh sửa phiên bản
             </div>

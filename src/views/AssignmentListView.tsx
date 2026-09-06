@@ -47,7 +47,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
 
   const getAssignmentStatusInfo = useCallback((assignment: Assignment): {
     status: AssignmentStatusVi;
-    badgeVariant: 'slate' | 'blue' | 'emerald' | 'amber' | 'indigo';
+    badgeVariant: 'slate' | 'blue' | 'emerald' | 'amber' | 'primary';
     unresolvedFbCount: number;
     versionCount: number;
   } => {
@@ -75,7 +75,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
       if (hasTeacherScore) {
         return { status: 'Hoàn thành', badgeVariant: 'emerald', unresolvedFbCount, versionCount };
       }
-      return { status: 'Đã nộp lại', badgeVariant: 'indigo', unresolvedFbCount, versionCount };
+      return { status: 'Đã nộp lại', badgeVariant: 'primary', unresolvedFbCount, versionCount };
     }
 
     return { status: 'Đang thực hiện', badgeVariant: 'blue', unresolvedFbCount, versionCount };

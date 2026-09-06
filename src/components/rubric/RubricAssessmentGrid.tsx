@@ -141,7 +141,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
             </div>
           </div>
 
-          <div className={`p-2.5 rounded-md border ${peerSub ? 'bg-indigo-50/70 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`p-2.5 rounded-md border ${peerSub ? 'bg-primary-50/70 border-primary-200' : 'bg-slate-50 border-slate-200'}`}>
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">Bạn học chấm</span>
               <span className="font-bold text-slate-900">{peerSub ? `${peerSub.totalScore}/${peerSub.maxScore}` : 'Chưa nộp'}</span>

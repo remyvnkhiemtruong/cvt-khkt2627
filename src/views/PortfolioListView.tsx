@@ -61,7 +61,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
       }
 
       let statusLabel = 'Đang viết nháp';
-      let statusVariant: 'slate' | 'blue' | 'indigo' | 'amber' | 'emerald' = 'slate';
+      let statusVariant: 'slate' | 'blue' | 'primary' | 'amber' | 'emerald' = 'slate';
 
       if (versionCount === 1) {
         if (unresolvedFbCount > 0) {
@@ -77,7 +77,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({ onNavigate
           statusVariant = 'emerald';
         } else {
           statusLabel = 'Đã nộp v2.0';
-          statusVariant = 'indigo';
+          statusVariant = 'primary';
         }
       }
 

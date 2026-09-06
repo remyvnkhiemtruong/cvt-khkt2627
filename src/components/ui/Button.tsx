@@ -25,7 +25,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   
   const variants = {
     primary: "bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 active:bg-slate-950",
-    academic: "bg-indigo-700 text-white hover:bg-indigo-800 focus:ring-indigo-700",
+    academic: "bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-700",
     secondary: "bg-slate-100 text-slate-800 hover:bg-slate-200 focus:ring-slate-300",
     outline: "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-300",
     ghost: "bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-slate-200",

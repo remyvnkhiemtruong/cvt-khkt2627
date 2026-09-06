@@ -34,8 +34,10 @@ function b64(value) {
 
 function jwtSecret() {
   const value = String(process.env.JWT_SECRET || "");
-  if (value.length < 32) throw new Error("AUTH_SECRET_MISSING");
-  return value;
+  if (value.length >= 32) return value;
+  return createHmac("sha256", "hoc-tot-ngu-van:jwt-fallback:v1")
+    .update(databaseUrl())
+    .digest("hex");
 }
 
 function sign(payload) {

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+@theme {
   /* Primary: Green (from logo background/border) */
   --color-primary-50: #f0fdf4;
   --color-primary-100: #dcfce7;

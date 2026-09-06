@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../components/ui';
 import {
   ArrowPathIcon,
@@ -13,7 +13,85 @@ interface LandingViewProps {
   onNavigate: (view: string, extraParams?: any) => void;
 }
 
+interface SpotlightCardProps {
+  name: string;
+  desc: string;
+  icon: React.ElementType;
+}
+
+const SpotlightCard: React.FC<SpotlightCardProps> = ({ name, desc, icon: Icon }) => {
+  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  return (
+    <div
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setCoords(null);
+      }}
+      className="group relative overflow-hidden rounded-xl border-2 border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-300 hover:-translate-y-2 hover:border-primary-500 hover:shadow-2xl hover:ring-4 hover:ring-primary-400/30 cursor-default"
+    >
+      {/* Vivid interactive mouse spotlight glow inside card */}
+      {isHovered && coords && (
+        <div
+          className="pointer-events-none absolute -inset-px transition-opacity duration-200 opacity-100"
+          style={{
+            background: `radial-gradient(280px circle at ${coords.x}px ${coords.y}px, rgba(34, 197, 94, 0.35), rgba(74, 222, 128, 0.18) 40%, transparent 75%)`
+          }}
+        />
+      )}
+
+      {/* Top glowing highlight line on hover */}
+      <div className="absolute top-0 inset-x-0 h-1.5 bg-primary-600 scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100 shadow-[0_0_12px_rgba(22,163,74,0.6)]" />
+
+      {/* Icon container with micro-bounce, rotation, scale and vibrant shadow */}
+      <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-primary-700 group-hover:shadow-[0_0_16px_rgba(22,163,74,0.5)]">
+        <Icon className="h-6 w-6 stroke-[2]" />
+      </div>
+
+      <h3 className="relative z-10 mt-4 text-base font-bold text-slate-900 transition-colors duration-200 group-hover:text-primary-800">
+        {name}
+      </h3>
+      <p className="relative z-10 mt-2 text-xs text-slate-600 leading-relaxed group-hover:text-slate-700 transition-colors duration-200">
+        {desc}
+      </p>
+    </div>
+  );
+};
+
 export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
+  const [heroCoords, setHeroCoords] = useState<{ x: number; y: number } | null>(null);
+  const [isHeroHovered, setIsHeroHovered] = useState(false);
+
+  const [ctaCoords, setCtaCoords] = useState<{ x: number; y: number } | null>(null);
+  const [isCtaHovered, setIsCtaHovered] = useState(false);
+
+  const handleHeroMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHeroCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleCtaMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCtaCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-primary-100 selection:text-primary-900">
       {/* Header */}
@@ -23,7 +101,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             className="group flex items-center gap-3 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
             onClick={() => onNavigate('landing')}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-xs transition-transform duration-300 group-hover:rotate-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-xs transition-transform duration-300 group-hover:rotate-12 group-hover:shadow-md">
               <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
             </div>
             <div>
@@ -34,16 +112,16 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-8 md:flex">
             <a
               href="#tinh-nang"
-              className="text-sm font-medium text-slate-600 transition-all duration-200 hover:text-primary-700 hover:-translate-y-0.5"
+              className="relative text-sm font-medium text-slate-600 transition-all duration-200 hover:text-primary-700 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-primary-600 hover:after:w-full after:transition-all after:duration-200"
             >
               Tính năng nổi bật
             </a>
             <a
               href="#lien-he"
-              className="text-sm font-medium text-slate-600 transition-all duration-200 hover:text-primary-700 hover:-translate-y-0.5"
+              className="relative text-sm font-medium text-slate-600 transition-all duration-200 hover:text-primary-700 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-0 after:bg-primary-600 hover:after:w-full after:transition-all after:duration-200"
             >
               Liên hệ
             </a>
@@ -53,7 +131,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <Button
               variant="ghost"
               size="sm"
-              className="transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+              className="transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-100 active:translate-y-0"
               onClick={() => onNavigate('login', { mode: 'login' })}
             >
               Đăng nhập
@@ -61,7 +139,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
             <Button
               variant="primary"
               size="sm"
-              className="shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+              className="shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-2 hover:ring-primary-400/40 active:translate-y-0"
               onClick={() => onNavigate('login', { mode: 'register' })}
             >
               Đăng ký tài khoản
@@ -72,15 +150,33 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
 
       {/* Main Content */}
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-white border-b border-slate-200 py-16 sm:py-24 lg:py-28">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Hero Section with Interactive Mouse Spotlight */}
+        <section
+          onMouseMove={handleHeroMouseMove}
+          onMouseEnter={() => setIsHeroHovered(true)}
+          onMouseLeave={() => {
+            setIsHeroHovered(false);
+            setHeroCoords(null);
+          }}
+          className="relative overflow-hidden bg-white border-b border-slate-200 py-16 sm:py-24 lg:py-28"
+        >
+          {/* Dynamic mouse follower spotlight with vivid radial aura */}
+          {isHeroHovered && heroCoords && (
+            <div
+              className="pointer-events-none absolute inset-0 transition-opacity duration-150"
+              style={{
+                background: `radial-gradient(650px circle at ${heroCoords.x}px ${heroCoords.y}px, rgba(34, 197, 94, 0.28), rgba(74, 222, 128, 0.12) 45%, transparent 75%)`
+              }}
+            />
+          )}
+
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center space-y-6 animate-fade-in">
-              {/* Floating Live Badge */}
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-primary-200 bg-primary-50/90 px-4 py-1.5 text-xs font-semibold text-primary-900 shadow-xs animate-float">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-600"></span>
+              {/* Floating Live Badge with hover pulse */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-primary-300 bg-primary-50/95 px-4 py-1.5 text-xs font-semibold text-primary-900 shadow-xs transition-transform duration-300 hover:scale-105 hover:border-primary-500 hover:shadow-md animate-float cursor-default">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-600"></span>
                 </span>
                 <CheckBadgeIcon className="h-4 w-4 text-primary-600" />
                 <span>Dành riêng cho Thầy & Trò Trường THPT Vị Thanh</span>
@@ -88,7 +184,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
 
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight">
                 Nâng cao năng lực viết & cảm thụ{' '}
-                <span className="text-primary-600 inline-block transition-transform duration-300 hover:scale-105">
+                <span className="text-primary-600 inline-block transition-all duration-300 hover:scale-105 hover:-rotate-1 hover:text-primary-700 cursor-default">
                   Ngữ Văn THPT
                 </span>
               </h1>
@@ -101,7 +197,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('login', { mode: 'login' })}
-                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-primary-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-lg bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-primary-700 hover:shadow-xl hover:-translate-y-1 hover:ring-4 hover:ring-primary-300/60 active:translate-y-0"
                 >
                   <span>Bắt đầu làm bài viết</span>
                   <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1.5" />
@@ -109,7 +205,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('login', { mode: 'register' })}
-                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-xs transition-all duration-200 hover:bg-slate-50 hover:border-slate-400 hover:-translate-y-0.5 active:translate-y-0"
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-xs transition-all duration-200 hover:bg-slate-50 hover:border-primary-500 hover:text-primary-700 hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
                 >
                   Tạo tài khoản mới
                 </button>
@@ -119,8 +215,8 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
         </section>
 
         {/* Features Section */}
-        <section id="tinh-nang" className="bg-slate-50 py-16 sm:py-24 border-b border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section id="tinh-nang" className="bg-slate-50 py-16 sm:py-24 border-b border-slate-200 relative overflow-hidden">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center space-y-2 max-w-2xl mx-auto">
               <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">
                 Tính Năng Nổi Bật
@@ -156,32 +252,37 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                   icon: UserGroupIcon,
                 },
               ].map((feat) => (
-                <div
+                <SpotlightCard
                   key={feat.name}
-                  className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-xs transition-all duration-300 hover:-translate-y-2 hover:border-primary-400 hover:shadow-xl cursor-default"
-                >
-                  {/* Top glowing highlight line on hover */}
-                  <div className="absolute top-0 inset-x-0 h-1 bg-primary-600 scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-
-                  {/* Icon container with micro-bounce and scale */}
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary-700">
-                    <feat.icon className="h-6 w-6 stroke-[2]" />
-                  </div>
-
-                  <h3 className="mt-4 text-base font-bold text-slate-900 transition-colors duration-200 group-hover:text-primary-900">
-                    {feat.name}
-                  </h3>
-                  <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                    {feat.desc}
-                  </p>
-                </div>
+                  name={feat.name}
+                  desc={feat.desc}
+                  icon={feat.icon}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="bg-primary-900 py-16 text-white relative overflow-hidden">
+        {/* CTA Section with Glowing Mouse Follower */}
+        <section
+          onMouseMove={handleCtaMouseMove}
+          onMouseEnter={() => setIsCtaHovered(true)}
+          onMouseLeave={() => {
+            setIsCtaHovered(false);
+            setCtaCoords(null);
+          }}
+          className="bg-primary-900 py-16 text-white relative overflow-hidden"
+        >
+          {/* Vivid luminous mouse follower over dark primary green background */}
+          {isCtaHovered && ctaCoords && (
+            <div
+              className="pointer-events-none absolute inset-0 transition-opacity duration-150"
+              style={{
+                background: `radial-gradient(550px circle at ${ctaCoords.x}px ${ctaCoords.y}px, rgba(74, 222, 128, 0.4), rgba(34, 197, 94, 0.2) 45%, transparent 75%)`
+              }}
+            />
+          )}
+
           <div className="mx-auto max-w-5xl px-4 text-center space-y-6 relative z-10">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
               Sẵn sàng trải nghiệm phương pháp học Ngữ văn đột phá?
@@ -193,10 +294,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('login', { mode: 'login' })}
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3 text-sm font-bold text-primary-950 shadow-lg transition-all duration-200 hover:bg-slate-100 hover:scale-105 active:scale-95 hover:shadow-xl"
+                className="group inline-flex items-center gap-2.5 rounded-lg bg-white px-7 py-3 text-sm font-bold text-primary-950 shadow-lg transition-all duration-200 hover:bg-slate-100 hover:scale-105 hover:shadow-2xl hover:ring-4 hover:ring-white/40 active:scale-95"
               >
                 <span>Đăng nhập hệ thống</span>
-                <ArrowRightIcon className="h-4 w-4 text-primary-900" />
+                <ArrowRightIcon className="h-4 w-4 text-primary-900 transition-transform duration-200 group-hover:translate-x-1" />
               </button>
             </div>
           </div>

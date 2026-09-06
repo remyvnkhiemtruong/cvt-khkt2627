@@ -10,6 +10,7 @@ import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 
+const LandingView = lazy(() => import('./views/LandingView').then((module) => ({ default: module.LandingView })));
 const StudentDashboardView = lazy(() => import('./views/StudentDashboardView').then((module) => ({ default: module.StudentDashboardView })));
 const AssignmentListView = lazy(() => import('./views/AssignmentListView').then((module) => ({ default: module.AssignmentListView })));
 const PortfolioListView = lazy(() => import('./views/PortfolioListView').then((module) => ({ default: module.PortfolioListView })));
@@ -91,7 +92,7 @@ const AppContent: React.FC = () => {
           profile:data.user.profile || {}
         });
         const current = locationState();
-        if (current.view === 'login' || current.view === 'not-found') replaceToView(homeViewForRole(data.user.role));
+        if (current.view === 'login' || current.view === 'not-found' || current.view === 'landing') replaceToView(homeViewForRole(data.user.role));
         else { setCurrentView(current.view); setNavParams(current.params); }
       } catch {
         if (!active) return;
@@ -122,7 +123,13 @@ const AppContent: React.FC = () => {
   };
 
   if (sessionChecking) return <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4"><div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-center"><div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900"/><p className="text-sm font-semibold text-slate-800">Đang xác thực phiên đăng nhập…</p></div></div>;
-  if (!isAuthenticated || currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} />;
+  if (!isAuthenticated) {
+    if (currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} />;
+    return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
+  }
+  if (currentView === 'landing' || currentView === 'login') {
+    return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
+  }
 
   const routeConfig = APP_ROUTES[currentView];
   if (routeConfig?.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig.allowedRoles.join(', ')} /></MainLayout>;

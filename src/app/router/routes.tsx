@@ -9,8 +9,9 @@ export interface RouteDefinition {
 }
 
 export const APP_ROUTES: Record<string, RouteDefinition> = {
+  landing: { id:'landing', path:'/', title:'Trang chủ', isGuestOnly:true },
   login: { id:'login', path:'/login', title:'Đăng nhập', isGuestOnly:true },
-  dashboard: { id:'dashboard', path:'/', title:'Bàn học', allowedRoles:['student','teacher','peer','researcher','admin'] },
+  dashboard: { id:'dashboard', path:'/dashboard', title:'Bàn học', allowedRoles:['student','teacher','peer','researcher','admin'] },
   ...(import.meta.env?.DEV ? {
     'ui-kit': { id:'ui-kit', path:'/ui-kit', title:'Bản mẫu giao diện', allowedRoles:['admin'] }
   } : {}),

@@ -371,7 +371,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 {axisFeedbacks.map(item => (
                   <div key={item.id} className="p-3 bg-white rounded-md border border-slate-200 text-xs space-y-1">
                     <div className="flex items-center justify-between text-slate-700 font-medium">
-                      <span>{item.authorName || (item.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học')}</span>
+                      <span>{item.authorName || (item.authorRole === 'teacher' ? 'Giáo viên' : item.authorRole === 'ai' ? 'AI' : 'Bạn học')}</span>
                       <span className={item.resolved ? 'text-emerald-700' : 'text-amber-700'}>
                         {item.resolved ? 'Đã xử lý' : 'Cần xem lại'}
                       </span>

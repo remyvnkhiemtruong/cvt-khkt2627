@@ -71,7 +71,7 @@ export const AiWorkspaceView: React.FC = () => {
         ? { rubricId: rubric.id, criteria: rubric.criteria.map(c => ({ id: c.id, title: c.title })) }
         : null;
       await postAction({ action: 'ai_complete_review', reviewId: selected.id, response: response.trim(), axisId, rubricProposal });
-      setMessage({ type: 'success', text: 'Đã gửi góp ý AI. Học sinh thấy ngay phản hồi này để chỉnh sửa; giáo viên vẫn xem được lịch sử và có thể duyệt, sửa hoặc bổ sung sau.' });
+      setMessage({ type: 'success', text: 'Đã gửi góp ý AI. Học sinh thấy ngay phản hồi này để chỉnh sửa; giáo viên vẫn xem được lịch sử và có thể bổ sung nhận xét riêng.' });
       await refresh();
     } catch (e: unknown) {
       setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể gửi góp ý AI' });
@@ -84,8 +84,8 @@ export const AiWorkspaceView: React.FC = () => {
     <div className="max-w-7xl space-y-5 pb-16">
       <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Tài khoản phản hồi AI</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Không gọi API trả phí. Bạn sao chép response từ ChatGPT, dán vào đây và gửi để học sinh nhận góp ý AI ngay.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Nhập phản hồi AI</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Không gọi API trả phí. Sao chép response từ ChatGPT, dán vào đúng bài và gửi để học sinh nhận phản hồi ngay.</p>
         </div>
         <div className="text-sm text-slate-600">{pendingCount} chờ nhập · {completedCount} đã gửi</div>
       </div>
@@ -111,7 +111,7 @@ export const AiWorkspaceView: React.FC = () => {
         </aside>
 
         <main className="h-[78vh] space-y-5 overflow-y-auto rounded-md border border-slate-200 bg-white p-5">
-          {!selected ? <div className="py-24 text-center text-sm text-slate-500">Chọn một bài từ hàng đợi bên trái để xem nội dung.</div> : integrityError ? <div className="py-24 text-center text-sm text-slate-500">Không thể hiển thị bài vì phiên bản bất biến không khớp yêu cầu AI.</div> : <>
+          {!selected ? <div className="py-24 text-center text-sm text-slate-500">Chọn một bài từ danh sách bên trái.</div> : integrityError ? <div className="py-24 text-center text-sm text-slate-500">Không thể hiển thị bài vì phiên bản bất biến không khớp yêu cầu AI.</div> : <>
             <div className="border-b border-slate-200 pb-3">
               <div className="flex items-baseline justify-between gap-2"><h2 className="text-lg font-semibold text-slate-900">{selected.student_name} — {selected.version_number}</h2><span className="text-sm text-slate-500">{currentVersion?.stage === 'prediction' ? 'Dự đoán trước đọc' : currentVersion?.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}</span></div>
               <div className="mt-1 text-sm text-slate-600">Nhiệm vụ: {assignment?.title || selected.assignment_id}{literatureText && ` · Tác phẩm: ${literatureText.title} (${literatureText.author})`}</div>
@@ -128,15 +128,15 @@ export const AiWorkspaceView: React.FC = () => {
 
         <aside className="flex h-[78vh] flex-col overflow-y-auto rounded-md border border-slate-200 bg-white p-4">
           <div className="space-y-4">
-            <div className="border-b border-slate-200 pb-2"><h2 className="text-sm font-semibold text-slate-900">Dán response ChatGPT</h2><p className="mt-0.5 text-sm text-slate-500">Đây là thao tác thủ công thay cho tích hợp API. Hãy đối chiếu đúng bài, đúng phiên bản trước khi gửi.</p></div>
-            {assignment?.aiGuidance && <div className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-700"><strong>Định hướng AI:</strong><div className="mt-1 whitespace-pre-wrap">{assignment.aiGuidance}</div></div>}
+            <div className="border-b border-slate-200 pb-2"><h2 className="text-sm font-semibold text-slate-900">Dán response ChatGPT</h2><p className="mt-0.5 text-sm text-slate-500">Đối chiếu đúng học sinh, nhiệm vụ và phiên bản trước khi gửi.</p></div>
+            {assignment?.aiGuidance && <div className="rounded-md border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-700"><strong>Định hướng phản hồi:</strong><div className="mt-1 whitespace-pre-wrap">{assignment.aiGuidance}</div></div>}
             {assignment?.commonMistakes && <div className="rounded-md border border-slate-200 p-2.5 text-sm text-slate-700"><strong>Lỗi thường gặp:</strong><div className="mt-1 whitespace-pre-wrap">{assignment.commonMistakes}</div></div>}
             {assignment?.referenceGuide && <details className="rounded-md border border-slate-200 p-2.5 text-sm text-slate-700"><summary className="cursor-pointer font-medium">Gợi ý chuyên môn tham chiếu</summary><div className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-slate-600">{assignment.referenceGuide}</div></details>}
             {rubric?.criteria?.length ? <details className="rounded-md border border-slate-200 p-2.5 text-sm text-slate-700"><summary className="cursor-pointer font-medium">Rubric giáo viên ({rubric.criteria.length} tiêu chí)</summary><div className="mt-2 space-y-1">{rubric.criteria.map(c => <div key={c.id} className="border-t border-slate-100 pt-1">{c.title}</div>)}</div></details> : null}
             <div><label className="mb-1 block text-sm font-medium text-slate-700">Trọng tâm phản hồi</label><select value={axisId} onChange={e => setAxisId(e.target.value as PoeticAxisId)} className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500">{axes.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
-            <div><label className="mb-1 block text-sm font-medium text-slate-700">Response từ ChatGPT</label><textarea rows={10} value={response} onChange={e => setResponse(e.target.value)} placeholder="Dán toàn bộ response ChatGPT tại đây. Khi bấm gửi, học sinh sẽ thấy nội dung này." className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-500" /></div>
+            <div><label className="mb-1 block text-sm font-medium text-slate-700">Response từ ChatGPT</label><textarea rows={10} value={response} onChange={e => setResponse(e.target.value)} placeholder="Dán response ChatGPT tại đây. Khi bấm gửi, học sinh sẽ thấy nội dung này." className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-500" /></div>
           </div>
-          <div className="mt-4 border-t border-slate-200 pt-3"><Button variant="primary" size="sm" className="w-full" isLoading={loading} disabled={!selected || !currentVersion || integrityError || !response.trim() || selected?.status === 'completed'} onClick={publishAiFeedback}>Gửi góp ý AI cho học sinh</Button><p className="mt-2 text-center text-sm text-slate-400">Học sinh thấy ngay; giáo viên vẫn giữ quyền đánh giá chính thức.</p></div>
+          <div className="mt-4 border-t border-slate-200 pt-3"><Button variant="primary" size="sm" className="w-full" isLoading={loading} disabled={!selected || !currentVersion || integrityError || !response.trim() || selected?.status === 'completed'} onClick={publishAiFeedback}>Gửi góp ý AI cho học sinh</Button><p className="mt-2 text-center text-sm text-slate-400">Học sinh thấy ngay; giáo viên chấm Rubric chính thức.</p></div>
         </aside>
       </div>
     </div>

@@ -41,6 +41,49 @@ async function updateAiPromptAfterVersion(result) {
   return result;
 }
 
+async function createVersionWithWorkflow(user, input, req) {
+  if (user.role !== 'student') return academicActionV3(user, input, req);
+  const assignmentId = cleanTrimmed(input.assignmentId, 200);
+  const requestedStage = cleanTrimmed(input.stage, 20);
+  const pool = await getPool();
+  const state = await pool.query(`
+    SELECT p.id portfolio_id, a.workflow_config,
+           count(v.id) FILTER (WHERE v.stage='prediction')::int prediction_count,
+           count(v.id) FILTER (WHERE v.stage<>'prediction')::int submission_count
+    FROM portfolios p
+    JOIN assignments a ON a.id=p.assignment_id
+    LEFT JOIN portfolio_versions v ON v.portfolio_id=p.id
+    WHERE p.student_id=$1 AND a.public_id=$2
+    GROUP BY p.id,a.workflow_config
+    LIMIT 1
+  `, [user.id, assignmentId]);
+  const row = state.rows[0];
+  if (!row) throw new Error('PORTFOLIO_NOT_FOUND');
+  const predictionEnabled = Boolean(row.workflow_config?.predictionEnabled);
+  const predictionCount = Number(row.prediction_count || 0);
+  const submissionCount = Number(row.submission_count || 0);
+
+  if (requestedStage === 'prediction' && submissionCount > 0) throw new Error('PREDICTION_WINDOW_CLOSED');
+  if (requestedStage === 'initial' && predictionEnabled && predictionCount === 0) throw new Error('PREDICTION_REQUIRED_FIRST');
+  if (requestedStage === 'revision') {
+    if (submissionCount === 0) throw new Error('INITIAL_VERSION_REQUIRED');
+    const previous = await pool.query(`
+      SELECT v.id
+      FROM portfolio_versions v
+      WHERE v.portfolio_id=$1 AND v.stage<>'prediction'
+      ORDER BY v.sequence_no DESC NULLS LAST, v.submitted_at DESC
+      LIMIT 1
+    `, [row.portfolio_id]);
+    const previousId = previous.rows[0]?.id;
+    if (!previousId) throw new Error('INITIAL_VERSION_REQUIRED');
+    const feedback = await pool.query('SELECT 1 FROM feedbacks WHERE portfolio_id=$1 AND version_id=$2 LIMIT 1', [row.portfolio_id, previousId]);
+    if (!feedback.rows.length) throw new Error('FEEDBACK_REQUIRED_BEFORE_REVISION');
+  }
+
+  const result = await academicActionV3(user, input, req);
+  return updateAiPromptAfterVersion(result);
+}
+
 async function aiCompleteReview(user, input, req) {
   if (user.role !== 'ai') throw new Error('FORBIDDEN');
   const reviewId = cleanTrimmed(input.reviewId, 80);
@@ -85,16 +128,8 @@ async function aiCompleteReview(user, input, req) {
       ) VALUES($1,$2,$3,$4,$5,$6,'ai',$7,$8)
       ON CONFLICT(source_ai_review_id) WHERE source_ai_review_id IS NOT NULL DO NOTHING
       RETURNING id
-    `, [
-      row.portfolio_id,
-      row.version_id,
-      axisId,
-      cleanText(input.selectedSnippet, 5000),
-      response,
-      user.id,
-      reviewId,
-      JSON.stringify({ source: 'manual_chatgpt_response', teacherReviewStatus: 'pending' })
-    ]);
+    `, [row.portfolio_id, row.version_id, axisId, cleanText(input.selectedSnippet, 5000), response, user.id, reviewId,
+      JSON.stringify({ source: 'manual_chatgpt_response', teacherReviewStatus: 'pending' })]);
     let feedbackId = feedback.rows[0]?.id || null;
     if (!feedbackId) {
       const existing = await client.query("SELECT id FROM feedbacks WHERE source_ai_review_id=$1 AND author_role='ai' LIMIT 1", [reviewId]);
@@ -165,15 +200,8 @@ async function teacherReviewAi(user, input, req) {
           author_id, author_role, anchor_json
         ) VALUES($1,$2,$3,$4,$5,$6,'teacher',$7)
         RETURNING id
-      `, [
-        row.portfolio_id,
-        row.version_id,
-        axisId,
-        cleanText(input.selectedSnippet, 5000),
-        finalResponse,
-        user.id,
-        JSON.stringify({ source: 'teacher_revision_of_ai', sourceAiReviewId: reviewId })
-      ]);
+      `, [row.portfolio_id, row.version_id, axisId, cleanText(input.selectedSnippet, 5000), finalResponse, user.id,
+        JSON.stringify({ source: 'teacher_revision_of_ai', sourceAiReviewId: reviewId })]);
       teacherFeedbackId = inserted.rows[0]?.id || null;
     }
 
@@ -283,9 +311,7 @@ export async function getAcademicSnapshot(user) {
   const snapshot = await getAcademicSnapshotV3(user);
   if (!['student', 'teacher', 'admin'].includes(user.role)) return { ...snapshot, reflections: [] };
 
-  const dbPortfolioIds = Object.values(snapshot.portfolios || {})
-    .map(portfolio => portfolio?.dbId)
-    .filter(isUuid);
+  const dbPortfolioIds = Object.values(snapshot.portfolios || {}).map(portfolio => portfolio?.dbId).filter(isUuid);
   if (!dbPortfolioIds.length) return { ...snapshot, reflections: [] };
 
   const pool = await getPool();
@@ -316,11 +342,10 @@ export async function getAcademicSnapshot(user) {
 export async function academicAction(user, input, req) {
   assertSameOrigin(req);
   const action = cleanTrimmed(input?.action, 80);
+  if (action === 'create_version') return createVersionWithWorkflow(user, input, req);
   if (action === 'ai_complete_review') return aiCompleteReview(user, input, req);
   if (action === 'teacher_review_ai') return teacherReviewAi(user, input, req);
   if (action === 'save_reflection') return saveReflection(user, input, req);
   if (action === 'submit_rubric') return submitRubricWithWorkflow(user, input, req);
-  const result = await academicActionV3(user, input, req);
-  if (action === 'create_version') return updateAiPromptAfterVersion(result);
-  return result;
+  return academicActionV3(user, input, req);
 }

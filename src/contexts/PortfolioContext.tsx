@@ -248,6 +248,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }}>{children}</PortfolioContext.Provider>;
 };
 
+// Context hooks are intentionally co-located with their provider for API compatibility.
+// eslint-disable-next-line react/only-export-components
 export const usePortfolio = () => {
   const context = useContext(PortfolioContext);
   if (!context) throw new Error('usePortfolio must be used within a PortfolioProvider');

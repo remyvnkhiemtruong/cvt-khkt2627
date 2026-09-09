@@ -128,7 +128,7 @@ export const CreateVersionModal: React.FC<CreateVersionModalProps> = ({
                   {feedbacks.map(f => (
                     <label key={f.id} className="flex items-start gap-2 cursor-pointer rounded p-1 hover:bg-white text-xs text-slate-700">
                       <input type="checkbox" checked={linkedFeedbackIds.includes(f.id)} onChange={() => toggleFeedback(f.id)} className="mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500" />
-                      <div className="min-w-0 flex-1 truncate"><span className="font-medium">{f.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học'}:</span>{' '}<span>{f.comment}</span></div>
+                      <div className="min-w-0 flex-1 truncate"><span className="font-medium">{f.authorRole === 'teacher' ? 'Giáo viên' : f.authorRole === 'ai' ? 'AI' : 'Bạn học'}:</span>{' '}<span>{f.comment}</span></div>
                     </label>
                   ))}
                 </div>

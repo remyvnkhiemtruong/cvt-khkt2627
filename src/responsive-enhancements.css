@@ -1,0 +1,120 @@
+/* Production responsive + motion layer — phones, tablets, desktops */
+:root {
+  --app-header-height: 64px;
+  --app-page-gutter: clamp(0.75rem, 2.4vw, 2rem);
+  --app-section-gap: clamp(0.875rem, 1.8vw, 1.5rem);
+  --app-motion-fast: 150ms;
+  --app-motion-base: 210ms;
+  --app-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+  min-width: 320px;
+  background: #f8fafc;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#root { min-height: 100dvh; }
+
+/* Global interactive motion without decorative effects. */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--app-motion-fast);
+  transition-timing-function: var(--app-ease);
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
+/* Better mobile controls and prevents iOS focus zoom. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+  }
+}
+
+/* Shared page entrance animation. */
+.app-view-enter {
+  animation: appViewEnter var(--app-motion-base) var(--app-ease) both;
+}
+
+@keyframes appViewEnter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stable surfaces across the app. */
+.app-surface {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+.app-surface-interactive:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+  transform: translateY(-1px);
+}
+
+/* Horizontal overflow should be intentional rather than clipping content. */
+.app-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe-area helpers for iPhone/iPad. */
+.safe-top { padding-top: max(0px, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+.safe-left { padding-left: max(0px, env(safe-area-inset-left)); }
+.safe-right { padding-right: max(0px, env(safe-area-inset-right)); }
+
+/* Tablet tuning: keep content airy without desktop-sized gaps. */
+@media (min-width: 768px) and (max-width: 1180px) {
+  :root { --app-page-gutter: 1.25rem; }
+  .tablet-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Large desktop: avoid over-stretching reading/editor surfaces. */
+@media (min-width: 1440px) {
+  .app-readable { max-width: 82rem; margin-inline: auto; }
+}
+
+/* Respect accessibility preference globally. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .app-view-enter { animation: none !important; }
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"] {
+    transition-duration: 0.01ms !important;
+  }
+}

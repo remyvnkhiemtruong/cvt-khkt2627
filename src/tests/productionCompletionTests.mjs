@@ -12,12 +12,17 @@ const test = async (name, fn) => {
 const block = (source, start, end) => source.slice(source.indexOf(start), source.indexOf(end));
 
 const academic = read('api/_lib/academic-v3.js');
+const workflow = read('api/_lib/academic-workflow-v4.js');
 const auth = read('api/auth/auth.js');
 
-await test('P01: production endpoints use academic-v3 only', () => {
-  for (const path of ['api/academic/action.ts','api/academic/snapshot.ts','api/academic/catalog.ts','api/health.ts']) {
-    const source = read(path); assert(source.includes('academic-v3.js')); assert(!source.includes('academic-v2.js'));
-  }
+await test('P01: production academic endpoints use workflow-v4 over academic-v3 core', () => {
+  const action = read('api/academic/action.ts');
+  const snapshot = read('api/academic/snapshot.ts');
+  assert(action.includes('academic-workflow-v4.js'));
+  assert(snapshot.includes('academic-workflow-v4.js'));
+  assert(read('api/academic/catalog.ts').includes('academic-v3.js'));
+  assert(read('api/health.ts').includes('academic-v3.js'));
+  for (const source of [action, snapshot, read('api/academic/catalog.ts'), read('api/health.ts')]) assert(!source.includes('academic-v2.js'));
 });
 await test('P02: academic-v3 does not import legacy academic service', () => { assert(!academic.includes("from './academic.js'")); assert(!academic.includes('legacyAcademic')); });
 await test('P03: auth request path does not mutate schema or seed identities', () => {
@@ -44,16 +49,16 @@ await test('P10: version and AI request are created atomically', () => {
   const source=block(academic,'async function createVersion','async function aiCompleteReview');
   for(const token of ["client.query('BEGIN')",'INSERT INTO portfolio_versions','INSERT INTO ai_review_requests',"client.query('COMMIT')"]) assert(source.includes(token),token);
 });
-await test('P11: AI feedback is published to the student while teacher review remains available', () => {
-  const source=block(academic,'async function aiCompleteReview','async function teacherReviewAi');
-  for (const token of ['INSERT INTO feedbacks', "'ai'", "teacher_review_status='pending'", "status='feedback_received'", 'visibleToStudent: true']) assert(source.includes(token), token);
+await test('P11: manual AI response is published to the student immediately', () => {
+  const source=block(workflow,'async function aiCompleteReview','async function teacherReviewAi');
+  for (const token of ['INSERT INTO feedbacks', "'ai'", "teacher_review_status='pending'", "status='feedback_received'", 'visibleToStudent: true', 'manual_chatgpt_response']) assert(source.includes(token), token);
 });
-await test('P12: teacher finalization supports approve/revise/reject safely', () => {
-  const source=block(academic,'async function teacherReviewAi','async function addFeedback');
-  for(const token of ["decision === 'approved'","decision === 'revised'","decision === 'revised' && finalResponse","status='feedback_received'"]) assert(source.includes(token),token);
+await test('P12: teacher can review AI history and add a distinct revision without hiding AI feedback', () => {
+  const source=block(workflow,'async function teacherReviewAi','async function saveReflection');
+  for(const token of ["decision === 'revised'", "decision === 'revised' && finalResponse", 'teacher_revision_of_ai', 'aiFeedbackRemainsVisible: true']) assert(source.includes(token),token);
 });
 await test('P13: peer review is bound to exact immutable version', () => { assert(academic.includes('async function exactPeerScope')); assert(academic.includes('pra.version_id=$2')); assert(academic.includes('v.id=pra.version_id AND v.portfolio_id=p.id')); });
-await test('P14: teacher access is class-scoped', () => { assert(academic.includes('async function teacherCanAccessClass')); assert(academic.includes("member_role='teacher'")); assert(academic.includes('TEACHER_CLASS_FORBIDDEN')); });
+await test('P14: teacher access is class-scoped in core and workflow', () => { assert(academic.includes('async function teacherCanAccessClass')); assert(workflow.includes('async function teacherCanAccessClass')); assert(workflow.includes("member_role='teacher'")); assert(workflow.includes('TEACHER_CLASS_FORBIDDEN')); });
 await test('P15: rubric score is server-calculated from assignment rubric', () => {
   const source=block(academic,'async function submitRubric','async function assignPeerReview');
   for(const token of ['rc.rubric_id=a.rubric_id','totalScore += score * weight','maxScore += maximum * weight']) assert(source.includes(token),token);
@@ -84,13 +89,29 @@ await test('P29: diff classifies added/deleted/changed/unchanged', () => { asser
 await test('P30: TLS verify-full remains enforced', () => { const s=read('api/_lib/db.js'), a='rejectUnauthorized'+': false', b='rejectUnauthorized'+':false'; assert(s.includes('sslmode=verify-full')); assert(!s.includes(a)); assert(!s.includes(b)); });
 await test('P31: SPA rewrite excludes API and remains in Singapore', () => { const c=JSON.parse(read('vercel.json')), f=c.rewrites?.find(r=>r.destination==='/index.html'); assert(f?.source?.includes('(?!api')); assert(c.regions?.includes('sin1')); });
 await test('P32: no global browser MutationObserver disables editor input behavior', () => { const s=read('index.html'); assert(!s.includes('MutationObserver')); assert(!s.includes("spellcheck', 'false")); });
-await test('P33: AI workspace is a manual ChatGPT-paste flow that reaches students before teacher follow-up', () => {
+await test('P33: AI workspace is a manual ChatGPT-response paste flow visible to students', () => {
   const s=read('src/views/AiWorkspaceView.tsx');
-  for (const token of ['Nhập phản hồi ChatGPT', 'Dán toàn bộ câu trả lời ChatGPT', "action: 'ai_complete_review'", 'Gửi góp ý cho học sinh', 'Học sinh sẽ thấy góp ý này']) assert(s.includes(token), token);
+  for (const token of ['Dán response ChatGPT', 'Không gọi API trả phí', "action: 'ai_complete_review'", 'Gửi góp ý AI cho học sinh', 'Học sinh thấy ngay']) assert(s.includes(token), token);
 });
 await test('P34: teacher workspace preserves the AI feedback and can add a distinct teacher revision', () => {
   const s=read('src/views/TeacherReviewView.tsx');
   for (const token of ['Góp ý AI đã gửi học sinh', 'Gửi bổ sung của giáo viên', 'Đã xem góp ý AI']) assert(s.includes(token), token);
+});
+await test('P35: workflow enforces V0 before V1 and feedback before revision when configured', () => {
+  const source=block(workflow,'async function createVersionWithWorkflow','async function aiCompleteReview');
+  for (const token of ['PREDICTION_REQUIRED_FIRST','PREDICTION_WINDOW_CLOSED','FEEDBACK_REQUIRED_BEFORE_REVISION',"requestedStage === 'revision'"]) assert(source.includes(token), token);
+});
+await test('P36: REF1 is immutable and required before official teacher rubric', () => {
+  const source=block(workflow,'async function saveReflection','async function submitRubricWithWorkflow');
+  for (const token of ['INSERT INTO student_reflections','REFLECTION_REQUIRES_REVISION',"status='waiting_official_rubric'"]) assert(source.includes(token), token);
+  const submit=block(workflow,'async function submitRubricWithWorkflow','export async function getAcademicSnapshot');
+  assert(submit.includes('REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC'));
+  const migration=read('scripts/migrate-workflow-v4.sql');
+  assert(migration.includes('trg_student_reflections_immutable'));
+});
+await test('P37: student editor counts V0 separately and exposes REF1 after a revision', () => {
+  const s=read('src/views/PortfolioEditorView.tsx');
+  for (const token of ["stage !== 'prediction'", 'Nộp V0 (dự đoán)', 'REF1 – Tự phản tư', 'saveReflection']) assert(s.includes(token), token);
 });
 
 const failed=results.filter(result=>!result.ok);

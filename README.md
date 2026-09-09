@@ -1,127 +1,156 @@
 # Học tốt Ngữ Văn
 
-Nền tảng học tập Ngữ văn THPT hỗ trợ đọc hiểu theo 6 trục thi pháp, viết theo phiên bản, phản hồi AI/giáo viên, rubric và phân tích tiến bộ dựa trên dữ liệu thật.
+Nền tảng học tập Ngữ văn THPT hỗ trợ đọc hiểu theo 6 trục thi pháp, hồ sơ phiên bản bất biến, phản hồi AI thủ công/giáo viên, rubric và phân tích tiến bộ dựa trên dữ liệu thật.
 
 ## Trạng thái
 
-- **Phiên bản:** Production V2
+- **Phiên bản nghiệp vụ:** Workflow V4 — KHKT 2026–2027
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS
 - **Backend:** Vercel Functions + PostgreSQL/Neon
-- **Xác thực:** tài khoản thật, cookie HttpOnly + JWT, RBAC theo vai trò
-- **AI hiện tại:** học sinh nộp V1 → hàng đợi AI → tài khoản AI dán phản hồi thủ công → giáo viên duyệt
+- **Xác thực:** cookie HttpOnly + JWT + RBAC
+- **AI hiện tại:** không gọi API trả phí. Tài khoản AI mở đúng bài/đúng version, người vận hành copy response từ ChatGPT và dán vào. Khi bấm gửi, học sinh thấy góp ý AI ngay.
+- **Điểm chính thức:** chỉ giáo viên chấm Rubric; máy chủ tính điểm từ rubric gắn đúng assignment.
 - **Production:** https://cvt-khkt2627.vercel.app
 
-Tên sản phẩm chính thức là **Học tốt Ngữ Văn**. Slug hạ tầng GitHub/Vercel hiện được giữ nguyên để không làm gián đoạn URL production và integration đang hoạt động.
+Tên sản phẩm chính thức là **Học tốt Ngữ Văn**. Slug GitHub/Vercel được giữ để không làm gián đoạn hạ tầng.
 
 ## Vai trò hệ thống
 
 - `student` — Học sinh
 - `teacher` — Giáo viên
-- `peer` — Người phản biện bạn học
-- `researcher` — Giám khảo / nghiên cứu
+- `peer` — Người phản biện bạn học theo phân công
+- `researcher` — Người nghiên cứu/giám khảo chỉ xem dữ liệu ẩn danh
 - `admin` — Quản trị hệ thống
-- `ai` — Người nhập phản hồi AI thủ công
+- `ai` — Tài khoản nhập response ChatGPT thủ công
 
-## Hồ sơ cá nhân
+## Luồng học thuật chuẩn
 
-Thông tin tài khoản được lưu trong PostgreSQL. Ngoài họ tên, email, vai trò, lớp và trạng thái tài khoản, người dùng có thể tự cập nhật các trường không bắt buộc:
+1. Giáo viên tạo lớp, gán học sinh, chọn đúng revision ngữ liệu và rubric rồi xuất bản nhiệm vụ.
+2. Nếu nhiệm vụ bật dự đoán trước đọc, học sinh hoàn thành **V0**. V0 lưu dự đoán + căn cứ + mức tự tin và bị khóa sau khi nộp; V0 không được chấm như đáp án đúng/sai tuyệt đối.
+3. Học sinh đọc, viết theo 6 trục thi pháp; autosave chỉ cập nhật draft, không tạo version.
+4. Học sinh nộp **V1**. Backend tạo version bất biến và `ai_review_request` trong cùng luồng nghiệp vụ.
+5. Tài khoản `ai` mở đúng học sinh + assignment + version, copy response từ ChatGPT, dán vào workspace và bấm **Gửi góp ý AI cho học sinh**.
+6. Backend tạo feedback `author_role='ai'`; học sinh thấy ngay để sửa bài. Giáo viên vẫn xem toàn bộ lịch sử, có thể ghi nhận, bổ sung hoặc tạo feedback giáo viên riêng; phản hồi AI gốc không bị sửa thành feedback giáo viên.
+7. Học sinh chỉ được nộp **V2**/revision sau khi version trước đã có feedback. Khi nộp revision phải lưu phần thay đổi, lí do sửa, nguồn thay đổi và feedback liên quan.
+8. Sau V2/revision, học sinh hoàn thành **REF1 – Tự phản tư** gồm 5 câu. REF1 gắn đúng version và bất biến.
+9. Chỉ sau REF1, giáo viên chấm **Rubric chính thức**. Máy chủ xác thực rubric của assignment và tự tính tổng điểm.
+10. Kết quả FINAL, lịch sử version, feedback và rubric được dùng cho báo cáo tiến bộ/lớp và nghiên cứu ẩn danh.
 
-- số điện thoại;
-- ngày sinh;
-- trường / đơn vị;
-- năm học, khối / cấp học;
-- mã học sinh hoặc mã cán bộ;
-- tổ / bộ môn;
-- giới thiệu ngắn;
-- mục tiêu học Ngữ văn;
-- thể loại, tác giả và tác phẩm yêu thích.
+Luồng rút gọn: **V0 → V1 → phản hồi AI/GV → V2 → REF1 → Rubric giáo viên → FINAL**.
 
-Lớp và vai trò là dữ liệu quản trị, không cho người dùng tự sửa trong hồ sơ cá nhân.
+## 6 trục thi pháp
 
-## Luồng học thuật chính
+1. Tình huống – Cốt truyện
+2. Nhân vật – Chi tiết nghệ thuật
+3. Người kể chuyện – Điểm nhìn
+4. Không gian – Thời gian nghệ thuật
+5. Ngôn ngữ – Giọng điệu – Biểu tượng
+6. Tổng hợp – Lập luận
 
-1. Giáo viên tạo lớp, gán thành viên và xuất bản nhiệm vụ.
-2. Backend tạo portfolio cho học sinh thuộc lớp được giao.
-3. Học sinh viết theo 6 trục; autosave chỉ báo thành công sau khi PostgreSQL xác nhận.
-4. Học sinh nộp `v1.0`; version được đóng băng bất biến và tạo `ai_review_request`.
-5. Tài khoản AI nhập phản hồi thủ công vào đúng version.
-6. Giáo viên duyệt / yêu cầu sửa / từ chối phản hồi AI và tiếp tục feedback chuyên môn.
-7. Học sinh chỉnh sửa và tạo các phiên bản tiếp theo.
-8. Rubric, version history và feedback được dùng cho Student Analytics, Class Analytics và nghiên cứu ẩn danh.
+## Dữ liệu seed KHKT 2026–2027
 
-## Các phân hệ chính
+Seed chuẩn nằm tại `scripts/seed-khkt-2026-2027.sql`. Script không chứa mật khẩu, không tạo bài nộp giả, feedback giả, AI review giả hay điểm giả.
+
+Baseline production sạch gồm:
+
+- 1 lớp `11A1-KHKT`;
+- 1 giáo viên và 2 học sinh demo được gán lớp;
+- 1 rubric 6 trục × 4 mức;
+- 4 ngữ liệu/revision và 4 nhiệm vụ: **Vợ nhặt**, **Chí Phèo**, **Xuân Tóc Đỏ cứu quốc**, **Mùa lá rụng trong vườn**;
+- 2 portfolio/draft trống cho mỗi nhiệm vụ;
+- 0 submitted version, 0 feedback, 0 AI review, 0 reflection, 0 rubric submission.
+
+Không nhúng toàn văn tác phẩm có bản quyền vào seed. Nội dung ngữ liệu đầy đủ do giáo viên quản lí qua kho văn bản/revision riêng.
+
+## Tài khoản baseline
+
+- `admin@cvt.edu.vn` — admin cao nhất
+- `ai-response@cvt.edu.vn` — AI Response thủ công
+- `giaovien@cvt.edu.vn` — giáo viên Ngữ văn
+- `hocsinh1@cvt.edu.vn`, `hocsinh2@cvt.edu.vn` — học sinh demo
+- `peer@cvt.edu.vn` — phản biện demo
+- `researcher@cvt.edu.vn` — nghiên cứu demo
+
+Mật khẩu không được lưu trong repository. Admin có thể tạo/reset tài khoản qua `/api/admin/manage`; mật khẩu tạm chỉ được trả về tại thời điểm thao tác.
+
+## Phân hệ
 
 ### Học sinh
 
-- Nhiệm vụ Ngữ văn
-- Không gian viết & phân tích theo 6 trục thi pháp
-- Autosave server-side
-- Version snapshot bất biến
-- So sánh phiên bản từ dữ liệu thật
-- Feedback và rubric
-- Báo cáo tiến bộ
+- Danh sách nhiệm vụ theo lớp thật
+- V0 dự đoán trước đọc
+- Editor 6 trục + autosave server-side
+- Version bất biến V1/V2…
+- Feedback AI/giáo viên
+- So sánh version
+- REF1 tự phản tư
+- Rubric và báo cáo tiến bộ
+
+### AI Response
+
+- Hàng đợi version đã nộp
+- Hiển thị đúng bài và đúng immutable version
+- Hiển thị định hướng AI, lỗi thường gặp, gợi ý chuyên môn và rubric của assignment
+- Dán response ChatGPT thủ công
+- Gửi feedback AI cho học sinh ngay
+- Không tích hợp API AI trả phí
+- Không quyết định điểm Rubric chính thức
 
 ### Giáo viên
 
-- Bàn làm việc từ portfolio/version thật
-- Hàng đợi bài nộp thật, không dùng học sinh giả
-- Chấm bài và phản hồi neo ngữ cảnh
-- Duyệt phản hồi AI
-- Tạo nhiệm vụ theo lớp thật
-- Quản lý rubric version
-- Kho tác phẩm PostgreSQL
-- Heatmap lớp từ rubric submissions thật
+- Bàn làm việc theo lớp được phân công
+- Review đúng học sinh + assignment + immutable version
+- Xem feedback AI đã gửi học sinh
+- Bổ sung feedback giáo viên riêng
+- Chấm rubric đúng assignment sau REF1
+- Quản lí nhiệm vụ, rubric và revision ngữ liệu
+- Class Analytics từ dữ liệu thật
 
 ### Admin
 
 - Tạo tài khoản và mật khẩu tạm
 - Đổi role / khóa / mở tài khoản
-- Reset mật khẩu bắt buộc đổi lại
+- Reset mật khẩu
 - Tạo lớp và gán thành viên
-- Audit log thật
+- Audit log
 
 ### Nghiên cứu
 
-- Cohort ẩn danh từ dữ liệu thật
-- Pre/post dựa trên rubric submissions đầu/cuối
-- Truy vết version / feedback / rubric
-- Không tạo số liệu nghiên cứu giả khi dữ liệu chưa đủ
+- Chỉ nhận pseudonym, không PII
+- Không nhận mutable draft
+- Pre/post từ dữ liệu version/rubric thật
+- Không tạo số liệu giả khi dữ liệu chưa đủ
 
 ## Backend API
 
-- `GET /api/health` — kiểm tra backend và schema học thuật
+- `GET /api/health` — health/schema counters
 - `POST /api/auth/login` — đăng nhập
 - `POST /api/auth/register` — đăng ký tài khoản học sinh
-- `GET /api/auth/me` — phục hồi phiên và đọc hồ sơ
-- `PATCH /api/auth/me` — cập nhật hồ sơ cá nhân
-- `POST /api/auth/logout` — đăng xuất
-- `POST /api/auth/change-password` — đổi mật khẩu
-- `GET /api/academic/snapshot` — snapshot dữ liệu học thuật theo role
-- `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI review actions
-- `GET /api/admin/users` — danh sách tài khoản thật, chỉ admin
-- `POST /api/admin/manage` — quản trị user/lớp/thành viên, chỉ admin
+- `GET/PATCH /api/auth/me` — session/hồ sơ
+- `POST /api/auth/logout`
+- `POST /api/auth/change-password`
+- `GET /api/academic/snapshot` — snapshot theo RBAC
+- `POST /api/academic/action` — draft/version/feedback/rubric/assignment/AI/reflection
+- `GET /api/admin/users` — admin-only
+- `POST /api/admin/manage` — admin-only
 
-## PostgreSQL V2
+## PostgreSQL
 
-Các bảng chính: `app_users`, `classes`, `class_members`, `literature_texts`, `rubrics`, `rubric_criteria`, `assignments`, `portfolios`, `portfolio_drafts`, `portfolio_versions`, `feedbacks`, `rubric_submissions`, `ai_review_requests`, `audit_logs`, `auth_rate_events`.
+Các bảng trọng yếu gồm `app_users`, `classes`, `class_members`, `literature_texts`, `literature_text_versions`, `rubrics`, `rubric_criteria`, `assignments`, `portfolios`, `portfolio_drafts`, `portfolio_versions`, `submission_idempotency_keys`, `feedbacks`, `ai_review_requests`, `student_reflections`, `rubric_submissions`, `peer_review_assignments`, `version_feedback_links`, `audit_logs`, `auth_rate_events`.
 
-`app_users.profile_json` lưu hồ sơ mở rộng. `portfolio_versions` có database trigger chặn UPDATE/DELETE để giữ tính toàn vẹn.
+- `portfolio_versions` là immutable snapshot; server tạo `sequence_no`, checksum và idempotency key.
+- assignment trỏ đúng `literature_text_version_id`.
+- `student_reflections` gắn đúng portfolio+version và có trigger chặn UPDATE/DELETE.
+- điểm rubric được máy chủ tính từ rubric của assignment.
 
 ## Biến môi trường
 
-Production cần cấu hình tại Vercel Project Settings:
+Production cần:
 
 - `DATABASE_URL`
-- `JWT_SECRET` — khuyến nghị; nếu không đặt backend dẫn xuất server-side từ `DATABASE_URL`
+- `JWT_SECRET`
 
-Bootstrap tùy chọn:
-
-- `BOOTSTRAP_ADMIN_PASSWORD`
-- `BOOTSTRAP_TEACHER_PASSWORD`
-- `BOOTSTRAP_STUDENT_PASSWORD`
-- `BOOTSTRAP_AI_PASSWORD`
-
-Tài khoản bootstrap: `admin@cvt.edu.vn`, `giaovien@cvt.edu.vn`, `hocsinh@cvt.edu.vn`, `ai@cvt.edu.vn`.
+Không commit secrets/mật khẩu vào repository.
 
 ## Chạy local
 
@@ -136,26 +165,18 @@ Build production:
 npm run build
 ```
 
-Build chạy invariant tests trước TypeScript/Vite.
-
-## CI & Deploy Vercel
-
-Mỗi commit vào `main` tạo production deployment. Pipeline:
-
-1. `npm test`
-2. TypeScript build
-3. Vite build
-4. Vercel Functions packaging
-
-Dự án giữ trong giới hạn 12 Serverless Functions của Vercel Hobby bằng cách gom academic actions vào route chung.
+Build chạy regression/invariant tests, TypeScript, lint và Vite build. Dự án giữ tối đa 12 Vercel Functions.
 
 ## Nguyên tắc production
 
 - Không lưu JWT trong localStorage.
-- Session dùng cookie HttpOnly và API nhạy cảm xác thực lại trạng thái tài khoản từ PostgreSQL.
+- Cookie HttpOnly; API nhạy cảm xác thực server-side.
 - Không dùng localStorage làm database.
-- Không dùng dữ liệu giả cho editor, version diff, teacher review, backup, audit hoặc analytics.
-- Mọi write học thuật quan trọng đi qua backend và PostgreSQL.
-- Editor chỉ cho học sinh ghi draft; giáo viên/peer dùng review flow.
-- Version đã nộp là bất biến.
-- AI tự động vẫn tắt; hiện dùng manual review queue có giáo viên duyệt.
+- Không dùng dữ liệu giả thay cho editor/version/review/audit/analytics production.
+- Draft autosave không tạo version.
+- Version và REF1 đã nộp là bất biến.
+- AI Response là manual ChatGPT-paste flow; feedback AI hiển thị cho học sinh ngay.
+- AI không chấm điểm chính thức.
+- Giáo viên chỉ thao tác trong lớp được phân công.
+- Peer chỉ review assignment/version được gán và không review chính mình.
+- Researcher chỉ xem dữ liệu ẩn danh.

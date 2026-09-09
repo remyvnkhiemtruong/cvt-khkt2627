@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { randomUUID } from "node:crypto";
 import { authenticate, send } from "../auth/auth.js";
-import { getAcademicSnapshot } from "../_lib/academic-v3.js";
+import { getAcademicSnapshot } from "../_lib/academic-workflow-v4.js";
 import { normalizeAcademicSnapshot } from "../_lib/content-compat.js";
 
 export default async function handler(req: any, res: any) {

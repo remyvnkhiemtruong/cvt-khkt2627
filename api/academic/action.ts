@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { randomUUID } from "node:crypto";
 import { authenticate, body, send } from "../auth/auth.js";
-import { academicAction } from "../_lib/academic-v3.js";
+import { academicAction } from "../_lib/academic-workflow-v4.js";
 import { normalizeAcademicActionInput } from "../_lib/content-compat.js";
 
 const clientMessage = (code: string) => {
@@ -15,7 +15,10 @@ const clientMessage = (code: string) => {
     SUBMISSION_KEY_REQUIRED: "Khóa nộp bài không hợp lệ. Vui lòng thử lại.",
     SCHEMA_MIGRATION_REQUIRED: "Hệ thống đang nâng cấp dữ liệu ngữ liệu. Vui lòng thử lại sau.",
     CSRF_ORIGIN_MISMATCH: "Yêu cầu không hợp lệ.",
-    VALIDATION_ERROR: "Dữ liệu gửi lên không hợp lệ."
+    VALIDATION_ERROR: "Dữ liệu gửi lên không hợp lệ.",
+    REFLECTION_REQUIRED: "Em cần hoàn thành đủ phần tự phản tư trước khi gửi.",
+    REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
+    REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức."
   };
   if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";

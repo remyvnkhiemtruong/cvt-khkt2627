@@ -11,9 +11,9 @@ export default async function handler(req: any, res: any) {
       ok: true,
       service: 'hoc-tot-ngu-van-api',
       product: 'Học tốt Ngữ Văn',
-      version: 'backend-v3',
+      version: 'backend-v4-workflow',
       academicData: 'postgresql',
-      aiFeedbackMode: 'manual-review-queue',
+      aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
       region: process.env.VERCEL_REGION || 'unknown',
       counts: {
         assignments: counts.assignments,
@@ -36,7 +36,7 @@ export default async function handler(req: any, res: any) {
       ok: false,
       service: 'hoc-tot-ngu-van-api',
       product: 'Học tốt Ngữ Văn',
-      version: 'backend-v3',
+      version: 'backend-v4-workflow',
       message: 'Backend unavailable',
       timestamp: new Date().toISOString()
     });

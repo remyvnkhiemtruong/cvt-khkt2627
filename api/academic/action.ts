@@ -2,6 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { authenticate, body, send } from "../auth/auth.js";
 import { academicAction } from "../_lib/academic-v3.js";
+import { normalizeAcademicActionInput } from "../_lib/content-compat.js";
 
 const clientMessage = (code: string) => {
   const messages: Record<string, string> = {
@@ -38,7 +39,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const actionStartedAt = Date.now();
-    const result = await academicAction(user, body(req), req);
+    const input = normalizeAcademicActionInput(body(req));
+    const result = await academicAction(user, input, req);
     const actionMs = Date.now() - actionStartedAt;
     res.setHeader("Server-Timing", `auth;dur=${authMs}, action;dur=${actionMs}, total;dur=${Date.now() - startedAt}`);
     return send(res, 200, result);

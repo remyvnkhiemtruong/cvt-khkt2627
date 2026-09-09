@@ -2,6 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { authenticate, send } from "../auth/auth.js";
 import { getAcademicSnapshot } from "../_lib/academic-v3.js";
+import { normalizeAcademicSnapshot } from "../_lib/content-compat.js";
 
 export default async function handler(req: any, res: any) {
   const startedAt = Date.now();
@@ -21,7 +22,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const dataStartedAt = Date.now();
-    const snapshot = await getAcademicSnapshot(user);
+    const snapshot = normalizeAcademicSnapshot(await getAcademicSnapshot(user));
     const dataMs = Date.now() - dataStartedAt;
     res.setHeader("Server-Timing", `auth;dur=${authMs}, data;dur=${dataMs}, total;dur=${Date.now() - startedAt}`);
     return send(res, 200, { snapshot, requestId });

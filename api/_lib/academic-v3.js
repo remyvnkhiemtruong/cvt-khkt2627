@@ -793,8 +793,8 @@ async function createVersion(user, input, req) {
     }
 
     const aiPrompt = stage === 'prediction'
-      ? 'Đánh giá bản dự đoán trước đọc theo lập luận và câu hỏi của học sinh. Không tiết lộ đáp án hoặc nội dung chưa được giao. Chỉ tạo đề xuất để giáo viên duyệt.'
-      : 'Đề xuất phản hồi cho đúng phiên bản bất biến này theo rubric và các trục được giao. Nêu điểm mạnh, điểm cần cải thiện và bước chỉnh sửa tiếp theo. Không tạo phản hồi chính thức cho học sinh.';
+      ? 'Đánh giá bản dự đoán trước đọc theo lập luận và câu hỏi của học sinh. Không tiết lộ đáp án hoặc nội dung chưa được giao. Phản hồi sẽ được gửi cho học sinh và lưu để giáo viên xem sau.'
+      : 'Tạo phản hồi cho đúng phiên bản bất biến này theo rubric và các trục được giao. Nêu điểm mạnh, điểm cần cải thiện và bước chỉnh sửa tiếp theo. Phản hồi được gửi cho học sinh; giáo viên sẽ xem lịch sử và bổ sung khi cần.';
     await client.query(`
       INSERT INTO ai_review_requests(portfolio_id,version_id,prompt,stage)
       VALUES($1,$2,$3,$4) ON CONFLICT(version_id) DO NOTHING
@@ -820,6 +820,8 @@ async function aiCompleteReview(user, input, req) {
   if (!isUuid(reviewId)) throw new Error('AI_REVIEW_NOT_FOUND');
   const response = cleanTrimmed(input.response, 100000);
   if (!response) throw new Error('EMPTY_RESPONSE');
+  const axisId = cleanTrimmed(input.axisId || 'form_argument', 50);
+  if (!AXES.includes(axisId)) throw new Error('INVALID_AXIS');
   const pool = await getPool();
   const client = await pool.connect();
   try {
@@ -841,10 +843,15 @@ async function aiCompleteReview(user, input, req) {
              reviewer_id=$4,completed_at=now(),teacher_review_status='pending'
       WHERE id=$1
     `, [reviewId, response, proposal ? JSON.stringify(proposal) : null, user.id]);
-    await client.query(`UPDATE portfolios SET status='ai_proposed_waiting_teacher',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
-    await audit(client, user, 'AI_COMPLETE_PROPOSAL', 'ai_review', reviewId, { hasProposal: true }, req);
+    const feedback = await client.query(`
+      INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role)
+      VALUES($1,$2,$3,$4,$5,$6,'ai')
+      RETURNING id
+    `, [row.portfolio_id, row.version_id, axisId, cleanText(input.selectedSnippet, 5000), response, user.id]);
+    await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
+    await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId: feedback.rows[0].id, visibleToStudent: true }, req);
     await client.query('COMMIT');
-    return { ok: true };
+    return { ok: true, feedbackId: feedback.rows[0].id, visibleToStudent: true };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -879,7 +886,7 @@ async function teacherReviewAi(user, input, req) {
       return { ok: true, isIdempotentRetry: true, decision: row.teacher_review_status, feedbackId: existing.rows[0]?.id || null };
     }
     let finalResponse = '';
-    if (decision === 'approved') finalResponse = cleanTrimmed(row.response, 100000);
+    if (decision === 'approved') finalResponse = '';
     if (decision === 'revised') {
       finalResponse = cleanTrimmed(input.finalResponse, 100000);
       if (!finalResponse) throw new Error('REVISED_RESPONSE_REQUIRED');
@@ -892,7 +899,7 @@ async function teacherReviewAi(user, input, req) {
              teacher_reviewed_at=now(),teacher_note=$5 WHERE id=$1
     `, [reviewId, decision, finalResponse, user.id, teacherNote]);
     let feedbackId = null;
-    if (decision !== 'rejected' && finalResponse) {
+    if (decision === 'revised' && finalResponse) {
       const inserted = await client.query(`
         INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role,source_ai_review_id)
         VALUES($1,$2,$3,$4,$5,$6,'teacher',$7)
@@ -906,11 +913,11 @@ async function teacherReviewAi(user, input, req) {
       }
       await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
     } else {
-      await client.query(`UPDATE portfolios SET status='teacher_feedback_needed',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
+      await client.query(`UPDATE portfolios SET status='feedback_received',updated_at=now() WHERE id=$1`, [row.portfolio_id]);
     }
     await audit(client, user, 'TEACHER_FINALIZE_AI_REVIEW', 'ai_review', reviewId, { decision, feedbackId, hasFinalResponse: Boolean(finalResponse) }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId, portfolioStatus: feedbackId ? 'feedback_received' : 'teacher_feedback_needed' };
+    return { ok: true, decision, feedbackId, portfolioStatus: 'feedback_received' };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

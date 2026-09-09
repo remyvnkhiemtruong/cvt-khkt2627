@@ -23,9 +23,20 @@ interface AppHeaderProps {
 }
 
 type ProfileForm = {
-  name: string; phone: string; dateOfBirth: string; school: string; schoolYear: string; grade: string;
-  studentCode: string; staffCode: string; department: string; bio: string; learningGoal: string;
-  favoriteGenres: string; favoriteAuthors: string; favoriteWorks: string;
+  name: string;
+  phone: string;
+  dateOfBirth: string;
+  school: string;
+  schoolYear: string;
+  grade: string;
+  studentCode: string;
+  staffCode: string;
+  department: string;
+  bio: string;
+  learningGoal: string;
+  favoriteGenres: string;
+  favoriteAuthors: string;
+  favoriteWorks: string;
 };
 
 const VIEW_TITLES: Record<string, string> = {
@@ -44,7 +55,7 @@ const VIEW_TITLES: Record<string, string> = {
   'class-analytics': 'Phân tích lớp',
   'researcher-view': 'Nghiên cứu',
   'admin-view': 'Quản trị',
-  'ai-workspace': 'Hàng đợi AI',
+  'ai-workspace': 'Phản hồi AI',
   'ui-kit': 'Bản mẫu giao diện'
 };
 
@@ -54,7 +65,7 @@ const ROLE_LABELS: Record<string, string> = {
   peer: 'Phản biện',
   researcher: 'Nghiên cứu viên',
   admin: 'Quản trị viên',
-  ai: 'Hỗ trợ AI'
+  ai: 'Nhập phản hồi AI'
 };
 
 const home = (role: string) =>
@@ -64,6 +75,7 @@ const home = (role: string) =>
   role === 'ai' ? 'ai-workspace' : 'dashboard';
 
 const joinList = (value?: string[]) => Array.isArray(value) ? value.join(', ') : '';
+const splitList = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
 
 const toForm = (user: any): ProfileForm => ({
   name: user.name || '',
@@ -81,8 +93,6 @@ const toForm = (user: any): ProfileForm => ({
   favoriteAuthors: joinList(user.profile?.favoriteAuthors),
   favoriteWorks: joinList(user.profile?.favoriteWorks)
 });
-
-const splitList = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
 
 const Field: React.FC<{
   label: string;
@@ -107,9 +117,7 @@ const Field: React.FC<{
       autoCorrect="off"
       autoCapitalize="off"
       spellCheck={false}
-      className={`w-full rounded-md border px-3 py-2 text-sm outline-none ${
-        readOnly ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-slate-300 bg-white text-slate-900 focus:border-slate-500'
-      }`}
+      className={`w-full rounded-md border px-3 py-2 text-sm outline-none ${readOnly ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-slate-300 bg-white text-slate-900 focus:border-slate-500'}`}
     />
   </label>
 );
@@ -129,9 +137,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<ProfileForm>(() => toForm(currentUser));
 
-  const change = (key: keyof ProfileForm, value: string) =>
-    setForm(previous => ({ ...previous, [key]: value }));
-
+  const change = (key: keyof ProfileForm, value: string) => setForm(previous => ({ ...previous, [key]: value }));
   const openProfile = () => {
     setForm(toForm(currentUser));
     setProfileOpen(true);
@@ -141,7 +147,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     setSaving(true);
     try {
       const response = await fetch('/api/auth/me', {
-        method:'PATCH',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
@@ -182,61 +188,32 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="mx-auto h-full max-w-7xl px-3 sm:px-6 lg:px-8">
         <div className="flex h-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={onOpenMobileDrawer}
-              className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 md:hidden"
-              aria-label="Mở menu"
-            >
+            <button type="button" onClick={onOpenMobileDrawer} className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 md:hidden" aria-label="Mở menu">
               <Bars3Icon className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => onNavigate(home(currentUser.role))}
-              className="flex shrink-0 items-center gap-2"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm overflow-hidden border border-slate-100">
+            <button type="button" onClick={() => onNavigate(home(currentUser.role))} className="flex shrink-0 items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white">
                 <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
               </span>
-              <span className="hidden text-sm font-bold text-primary-900 sm:inline">Học Tốt Ngữ Văn</span>
+              <span className="hidden text-sm font-semibold text-primary-900 sm:inline">Học tốt Ngữ Văn</span>
             </button>
             <span className="hidden text-slate-300 sm:inline">/</span>
-            <span className="max-w-[150px] truncate text-xs font-medium text-slate-600 sm:max-w-xs">
-              {VIEW_TITLES[currentView] || 'Học tốt Ngữ Văn'}
-            </span>
+            <span className="max-w-[150px] truncate text-xs font-medium text-slate-600 sm:max-w-xs">{VIEW_TITLES[currentView] || 'Học tốt Ngữ Văn'}</span>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenCommandPalette}
-              className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
-            >
+            <button type="button" onClick={onOpenCommandPalette} className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500 hover:bg-slate-100">
               <MagnifyingGlassIcon className="h-3.5 w-3.5" />
               <span className="hidden md:inline">Tìm nhanh...</span>
             </button>
-            <button
-              type="button"
-              onClick={() => addToast({ type: 'info', title: 'Thông báo', message: 'Hiện chưa có thông báo mới.' })}
-              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100"
-              aria-label="Thông báo"
-            >
+            <button type="button" onClick={() => addToast({ type: 'info', title: 'Thông báo', message: 'Hiện chưa có thông báo mới.' })} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100" aria-label="Thông báo">
               <BellIcon className="h-4 w-4" />
             </button>
-            <button
-              type="button"
-              onClick={() => setHelpOpen(true)}
-              className="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 sm:block"
-              aria-label="Trợ giúp"
-            >
+            <button type="button" onClick={() => setHelpOpen(true)} className="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 sm:block" aria-label="Trợ giúp">
               <QuestionMarkCircleIcon className="h-4 w-4" />
             </button>
             <Dropdown
-              trigger={
-                <div className="cursor-pointer">
-                  <Avatar name={currentUser.name || 'Người dùng'} size="sm" />
-                </div>
-              }
+              trigger={<div className="cursor-pointer"><Avatar name={currentUser.name || 'Người dùng'} size="sm" /></div>}
               items={[
                 { key: 'profile', label: 'Thông tin cá nhân', icon: <UserCircleIcon className="h-4 w-4" />, onClick: openProfile },
                 { key: 'logout', label: 'Đăng xuất', icon: <ArrowRightOnRectangleIcon className="h-4 w-4" />, danger: true, onClick: onLogout }
@@ -246,40 +223,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       </div>
 
-      {/* Help Modal */}
-      <Modal
-        isOpen={helpOpen}
-        onClose={() => setHelpOpen(false)}
-        title="Hướng dẫn sử dụng"
-        footer={<Button variant="primary" onClick={() => setHelpOpen(false)}>Đóng</Button>}
-      >
+      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Hướng dẫn sử dụng" footer={<Button variant="primary" onClick={() => setHelpOpen(false)}>Đóng</Button>}>
         <div className="space-y-4 text-sm text-slate-700">
-          <p className="text-slate-600">Quy trình học tập và hoàn thiện bài viết:</p>
-          <ol className="list-decimal list-inside space-y-1.5 pl-1 text-slate-700">
-            <li>Nhận nhiệm vụ và đọc trích đoạn ngữ liệu.</li>
-            <li>Viết bài phân tích theo các trục thi pháp.</li>
-            <li>Nộp phiên bản (V0 dự đoán, V1 bản đầu, V2 chỉnh sửa).</li>
-            <li>AI tổng hợp đề xuất phản hồi cho giáo viên.</li>
-            <li>Giáo viên xem xét, chỉnh sửa và phê duyệt phản hồi.</li>
-            <li>Học sinh tiếp thu nhận xét và nộp phiên bản tiếp theo.</li>
+          <p className="text-slate-600">Quy trình học tập trên hệ thống:</p>
+          <ol className="list-inside list-decimal space-y-1.5 pl-1 text-slate-700">
+            <li>Nếu nhiệm vụ yêu cầu dự đoán trước đọc, hoàn thành và nộp V0.</li>
+            <li>Đọc ngữ liệu, viết theo các trục thi pháp và nộp V1.</li>
+            <li>Tài khoản AI dán response từ ChatGPT và gửi; học sinh thấy phản hồi ngay.</li>
+            <li>Giáo viên xem lịch sử phản hồi và có thể bổ sung nhận xét riêng.</li>
+            <li>Học sinh chỉnh sửa, nộp V2 hoặc phiên bản tiếp theo và ghi rõ lí do thay đổi.</li>
+            <li>Sau bản chỉnh sửa, học sinh hoàn thành REF1; giáo viên chấm Rubric chính thức.</li>
           </ol>
-          <div className="pt-2 text-xs text-slate-500 border-t border-slate-100">
-            Phím tắt: <strong>Ctrl + K</strong> để tìm kiếm nhanh; <strong>Esc</strong> để đóng hộp thoại.
-          </div>
+          <div className="border-t border-slate-100 pt-2 text-xs text-slate-500">Phím tắt: <strong>Ctrl + K</strong> để tìm nhanh; <strong>Esc</strong> để đóng hộp thoại.</div>
         </div>
       </Modal>
 
-      {/* Profile Modal */}
       <Modal
         isOpen={profileOpen}
         onClose={() => setProfileOpen(false)}
         title="Thông tin cá nhân"
-        footer={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setProfileOpen(false)}>Hủy</Button>
-            <Button variant="primary" isLoading={saving} onClick={save}>Lưu thay đổi</Button>
-          </div>
-        }
+        footer={<div className="flex gap-2"><Button variant="outline" onClick={() => setProfileOpen(false)}>Hủy</Button><Button variant="primary" isLoading={saving} onClick={save}>Lưu thay đổi</Button></div>}
       >
         <div className="max-h-[68vh] space-y-5 overflow-y-auto pr-1 text-sm">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -287,10 +250,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <div className="min-w-0">
               <div className="truncate text-base font-semibold text-slate-900">{currentUser.name}</div>
               <div className="truncate text-xs text-slate-500">{currentUser.email}</div>
-              <div className="mt-1 text-xs text-slate-600">
-                {ROLE_LABELS[currentUser.role] || currentUser.role}
-                {currentUser.className && ` · Lớp ${currentUser.className}`}
-              </div>
+              <div className="mt-1 text-xs text-slate-600">{ROLE_LABELS[currentUser.role] || currentUser.role}{currentUser.className && ` · Lớp ${currentUser.className}`}</div>
             </div>
           </div>
 
@@ -305,11 +265,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <Field label="Năm học" value={form.schoolYear} onChange={v => change('schoolYear', v)} placeholder="2026-2027" />
               <Field label="Lớp được phân công" value={currentUser.className || 'Chưa gán lớp'} onChange={() => {}} readOnly />
               <Field label="Khối học" value={form.grade} onChange={v => change('grade', v)} placeholder="Khối 11" />
-              {currentUser.role === 'student' ? (
-                <Field label="Mã học sinh" value={form.studentCode} onChange={v => change('studentCode', v)} />
-              ) : (
-                <Field label="Mã cán bộ / giáo viên" value={form.staffCode} onChange={v => change('staffCode', v)} />
-              )}
+              {currentUser.role === 'student' ? <Field label="Mã học sinh" value={form.studentCode} onChange={v => change('studentCode', v)} /> : <Field label="Mã cán bộ / giáo viên" value={form.staffCode} onChange={v => change('staffCode', v)} />}
               <Field label="Tổ / Bộ môn" value={form.department} onChange={v => change('department', v)} placeholder="Tổ Ngữ văn" />
             </div>
           </section>
@@ -318,30 +274,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <h3 className="text-sm font-semibold text-slate-900">Sở thích & Mục tiêu</h3>
             <label className="block space-y-1">
               <span className="text-xs text-slate-600">Mục tiêu môn học</span>
-              <textarea
-                rows={3}
-                value={form.learningGoal}
-                onChange={e => change('learningGoal', e.target.value)}
-                className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500"
-                placeholder="Ví dụ: Rèn luyện kĩ năng phân tích dẫn chứng, liên hệ bối cảnh..."
-              />
+              <textarea rows={3} value={form.learningGoal} onChange={e => change('learningGoal', e.target.value)} className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500" placeholder="Ví dụ: Rèn kĩ năng phân tích dẫn chứng, liên hệ bối cảnh..." />
             </label>
             <label className="block space-y-1">
               <span className="text-xs text-slate-600">Giới thiệu ngắn</span>
-              <textarea
-                rows={3}
-                value={form.bio}
-                onChange={e => change('bio', e.target.value)}
-                className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500"
-                placeholder="Đôi nét về bản thân và cách học tập yêu thích..."
-              />
+              <textarea rows={3} value={form.bio} onChange={e => change('bio', e.target.value)} className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500" placeholder="Đôi nét về bản thân và cách học tập yêu thích..." />
             </label>
             <Field label="Thể loại yêu thích" value={form.favoriteGenres} onChange={v => change('favoriteGenres', v)} placeholder="Truyện ngắn, thơ..." />
             <Field label="Tác giả yêu thích" value={form.favoriteAuthors} onChange={v => change('favoriteAuthors', v)} placeholder="Kim Lân, Nam Cao..." />
             <Field label="Tác phẩm yêu thích" value={form.favoriteWorks} onChange={v => change('favoriteWorks', v)} placeholder="Vợ nhặt, Lão Hạc..." />
           </section>
 
-          <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
+          <div className="space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
             <div>Lần đăng nhập gần nhất: {lastLogin}</div>
             <div>Mã tài khoản: {currentUser.id}</div>
           </div>

@@ -147,7 +147,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     setSaving(true);
     try {
       const response = await fetch('/api/auth/me', {
-        method: 'PATCH',
+        method:'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({

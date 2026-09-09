@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button, Input, Alert } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
 
-
 interface LoginViewProps {
   onLoginSuccess: () => void;
   initialMode?: 'login' | 'register';
@@ -16,7 +15,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 }) => {
   const { setAuthenticatedUser } = useAuthStore();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  
+
   React.useEffect(() => {
     if (initialMode) setMode(initialMode);
   }, [initialMode]);
@@ -90,74 +89,145 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
+  const switchMode = (nextMode: 'login' | 'register') => {
+    setMode(nextMode);
+    setError(null);
+  };
+
   return (
-    <div className="min-h-[100dvh] bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4">
-      {onNavigate && (
-        <div className="mx-auto w-full max-w-md mb-4 text-left">
-          <button
-            type="button"
-            onClick={() => onNavigate('landing')}
-            className="text-xs font-medium text-slate-500 hover:text-primary-700 transition-colors"
-          >
-            ← Quay lại trang chủ
-          </button>
-        </div>
-      )}
+    <div className="safe-top safe-bottom min-h-[100dvh] bg-slate-100 px-3 py-3 sm:px-5 sm:py-6 lg:flex lg:items-center lg:justify-center lg:px-8">
+      <div className="app-view-enter mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.10)] lg:min-h-[660px] lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
+          <div>
+            <button
+              type="button"
+              onClick={() => onNavigate?.('landing')}
+              className="inline-flex min-h-10 items-center rounded-lg border border-white/15 px-3 text-sm font-medium text-slate-200 hover:bg-white/10 hover:text-white"
+            >
+              ← Trang chủ
+            </button>
+          </div>
 
-      <div className="mx-auto w-full max-w-md text-center space-y-2">
-        <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto overflow-hidden border border-slate-200">
-          <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
-        </div>
-        <h1 className="text-xl font-bold text-slate-900">Học tốt Ngữ Văn</h1>
-        <p className="text-xs font-medium text-primary-800">Trường THPT Vị Thanh</p>
-        <p className="text-xs text-slate-500">
-          {mustChange
-            ? 'Thiết lập mật khẩu riêng trước khi tiếp tục'
-            : mode === 'login'
-            ? 'Đăng nhập vào hệ thống học tập'
-            : 'Đăng ký tài khoản học sinh mới'}
-        </p>
-      </div>
-
-      <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md">
-        <div className="bg-white py-6 px-4 border border-slate-200 rounded-md sm:py-8 sm:px-8">
-          {error && (
-            <div className="mb-4">
-              <Alert
-                type="error"
-                title={mustChange ? 'Đổi mật khẩu không thành công' : mode === 'login' ? 'Đăng nhập không thành công' : 'Đăng ký không thành công'}
-              >
-                {error}
-              </Alert>
+          <div className="max-w-xl py-12">
+            <div className="mb-7 flex items-center gap-4">
+              <div className="h-16 w-16 overflow-hidden rounded-2xl border border-white/15 bg-white p-1 shadow-lg">
+                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full rounded-xl object-cover" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-300">Trường THPT Vị Thanh</p>
+                <h1 className="mt-1 text-3xl font-bold tracking-tight xl:text-4xl">Học tốt Ngữ Văn</h1>
+              </div>
             </div>
-          )}
+            <p className="max-w-lg text-base leading-8 text-slate-300">
+              Hồ sơ đọc số lưu phiên bản theo trục thi pháp, giúp học sinh nhìn thấy quá trình thay đổi cách đọc và giúp giáo viên theo dõi tiến bộ bằng minh chứng.
+            </p>
 
-          {mustChange ? (
-            <form onSubmit={rotatePassword} className="space-y-4" autoComplete="off">
-              <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
-              <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
-              <Alert type="info" title="Bảo mật tài khoản">
-                Tài khoản cấp sẵn cần đổi mật khẩu trước lần sử dụng đầu tiên.
-              </Alert>
-              <Input
-                label="Mật khẩu mới"
-                type="password"
-                required
-                minLength={10}
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                placeholder="Tối thiểu 10 ký tự"
-                name="new_password"
-                autoComplete="new-password"
-                data-lpignore="true"
-              />
-              <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">
-                Đổi mật khẩu & tiếp tục
-              </Button>
-            </form>
-          ) : (
-            <>
-              <form onSubmit={submit} className="space-y-4" autoComplete="off">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {[
+                ['01', 'Lưu phiên bản', 'Không ghi đè bài cũ'],
+                ['02', 'Phản hồi rõ ràng', 'AI thủ công và giáo viên'],
+                ['03', 'Đa thiết bị', 'Điện thoại · iPad · máy tính']
+              ].map(([index, title, note]) => (
+                <div key={index} className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
+                  <div className="text-xs font-bold text-emerald-300">{index}</div>
+                  <div className="mt-2 text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-1 text-xs leading-5 text-slate-400">{note}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs leading-5 text-slate-500">KHKT 2026–2027 · Hệ thống hồ sơ đọc số</p>
+        </section>
+
+        <section className="flex min-w-0 flex-col justify-center p-4 sm:p-8 lg:p-10 xl:p-12">
+          <div className="mx-auto w-full max-w-md">
+            <div className="mb-6 flex items-start justify-between gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => onNavigate?.('landing')}
+                className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              >
+                ← Trang chủ
+              </button>
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
+                <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full rounded-[10px] object-cover" />
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary-700">Học tốt Ngữ Văn</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                {mustChange ? 'Thiết lập mật khẩu mới' : mode === 'login' ? 'Đăng nhập hệ thống' : 'Tạo tài khoản học sinh'}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {mustChange
+                  ? 'Tài khoản cấp sẵn cần đổi mật khẩu trước khi tiếp tục.'
+                  : mode === 'login'
+                  ? 'Sử dụng tài khoản đã được cấp hoặc tài khoản học sinh đã đăng ký.'
+                  : 'Đăng ký nhanh trên điện thoại, iPad hoặc máy tính.'}
+              </p>
+            </div>
+
+            {!mustChange && (
+              <div className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Chế độ xác thực">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === 'login'}
+                  onClick={() => switchMode('login')}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold ${mode === 'login' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === 'register'}
+                  onClick={() => switchMode('register')}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold ${mode === 'register' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Đăng ký
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-5" role="alert">
+                <Alert
+                  type="error"
+                  title={mustChange ? 'Đổi mật khẩu không thành công' : mode === 'login' ? 'Đăng nhập không thành công' : 'Đăng ký không thành công'}
+                >
+                  {error}
+                </Alert>
+              </div>
+            )}
+
+            {mustChange ? (
+              <form onSubmit={rotatePassword} className="space-y-5" autoComplete="off">
+                <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+                <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+                <Alert type="info" title="Bảo mật tài khoản">
+                  Hãy dùng mật khẩu riêng có ít nhất 10 ký tự và không chia sẻ cho người khác.
+                </Alert>
+                <Input
+                  label="Mật khẩu mới"
+                  type="password"
+                  required
+                  minLength={10}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Tối thiểu 10 ký tự"
+                  name="new_password"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                />
+                <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full">
+                  Đổi mật khẩu & tiếp tục
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={submit} className="space-y-5" autoComplete="off">
                 <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 {mode === 'register' && (
@@ -197,26 +267,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   autoComplete="new-password"
                   data-lpignore="true"
                 />
-                <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full bg-slate-900 hover:bg-slate-800">
+                <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full">
                   {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
                 </Button>
               </form>
-              <div className="mt-5 text-center text-sm text-slate-500">
-                {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
-                <button
-                  type="button"
-                  className="font-medium text-slate-900 hover:underline"
-                  onClick={() => {
-                    setMode(mode === 'login' ? 'register' : 'login');
-                    setError(null);
-                  }}
-                >
-                  {mode === 'login' ? 'Đăng ký' : 'Đăng nhập'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+            )}
+
+            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">
+              Giao diện được tối ưu cho màn hình từ 320px đến desktop lớn; hỗ trợ thao tác cảm ứng và giảm chuyển động theo cài đặt thiết bị.
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

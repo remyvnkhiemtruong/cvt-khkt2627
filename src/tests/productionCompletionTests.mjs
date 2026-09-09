@@ -83,6 +83,10 @@ await test('P29: diff classifies added/deleted/changed/unchanged', () => { asser
 await test('P30: TLS verify-full remains enforced', () => { const s=read('api/_lib/db.js'), a='rejectUnauthorized'+': false', b='rejectUnauthorized'+':false'; assert(s.includes('sslmode=verify-full')); assert(!s.includes(a)); assert(!s.includes(b)); });
 await test('P31: SPA rewrite excludes API and remains in Singapore', () => { const c=JSON.parse(read('vercel.json')), f=c.rewrites?.find(r=>r.destination==='/index.html'); assert(f?.source?.includes('(?!api')); assert(c.regions?.includes('sin1')); });
 await test('P32: no global browser MutationObserver disables editor input behavior', () => { const s=read('index.html'); assert(!s.includes('MutationObserver')); assert(!s.includes("spellcheck', 'false")); });
+await test('P33: AI workspace is a manual ChatGPT-paste proposal flow for teachers only', () => {
+  const s=read('src/views/AiWorkspaceView.tsx');
+  for (const token of ['Nhập phản hồi ChatGPT', 'Dán toàn bộ câu trả lời ChatGPT', "action: 'ai_complete_review'", 'Gửi đề xuất cho giáo viên', 'Học sinh không thể xem nội dung này']) assert(s.includes(token), token);
+});
 
 const failed=results.filter(result=>!result.ok);
 console.log(`${results.length-failed.length}/${results.length} production completion regression tests passed.`);

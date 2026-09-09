@@ -6,7 +6,6 @@ import {
   ChartBarIcon,
   HomeIcon,
   DocumentTextIcon,
-  SparklesIcon,
   XMarkIcon,
   FolderIcon
 } from '@heroicons/react/24/outline';
@@ -48,7 +47,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       { id: 'cmd-portfolios', category: 'Hồ sơ', title: 'Hồ sơ học tập', icon: FolderIcon, action: () => onNavigate('portfolio-list'), roles: ['student', 'teacher', 'peer', 'researcher', 'admin'] },
       { id: 'cmd-feedback', category: 'Phản hồi', title: currentUser.role === 'student' ? 'Phản hồi cần xử lý' : 'Chấm bài', icon: ChatBubbleLeftRightIcon, action: () => onNavigate(currentUser.role === 'student' ? 'assignment-list' : 'teacher-review'), roles: ['student', 'teacher', 'peer', 'admin'] },
       { id: 'cmd-analytics', category: 'Phân tích', title: 'Xem tiến bộ', icon: ChartBarIcon, action: () => onNavigate(currentUser.role === 'teacher' || currentUser.role === 'researcher' || currentUser.role === 'admin' ? 'class-analytics' : 'dashboard'), roles: ['student', 'teacher', 'researcher', 'admin'] },
-      { id: 'cmd-ai', category: 'AI', title: 'Hàng đợi AI', icon: SparklesIcon, action: () => onNavigate('ai-workspace'), roles: ['ai', 'teacher', 'admin'] }
+      { id: 'cmd-ai', category: 'Phản hồi', title: currentUser.role === 'ai' ? 'Nhập phản hồi AI' : 'Hàng đợi phản hồi AI', icon: ChatBubbleLeftRightIcon, action: () => onNavigate('ai-workspace'), roles: ['ai', 'teacher', 'admin'] }
     ];
 
     if (currentUser.role === 'student') {
@@ -86,11 +85,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       if (command.roles && !command.roles.includes(currentUser.role)) return false;
       if (!query.trim()) return true;
       const q = query.toLowerCase().trim();
-      return (
-        command.title.toLowerCase().includes(q) ||
-        command.category.toLowerCase().includes(q) ||
-        Boolean(command.subtitle?.toLowerCase().includes(q))
-      );
+      return command.title.toLowerCase().includes(q) || command.category.toLowerCase().includes(q) || Boolean(command.subtitle?.toLowerCase().includes(q));
     });
   }, [commands, currentUser.role, query]);
 
@@ -106,21 +101,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         return;
       }
       if (!isOpen) return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        setSelectedIndex(index => (filteredCommands.length ? (index + 1) % filteredCommands.length : 0));
-        return;
-      }
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        setSelectedIndex(index => (filteredCommands.length ? (index - 1 + filteredCommands.length) % filteredCommands.length : 0));
-        return;
-      }
+      if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key === 'ArrowDown') { event.preventDefault(); setSelectedIndex(index => (filteredCommands.length ? (index + 1) % filteredCommands.length : 0)); return; }
+      if (event.key === 'ArrowUp') { event.preventDefault(); setSelectedIndex(index => (filteredCommands.length ? (index - 1 + filteredCommands.length) % filteredCommands.length : 0)); return; }
       if (event.key === 'Enter' && filteredCommands[selectedIndex]) {
         event.preventDefault();
         filteredCommands[selectedIndex].action();
@@ -146,65 +129,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       <div className="flex w-full max-w-xl flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-modal">
         <div className="relative flex items-center border-b border-slate-200 px-4 py-3">
           <MagnifyingGlassIcon className="mr-3 h-5 w-5 shrink-0 text-slate-400" />
-          <input
-            autoFocus
-            value={query}
-            onChange={event => {
-              setQuery(event.target.value);
-              setSelectedIndex(0);
-            }}
-            placeholder="Tìm nhiệm vụ, tác phẩm..."
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            data-lpignore="true"
-            data-1p-ignore="true"
-            data-form-type="other"
-            className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
-          />
-          <button onClick={onClose} className="ml-2 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-            <XMarkIcon className="h-4 w-4" />
-          </button>
+          <input autoFocus value={query} onChange={event => { setQuery(event.target.value); setSelectedIndex(0); }} placeholder="Tìm nhiệm vụ, tác phẩm..." autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" data-form-type="other" className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none" />
+          <button onClick={onClose} className="ml-2 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Đóng tìm kiếm"><XMarkIcon className="h-4 w-4" /></button>
         </div>
         <div className="max-h-80 space-y-0.5 overflow-y-auto p-2">
           {filteredCommands.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              Không tìm thấy kết quả phù hợp với “{query}”.
-            </div>
-          ) : (
-            filteredCommands.map((command, index) => {
-              const Icon = command.icon;
-              const isSelected = index === selectedIndex;
-              return (
-                <button
-                  type="button"
-                  key={command.id}
-                  onClick={() => select(command)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                    isSelected ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Icon className="h-4 w-4 shrink-0 text-slate-400" />
-                    <div className="min-w-0">
-                      <div className="truncate">{command.title}</div>
-                      {command.subtitle && (
-                        <p className="truncate text-xs text-slate-500">{command.subtitle}</p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="ml-2 shrink-0 text-xs text-slate-400">{command.category}</span>
-                </button>
-              );
-            })
-          )}
+            <div className="py-8 text-center text-xs text-slate-500">Không tìm thấy kết quả phù hợp với “{query}”.</div>
+          ) : filteredCommands.map((command, index) => {
+            const Icon = command.icon;
+            const isSelected = index === selectedIndex;
+            return (
+              <button type="button" key={command.id} onClick={() => select(command)} onMouseEnter={() => setSelectedIndex(index)} className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors ${isSelected ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700 hover:bg-slate-50'}`}>
+                <div className="flex min-w-0 items-center gap-3"><Icon className="h-4 w-4 shrink-0 text-slate-400" /><div className="min-w-0"><div className="truncate">{command.title}</div>{command.subtitle && <p className="truncate text-xs text-slate-500">{command.subtitle}</p>}</div></div>
+                <span className="ml-2 shrink-0 text-xs text-slate-400">{command.category}</span>
+              </button>
+            );
+          })}
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-2 text-xs text-slate-400">
-          <span>↑ ↓ điều hướng · Enter chọn</span>
-          <span>Esc đóng</span>
-        </div>
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-2 text-xs text-slate-400"><span>↑ ↓ điều hướng · Enter chọn</span><span>Esc đóng</span></div>
       </div>
     </div>
   );

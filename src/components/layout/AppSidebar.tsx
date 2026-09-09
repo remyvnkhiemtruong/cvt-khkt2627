@@ -4,6 +4,7 @@ import {
   AcademicCapIcon,
   BookOpenIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClipboardDocumentCheckIcon,
@@ -11,7 +12,6 @@ import {
   HomeIcon,
   PlusCircleIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/cn';
@@ -32,7 +32,7 @@ const ROLE_NAMES: Record<string, string> = {
   teacher: 'Giáo viên',
   admin: 'Quản trị viên',
   researcher: 'Nghiên cứu',
-  ai: 'Trợ lý AI',
+  ai: 'Nhập phản hồi AI',
   peer: 'Phản biện',
 };
 
@@ -57,7 +57,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
           { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
           { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon },
-          { id: 'ai-workspace', label: 'Đề xuất AI', icon: SparklesIcon },
+          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
           { id: 'class-analytics', label: 'Phân tích lớp', icon: UserGroupIcon },
           { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
           { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon },
@@ -67,7 +67,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       ? [
           { id: 'admin-view', label: 'Quản trị', icon: ShieldCheckIcon },
           { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
-          { id: 'ai-workspace', label: 'Hàng đợi AI', icon: SparklesIcon },
+          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
           { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon },
           { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon }
         ]
@@ -79,7 +79,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         ]
       : user.role === 'ai'
       ? [
-          { id: 'ai-workspace', label: 'Hàng đợi AI', icon: SparklesIcon }
+          { id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }
         ]
       : [
           { id: 'portfolio-list', label: 'Hồ sơ phản biện', icon: FolderIcon },

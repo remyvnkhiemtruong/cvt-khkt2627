@@ -34,8 +34,8 @@ async function updateAiPromptAfterVersion(result) {
   if (!result?.version?.id || !isUuid(result.version.id)) return result;
   const stage = result.version.stage;
   const prompt = stage === 'prediction'
-    ? 'Tạo GỢI Ý PHẢN HỒI NỘI BỘ cho bản dự đoán V0. Không chấm đúng/sai tuyệt đối, không tiết lộ kiến thức sau đọc. AI chỉ đề xuất; học sinh chưa được xem cho đến khi giáo viên duyệt hoặc chỉnh sửa.'
-    : 'Tạo GỢI Ý PHẢN HỒI NỘI BỘ cho đúng phiên bản bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. AI không gửi trực tiếp cho học sinh và không quyết định điểm; giáo viên phải duyệt/chỉnh sửa trước.';
+    ? 'Tạo góp ý AI hỗ trợ cho bản dự đoán V0. Không chấm đúng/sai tuyệt đối và không tiết lộ kiến thức sau đọc. Tài khoản AI là nơi người vận hành dán response từ ChatGPT; sau khi gửi, học sinh được xem góp ý để tiếp tục học.'
+    : 'Tạo góp ý AI cho đúng phiên bản bất biến này. Đối chiếu bài học sinh với câu hỏi, gợi ý chuyên môn, lỗi thường gặp và rubric do giáo viên cung cấp. Nêu điểm đạt, điểm cần bổ sung và câu hỏi gợi mở. Sau khi người vận hành dán response và gửi, học sinh được xem ngay để chỉnh sửa. AI không quyết định điểm chính thức; giáo viên vẫn xem lịch sử và quyết định rubric cuối.';
   const pool = await getPool();
   await pool.query('UPDATE ai_review_requests SET prompt=$2 WHERE version_id=$1', [result.version.id, prompt]);
   return result;
@@ -64,24 +64,47 @@ async function aiCompleteReview(user, input, req) {
     const row = result.rows[0];
     if (!row) throw new Error('AI_REVIEW_NOT_FOUND');
     if (row.status === 'completed') {
+      const existing = await client.query("SELECT id FROM feedbacks WHERE source_ai_review_id=$1 AND author_role='ai' LIMIT 1", [reviewId]);
       await client.query('COMMIT');
-      return { ok: true, isIdempotentRetry: true, visibleToStudent: false, awaitingTeacher: row.teacher_review_status === 'pending' };
+      return { ok: true, isIdempotentRetry: true, feedbackId: existing.rows[0]?.id || null, visibleToStudent: true, teacherReviewAvailable: true };
     }
     if (!['pending', 'in_progress'].includes(row.status)) throw new Error('AI_REVIEW_CLOSED');
 
-    const rubricProposal = input.rubricProposal && typeof input.rubricProposal === 'object'
-      ? input.rubricProposal
-      : null;
+    const rubricProposal = input.rubricProposal && typeof input.rubricProposal === 'object' ? input.rubricProposal : null;
     await client.query(`
       UPDATE ai_review_requests
       SET status='completed', response=$2, rubric_proposal_json=$3, reviewer_id=$4,
           completed_at=now(), teacher_review_status='pending', final_response=''
       WHERE id=$1
     `, [reviewId, response, rubricProposal ? JSON.stringify(rubricProposal) : null, user.id]);
-    await client.query("UPDATE portfolios SET status='ai_proposed_waiting_teacher', updated_at=now() WHERE id=$1", [row.portfolio_id]);
-    await audit(client, user, 'AI_SUBMIT_PROPOSAL', 'ai_review', reviewId, { axisId, visibleToStudent: false, awaitingTeacher: true }, req);
+
+    const feedback = await client.query(`
+      INSERT INTO feedbacks(
+        portfolio_id, version_id, axis_id, selected_snippet, comment,
+        author_id, author_role, source_ai_review_id, anchor_json
+      ) VALUES($1,$2,$3,$4,$5,$6,'ai',$7,$8)
+      ON CONFLICT(source_ai_review_id) WHERE source_ai_review_id IS NOT NULL DO NOTHING
+      RETURNING id
+    `, [
+      row.portfolio_id,
+      row.version_id,
+      axisId,
+      cleanText(input.selectedSnippet, 5000),
+      response,
+      user.id,
+      reviewId,
+      JSON.stringify({ source: 'manual_chatgpt_response', teacherReviewStatus: 'pending' })
+    ]);
+    let feedbackId = feedback.rows[0]?.id || null;
+    if (!feedbackId) {
+      const existing = await client.query("SELECT id FROM feedbacks WHERE source_ai_review_id=$1 AND author_role='ai' LIMIT 1", [reviewId]);
+      feedbackId = existing.rows[0]?.id || null;
+    }
+
+    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    await audit(client, user, 'AI_PUBLISH_FEEDBACK', 'ai_review', reviewId, { feedbackId, axisId, visibleToStudent: true, teacherReviewAvailable: true }, req);
     await client.query('COMMIT');
-    return { ok: true, visibleToStudent: false, awaitingTeacher: true };
+    return { ok: true, feedbackId, visibleToStudent: true, teacherReviewAvailable: true, portfolioStatus: 'feedback_received' };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -119,17 +142,12 @@ async function teacherReviewAi(user, input, req) {
     if (!(await teacherCanAccessClass(client, row.class_id, user.id))) throw new Error('TEACHER_CLASS_FORBIDDEN');
 
     if (row.teacher_review_status !== 'pending') {
-      const existing = await client.query('SELECT id FROM feedbacks WHERE source_ai_review_id=$1 LIMIT 1', [reviewId]);
       await client.query('COMMIT');
-      return { ok: true, isIdempotentRetry: true, decision: row.teacher_review_status, feedbackId: existing.rows[0]?.id || null };
+      return { ok: true, isIdempotentRetry: true, decision: row.teacher_review_status };
     }
 
-    const finalResponse = decision === 'approved'
-      ? cleanTrimmed(row.response, 100000)
-      : decision === 'revised'
-        ? cleanTrimmed(input.finalResponse, 100000)
-        : '';
-    if ((decision === 'approved' || decision === 'revised') && !finalResponse) throw new Error('REVISED_RESPONSE_REQUIRED');
+    const finalResponse = decision === 'revised' ? cleanTrimmed(input.finalResponse, 100000) : '';
+    if (decision === 'revised' && !finalResponse) throw new Error('REVISED_RESPONSE_REQUIRED');
     const teacherNote = cleanTrimmed(input.teacherNote || input.note, 10000);
 
     await client.query(`
@@ -139,15 +157,13 @@ async function teacherReviewAi(user, input, req) {
       WHERE id=$1
     `, [reviewId, decision, finalResponse, user.id, teacherNote]);
 
-    let feedbackId = null;
-    let portfolioStatus = 'teacher_feedback_needed';
-    if (decision !== 'rejected') {
+    let teacherFeedbackId = null;
+    if (decision === 'revised' && finalResponse) {
       const inserted = await client.query(`
         INSERT INTO feedbacks(
           portfolio_id, version_id, axis_id, selected_snippet, comment,
-          author_id, author_role, source_ai_review_id, anchor_json
-        ) VALUES($1,$2,$3,$4,$5,$6,'teacher',$7,$8)
-        ON CONFLICT(source_ai_review_id) WHERE source_ai_review_id IS NOT NULL DO NOTHING
+          author_id, author_role, anchor_json
+        ) VALUES($1,$2,$3,$4,$5,$6,'teacher',$7)
         RETURNING id
       `, [
         row.portfolio_id,
@@ -156,26 +172,20 @@ async function teacherReviewAi(user, input, req) {
         cleanText(input.selectedSnippet, 5000),
         finalResponse,
         user.id,
-        reviewId,
-        JSON.stringify({ source: 'ai_proposal', teacherDecision: decision })
+        JSON.stringify({ source: 'teacher_revision_of_ai', sourceAiReviewId: reviewId })
       ]);
-      feedbackId = inserted.rows[0]?.id || null;
-      if (!feedbackId) {
-        const existing = await client.query('SELECT id FROM feedbacks WHERE source_ai_review_id=$1 LIMIT 1', [reviewId]);
-        feedbackId = existing.rows[0]?.id || null;
-      }
-      portfolioStatus = 'feedback_received';
+      teacherFeedbackId = inserted.rows[0]?.id || null;
     }
 
-    await client.query('UPDATE portfolios SET status=$2, updated_at=now() WHERE id=$1', [row.portfolio_id, portfolioStatus]);
-    await audit(client, user, 'TEACHER_FINALIZE_AI_REVIEW', 'ai_review', reviewId, {
+    await client.query("UPDATE portfolios SET status='feedback_received', updated_at=now() WHERE id=$1", [row.portfolio_id]);
+    await audit(client, user, 'TEACHER_REVIEW_AI_FEEDBACK', 'ai_review', reviewId, {
       decision,
-      feedbackId,
-      visibleToStudent: decision !== 'rejected',
-      finalResponseStored: Boolean(finalResponse)
+      teacherFeedbackId,
+      aiFeedbackRemainsVisible: true,
+      teacherRevisionVisible: Boolean(teacherFeedbackId)
     }, req);
     await client.query('COMMIT');
-    return { ok: true, decision, feedbackId, portfolioStatus, visibleToStudent: decision !== 'rejected' };
+    return { ok: true, decision, feedbackId: teacherFeedbackId, portfolioStatus: 'feedback_received', aiFeedbackRemainsVisible: true };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

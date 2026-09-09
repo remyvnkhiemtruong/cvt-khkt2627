@@ -44,12 +44,13 @@ await test('P10: version and AI request are created atomically', () => {
   const source=block(academic,'async function createVersion','async function aiCompleteReview');
   for(const token of ["client.query('BEGIN')",'INSERT INTO portfolio_versions','INSERT INTO ai_review_requests',"client.query('COMMIT')"]) assert(source.includes(token),token);
 });
-await test('P11: AI proposal cannot create student feedback', () => {
-  const source=block(academic,'async function aiCompleteReview','async function teacherReviewAi'); assert(!source.includes('INSERT INTO feedbacks')); assert(source.includes("teacher_review_status='pending'"));
+await test('P11: AI feedback is published to the student while teacher review remains available', () => {
+  const source=block(academic,'async function aiCompleteReview','async function teacherReviewAi');
+  for (const token of ['INSERT INTO feedbacks', "'ai'", "teacher_review_status='pending'", "status='feedback_received'", 'visibleToStudent: true']) assert(source.includes(token), token);
 });
 await test('P12: teacher finalization supports approve/revise/reject safely', () => {
   const source=block(academic,'async function teacherReviewAi','async function addFeedback');
-  for(const token of ["decision === 'approved'","decision === 'revised'","decision !== 'rejected' && finalResponse","teacher_feedback_needed"]) assert(source.includes(token),token);
+  for(const token of ["decision === 'approved'","decision === 'revised'","decision === 'revised' && finalResponse","status='feedback_received'"]) assert(source.includes(token),token);
 });
 await test('P13: peer review is bound to exact immutable version', () => { assert(academic.includes('async function exactPeerScope')); assert(academic.includes('pra.version_id=$2')); assert(academic.includes('v.id=pra.version_id AND v.portfolio_id=p.id')); });
 await test('P14: teacher access is class-scoped', () => { assert(academic.includes('async function teacherCanAccessClass')); assert(academic.includes("member_role='teacher'")); assert(academic.includes('TEACHER_CLASS_FORBIDDEN')); });
@@ -83,9 +84,13 @@ await test('P29: diff classifies added/deleted/changed/unchanged', () => { asser
 await test('P30: TLS verify-full remains enforced', () => { const s=read('api/_lib/db.js'), a='rejectUnauthorized'+': false', b='rejectUnauthorized'+':false'; assert(s.includes('sslmode=verify-full')); assert(!s.includes(a)); assert(!s.includes(b)); });
 await test('P31: SPA rewrite excludes API and remains in Singapore', () => { const c=JSON.parse(read('vercel.json')), f=c.rewrites?.find(r=>r.destination==='/index.html'); assert(f?.source?.includes('(?!api')); assert(c.regions?.includes('sin1')); });
 await test('P32: no global browser MutationObserver disables editor input behavior', () => { const s=read('index.html'); assert(!s.includes('MutationObserver')); assert(!s.includes("spellcheck', 'false")); });
-await test('P33: AI workspace is a manual ChatGPT-paste proposal flow for teachers only', () => {
+await test('P33: AI workspace is a manual ChatGPT-paste flow that reaches students before teacher follow-up', () => {
   const s=read('src/views/AiWorkspaceView.tsx');
-  for (const token of ['Nhập phản hồi ChatGPT', 'Dán toàn bộ câu trả lời ChatGPT', "action: 'ai_complete_review'", 'Gửi đề xuất cho giáo viên', 'Học sinh không thể xem nội dung này']) assert(s.includes(token), token);
+  for (const token of ['Nhập phản hồi ChatGPT', 'Dán toàn bộ câu trả lời ChatGPT', "action: 'ai_complete_review'", 'Gửi góp ý cho học sinh', 'Học sinh sẽ thấy góp ý này']) assert(s.includes(token), token);
+});
+await test('P34: teacher workspace preserves the AI feedback and can add a distinct teacher revision', () => {
+  const s=read('src/views/TeacherReviewView.tsx');
+  for (const token of ['Góp ý AI đã gửi học sinh', 'Gửi bổ sung của giáo viên', 'Đã xem góp ý AI']) assert(s.includes(token), token);
 });
 
 const failed=results.filter(result=>!result.ok);

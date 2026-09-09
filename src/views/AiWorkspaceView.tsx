@@ -81,7 +81,7 @@ export const AiWorkspaceView: React.FC = () => {
       <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Hàng đợi AI</h1>
-          <p className="mt-0.5 text-sm text-slate-500">Soạn đề xuất phản hồi học thuật. Đề xuất sẽ được giáo viên duyệt trước khi gửi học sinh.</p>
+          <p className="mt-0.5 text-sm text-slate-500">Dán phản hồi từ ChatGPT để tạo đề xuất AI. Chỉ giáo viên mới có thể duyệt, sửa hoặc gửi phản hồi cho học sinh.</p>
         </div>
         <div className="text-sm text-slate-600">{pendingCount} chờ xử lý · {completedCount} đã đề xuất</div>
       </div>
@@ -124,11 +124,11 @@ export const AiWorkspaceView: React.FC = () => {
 
         <aside className="flex h-[78vh] flex-col justify-between rounded-md border border-slate-200 bg-white p-4">
           <div className="space-y-4">
-            <div className="border-b border-slate-200 pb-2"><h2 className="text-sm font-semibold text-slate-900">Soạn đề xuất AI</h2><p className="mt-0.5 text-sm text-slate-500">Nhận xét gợi ý giúp giáo viên tham khảo khi chấm bài.</p></div>
+            <div className="border-b border-slate-200 pb-2"><h2 className="text-sm font-semibold text-slate-900">Nhập phản hồi ChatGPT</h2><p className="mt-0.5 text-sm text-slate-500">1. Sao chép câu trả lời từ ChatGPT. 2. Dán vào ô dưới đây. 3. Gửi thành đề xuất để giáo viên duyệt.</p></div>
             <div><label className="mb-1 block text-sm font-medium text-slate-700">Trọng tâm phản hồi</label><select value={axisId} onChange={e => setAxisId(e.target.value as PoeticAxisId)} className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:border-slate-500">{axes.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}</select></div>
-            <div><label className="mb-1 block text-sm font-medium text-slate-700">Nội dung đề xuất</label><textarea rows={12} value={response} onChange={e => setResponse(e.target.value)} placeholder="Gợi ý nhận xét cụ thể: điểm tốt, chỗ cần đào sâu và hướng sửa đổi..." className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-500" /></div>
+            <div><label className="mb-1 block text-sm font-medium text-slate-700">Câu trả lời từ ChatGPT</label><textarea rows={12} value={response} onChange={e => setResponse(e.target.value)} placeholder="Dán toàn bộ câu trả lời ChatGPT tại đây. Nội dung này chỉ là đề xuất nội bộ, chưa được gửi tới học sinh." className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 outline-none focus:border-slate-500" /></div>
           </div>
-          <div className="border-t border-slate-200 pt-3"><Button variant="primary" size="sm" className="w-full" isLoading={loading} disabled={!selected || !currentVersion || integrityError || !response.trim()} onClick={saveAiProposal}>Lưu đề xuất</Button><p className="mt-2 text-center text-sm text-slate-400">Đề xuất sẽ được chuyển tới giáo viên phê duyệt.</p></div>
+          <div className="border-t border-slate-200 pt-3"><Button variant="primary" size="sm" className="w-full" isLoading={loading} disabled={!selected || !currentVersion || integrityError || !response.trim()} onClick={saveAiProposal}>Gửi đề xuất cho giáo viên</Button><p className="mt-2 text-center text-sm text-slate-400">Học sinh không thể xem nội dung này trước khi giáo viên hoàn tất duyệt.</p></div>
         </aside>
       </div>
     </div>

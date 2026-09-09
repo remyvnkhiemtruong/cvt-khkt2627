@@ -60,7 +60,7 @@ await test('P15: rubric score is server-calculated from assignment rubric', () =
 });
 await test('P16: arbitrary rubric criteria and levels are rejected', () => { assert(academic.includes('INVALID_RUBRIC_CRITERION')); assert(academic.includes('INVALID_RUBRIC_LEVEL')); });
 await test('P17: literature edits create immutable revisions', () => {
-  const source=block(academic,'export async function saveLiteratureRevision','export async function createRubricVersion'); assert(source.includes('INSERT INTO literature_text_versions')); assert(source.includes('revisionNo = Number(latest.rows[0]?.revision_no || 0) + 1'));
+  const source=block(academic,'export async function saveLiteratureRevision','export async function createRubricVersion'); assert(source.includes('INSERT INTO literature_text_versions')); assert(source.includes('revisionNo = Number(latest.rows[0]?.version_no || 0) + 1')); assert(!source.includes('revision_no'));
 });
 await test('P18: assignment creation binds exact latest literature revision', () => {
   const source=block(academic,'async function createAssignment','export async function academicAction'); for(const token of ['literature_text_version_id','LITERATURE_VERSION_NOT_LATEST','textVersionId']) assert(source.includes(token),token);

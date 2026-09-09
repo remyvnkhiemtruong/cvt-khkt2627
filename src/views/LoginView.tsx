@@ -96,7 +96,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   return (
     <div className="safe-top safe-bottom min-h-[100dvh] bg-slate-100 px-3 py-3 sm:px-5 sm:py-6 lg:flex lg:items-center lg:justify-center lg:px-8">
-      <div className="app-view-enter mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.10)] lg:min-h-[660px] lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="app-view-enter mx-auto grid w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.10)] lg:min-h-[660px] lg:grid-cols-[1.05fr_0.95fr]">
         <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
           <div>
             <button
@@ -110,7 +110,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           <div className="max-w-xl py-12">
             <div className="mb-7 flex items-center gap-4">
-              <div className="h-16 w-16 overflow-hidden rounded-2xl border border-white/15 bg-white p-1 shadow-lg">
+              <div className="h-16 w-16 overflow-hidden rounded-xl border border-white/15 bg-white p-1 shadow-lg">
                 <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full rounded-xl object-cover" />
               </div>
               <div>

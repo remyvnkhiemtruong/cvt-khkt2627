@@ -5,12 +5,12 @@ import {
   ArrowRightOnRectangleIcon,
   BookOpenIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
   ClipboardDocumentCheckIcon,
   FolderIcon,
   HomeIcon,
   PlusCircleIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   UserGroupIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -32,17 +32,11 @@ const ROLE_NAMES: Record<string, string> = {
   teacher: 'Giáo viên',
   admin: 'Quản trị viên',
   researcher: 'Nghiên cứu',
-  ai: 'Trợ lý AI',
+  ai: 'Nhập phản hồi AI',
   peer: 'Phản biện',
 };
 
-export const MobileDrawer: React.FC<MobileDrawerProps> = ({
-  isOpen,
-  onClose,
-  currentView,
-  onNavigate,
-  onLogout
-}) => {
+export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, currentView, onNavigate, onLogout }) => {
   const user = useAuthStore(s => s.currentUser);
   if (!isOpen) return null;
 
@@ -58,7 +52,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
           { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
           { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon },
-          { id: 'ai-workspace', label: 'Đề xuất AI', icon: SparklesIcon },
+          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
           { id: 'class-analytics', label: 'Phân tích lớp', icon: UserGroupIcon },
           { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
           { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon },
@@ -68,14 +62,12 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
       ? [
           { id: 'admin-view', label: 'Quản trị', icon: ShieldCheckIcon },
           { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
-          { id: 'ai-workspace', label: 'Hàng đợi AI', icon: SparklesIcon },
+          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
           { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon },
           { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon }
         ]
       : user.role === 'ai'
-      ? [
-          { id: 'ai-workspace', label: 'Hàng đợi AI', icon: SparklesIcon }
-        ]
+      ? [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }]
       : user.role === 'researcher'
       ? [
           { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon },
@@ -106,7 +98,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   <div className="text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}</div>
                 </div>
               </div>
-              <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">
+              <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100" aria-label="Đóng menu">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
@@ -114,16 +106,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               {items.map(item => {
                 const Icon = item.icon;
                 return (
-                  <button
-                    key={`${item.id}-${item.label}`}
-                    onClick={() => go(item)}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-normal',
-                      currentView === item.id
-                        ? 'bg-slate-100 font-medium text-slate-900'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    )}
-                  >
+                  <button key={`${item.id}-${item.label}`} onClick={() => go(item)} className={cn('flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-normal', currentView === item.id ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700 hover:bg-slate-50')}>
                     <Icon className="h-4 w-4 text-slate-500" />
                     <span>{item.label}</span>
                   </button>
@@ -132,15 +115,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
             </nav>
           </div>
           {onLogout && (
-            <button
-              onClick={() => {
-                onClose();
-                onLogout();
-              }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
-            >
-              <ArrowRightOnRectangleIcon className="h-4 w-4" />
-              Đăng xuất
+            <button onClick={() => { onClose(); onLogout(); }} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">
+              <ArrowRightOnRectangleIcon className="h-4 w-4" />Đăng xuất
             </button>
           )}
         </div>

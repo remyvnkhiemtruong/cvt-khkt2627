@@ -16,6 +16,22 @@ import { useAuth } from './AuthContext';
 import { usePortfolioStore, type CreateSnapshotOptions } from '../app/store/usePortfolioStore';
 import { mockDb } from '../services/mockApi/mockDb';
 
+export interface StudentReflectionRecord {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  versionId: string;
+  versionNumber: string;
+  reflection: {
+    changedUnderstanding: string;
+    mostUsefulFeedback: string;
+    incompleteInV1: string;
+    improvedInV2: string;
+    transferToNextReading: string;
+  };
+  createdAt: string;
+}
+
 interface PortfolioContextType {
   portfolios: Record<string, StudentPortfolio>;
   assignments: Assignment[];
@@ -26,6 +42,7 @@ interface PortfolioContextType {
   rubricSubmissions: RubricAssessmentSubmission[];
   auditLogs: AuditLog[];
   aiReviews: AiReviewRequest[];
+  reflections: StudentReflectionRecord[];
   autosaveStatus: 'saved' | 'saving' | 'dirty';
   lastSavedTime: string | null;
   isLoading: boolean;
@@ -36,6 +53,7 @@ interface PortfolioContextType {
   createVersionSnapshot: (assignmentId: string, versionNumber: string, changeSummary: string, options?: CreateSnapshotOptions) => Promise<boolean>;
   addAnchoredFeedback: (feedback: Omit<FeedbackItem, 'id' | 'createdAt' | 'resolved'>) => Promise<{ ok: boolean; id?: string }>;
   resolveFeedback: (feedbackId: string) => Promise<void>;
+  saveReflection: (assignmentId: string, versionId: string, reflection: StudentReflectionRecord['reflection']) => Promise<{ ok: boolean; id?: string }>;
   submitRubric: (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => Promise<{ ok: boolean; id?: string; totalScore?: number; maxScore?: number }>;
   createAssignment: (newAssignment: Assignment) => Promise<void>;
   getPortfolioForStudentAndAssignment: (studentId: string, assignmentId: string) => StudentPortfolio;
@@ -76,6 +94,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [rubricSubmissions, setRubricSubmissions] = useState<RubricAssessmentSubmission[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [aiReviews, setAiReviews] = useState<AiReviewRequest[]>([]);
+  const [reflections, setReflections] = useState<StudentReflectionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
 
@@ -91,6 +110,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setRubricSubmissions(snapshot.rubricSubmissions || []);
     setAuditLogs(snapshot.auditLogs || []);
     setAiReviews(snapshot.aiReviews || []);
+    const extended = snapshot as AcademicSnapshot & { reflections?: StudentReflectionRecord[] };
+    setReflections(Array.isArray(extended.reflections) ? extended.reflections : []);
   }, [hydratePortfolios]);
 
   const refreshAcademicData = useCallback(async () => {
@@ -171,6 +192,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const saveReflection = async (assignmentId: string, versionId: string, reflection: StudentReflectionRecord['reflection']) => {
+    const res = await postAction({ action: 'save_reflection', assignmentId, versionId, reflection });
+    await refreshAcademicData();
+    return { ok: true, id: res.id };
+  };
+
   const submitRubric = async (evaluation: Omit<RubricAssessmentSubmission, 'id' | 'submittedAt'>) => {
     const res = await postAction({ action: 'submit_rubric', ...evaluation });
     await refreshAcademicData();
@@ -202,6 +229,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     rubricSubmissions,
     auditLogs,
     aiReviews,
+    reflections,
     autosaveStatus,
     lastSavedTime: lastSavedTime || null,
     isLoading,
@@ -212,6 +240,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     createVersionSnapshot,
     addAnchoredFeedback,
     resolveFeedback,
+    saveReflection,
     submitRubric,
     createAssignment,
     getPortfolioForStudentAndAssignment,

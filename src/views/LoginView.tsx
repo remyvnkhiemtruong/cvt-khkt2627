@@ -1,23 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Input, Alert } from '../components/ui';
 import { useAuthStore } from '../app/store/useAuthStore';
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
   onNavigate?: (view: string) => void;
+  forcePasswordChange?: boolean;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onLoginSuccess,
-  onNavigate
+  onNavigate,
+  forcePasswordChange = false
 }) => {
   const { setAuthenticatedUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [mustChange, setMustChange] = useState(false);
+  const [mustChange, setMustChange] = useState(forcePasswordChange);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (forcePasswordChange) setMustChange(true);
+  }, [forcePasswordChange]);
 
   const acceptUser = (user: any) =>
     setAuthenticatedUser({
@@ -45,11 +51,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Không thể xác thực tài khoản');
-      acceptUser(data.user);
       if (data.user?.mustChangePassword) {
+        setPassword('');
         setMustChange(true);
         return;
       }
+      acceptUser(data.user);
       onLoginSuccess();
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối');
@@ -72,6 +79,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Không thể đổi mật khẩu');
       acceptUser(data.user);
+      setMustChange(false);
+      setNewPassword('');
       onLoginSuccess();
     } catch (err: any) {
       setError(err.message || 'Không thể đổi mật khẩu');
@@ -176,9 +185,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   type="password"
                   required
                   minLength={10}
+                  maxLength={256}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Tối thiểu 10 ký tự"
+                  placeholder="10–256 ký tự"
                   name="new_password"
                   autoComplete="new-password"
                   data-lpignore="true"
@@ -195,6 +205,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   label="Email đăng nhập"
                   type="email"
                   required
+                  maxLength={240}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="name@school.edu.vn"
@@ -208,6 +219,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   type="password"
                   required
                   minLength={8}
+                  maxLength={512}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Tối thiểu 8 ký tự"

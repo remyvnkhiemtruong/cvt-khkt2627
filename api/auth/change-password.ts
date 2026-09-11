@@ -4,7 +4,7 @@ export default async function handler(req:any,res:any) {
   if(req.method!=="POST") return send(res,405,{code:"METHOD_NOT_ALLOWED"});
   try {
     assertSameOrigin(req);
-    const user=await authenticate(req);
+    const user=await authenticate(req,{allowPasswordChangeRequired:true});
     if(!user) return send(res,401,{code:"UNAUTHENTICATED"});
     const {newPassword,currentPassword}=body(req);
     const next=String(newPassword||"");

@@ -12,16 +12,20 @@ const test = async (name, fn) => {
   }
 };
 
-await test('FSA01: JWT signing requires a dedicated 32+ character secret', () => {
+await test('FSA01: JWT signing uses a dedicated domain-separated key and never DATABASE_URL', () => {
   const source = read('api/auth/auth.js');
   assert(source.includes('authSecretConfigured'), 'Missing JWT readiness helper');
-  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed when secret is missing');
+  assert(source.includes('JWT_SECRET_NOT_CONFIGURED'), 'JWT must fail closed if neither dedicated source is usable');
+  assert(source.includes("config_key='student_roster_seed_v1'"), 'Missing protected runtime root fallback');
+  assert(source.includes('hoc-tot-ngu-van:jwt-signing:v1'), 'Fallback key must be domain separated');
   assert(!source.includes('.update(databaseUrl())'), 'JWT must never derive its signing secret from DATABASE_URL');
+  assert(source.includes('decodedHeader?.alg !== "HS256"'), 'JWT header algorithm must be validated');
 });
 
-await test('FSA02: health exposes only JWT readiness, never the secret value', () => {
+await test('FSA02: health exposes only JWT readiness, never a secret value', () => {
   const source = read('api/health.ts');
-  assert(source.includes('jwtSecretConfigured: authSecretConfigured()'));
+  assert(source.includes('authSecretConfigured()'));
+  assert(source.includes('jwtSecretConfigured'));
   assert(!source.includes('process.env.JWT_SECRET'));
 });
 
@@ -65,6 +69,24 @@ await test('FSA06: rubric catalog requires six axes and exact four unique levels
     'score < 0 || score > 100',
     'CONTENT_TOO_LARGE'
   ]) assert(source.includes(token), `Missing rubric validation: ${token}`);
+});
+
+await test('FSA07: Vercel applies baseline browser security headers and keeps API out of SPA rewrite', () => {
+  const config = JSON.parse(read('vercel.json'));
+  const headers = (config.headers || []).flatMap(item => item.headers || []);
+  const names = new Set(headers.map(item => item.key));
+  for (const key of ['X-Content-Type-Options', 'X-Frame-Options', 'Referrer-Policy', 'Permissions-Policy']) {
+    assert(names.has(key), `Missing security header: ${key}`);
+  }
+  const fallback = config.rewrites?.find(item => item.destination === '/index.html');
+  assert(fallback?.source?.includes('(?!api'), 'SPA rewrite must exclude API');
+  assert(config.regions?.includes('sin1'), 'Production functions must stay in sin1');
+});
+
+await test('FSA08: class analytics never counts V0 prediction as submitted academic work', () => {
+  const source = read('src/views/ClassAnalyticsView.tsx');
+  assert(source.includes("portfolio.versions.some(version => version.stage !== 'prediction')"));
+  assert(source.includes('học sinh đã nộp V1+'));
 });
 
 const failed = results.filter(result => !result.ok);

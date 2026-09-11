@@ -23,7 +23,7 @@ async function migrateTemporaryCredential(email:string,password:string) {
   const pool=new Pool({connectionString:databaseUrl(),max:1,idleTimeoutMillis:5000,connectionTimeoutMillis:10000});
   try {
     const row=(await pool.query(
-      "SELECT id,password_hash,must_change_password,profile_json FROM app_users WHERE lower(email)=lower($1) AND account_status='active' LIMIT 1",
+      "SELECT id,password_hash,must_change_password,profile_json FROM app_users WHERE email=$1 AND account_status='active' LIMIT 1",
       [email]
     )).rows[0];
     if(!row||!row.must_change_password) return;
@@ -63,8 +63,9 @@ export default async function handler(req:any,res:any) {
     assertSameOrigin(req);
     const {email,password}=body(req);
     if(!email||!password) return send(res,400,{code:"VALIDATION_ERROR",message:"Email và mật khẩu là bắt buộc."});
-    const cleanEmail=String(email).toLowerCase().slice(0,240);
+    const cleanEmail=String(email).trim().toLowerCase().slice(0,240);
     const cleanPassword=String(password);
+    if(cleanPassword.length>512) return send(res,400,{code:"VALIDATION_ERROR",message:"Thông tin đăng nhập không hợp lệ."});
     const key=`login:${requestIp(req)}:${cleanEmail}`;
     if(!await checkRateLimit(key,8,900)) return send(res,429,{code:"RATE_LIMITED",message:"Đăng nhập quá nhiều lần. Vui lòng thử lại sau."});
     await migrateTemporaryCredential(cleanEmail,cleanPassword);

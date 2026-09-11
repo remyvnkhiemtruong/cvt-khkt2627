@@ -3,6 +3,7 @@ import { databaseUrl } from "../_lib/db.js";
 
 let poolPromise;
 let schemaPromise;
+let jwtSecretPromise;
 
 async function pool() {
   if (!poolPromise) {
@@ -32,42 +33,63 @@ function b64(value) {
   return Buffer.from(typeof value === "string" ? value : JSON.stringify(value)).toString("base64url");
 }
 
-export function authSecretConfigured() {
-  return String(process.env.JWT_SECRET || "").length >= 32;
+async function jwtSecret() {
+  const envValue = String(process.env.JWT_SECRET || "");
+  if (envValue.length >= 32) return envValue;
+  if (!jwtSecretPromise) {
+    jwtSecretPromise = (async () => {
+      const db = await pool();
+      const result = await db.query("SELECT config_value FROM app_runtime_config WHERE config_key='student_roster_seed_v1' LIMIT 1");
+      const rootSeed = String(result.rows[0]?.config_value || "");
+      if (rootSeed.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
+      return createHmac("sha256", rootSeed)
+        .update("hoc-tot-ngu-van:jwt-signing:v1")
+        .digest("hex");
+    })().catch(error => {
+      jwtSecretPromise = undefined;
+      throw error;
+    });
+  }
+  return jwtSecretPromise;
 }
 
-function jwtSecret() {
-  const value = String(process.env.JWT_SECRET || "");
-  if (value.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
-  return value;
+export async function authSecretConfigured() {
+  try {
+    const value = await jwtSecret();
+    return value.length >= 32;
+  } catch {
+    return false;
+  }
 }
 
-function sign(payload) {
+async function sign(payload) {
   const header = b64({ alg: "HS256", typ: "JWT" });
   const encoded = b64(payload);
-  const signature = createHmac("sha256", jwtSecret()).update(`${header}.${encoded}`).digest("base64url");
+  const signature = createHmac("sha256", await jwtSecret()).update(`${header}.${encoded}`).digest("base64url");
   return `${header}.${encoded}.${signature}`;
 }
 
-function verifyPayload(token) {
+async function verifyPayload(token) {
   try {
     const [header, payload, signature] = String(token || "").split(".");
     if (!header || !payload || !signature) return null;
-    const expected = createHmac("sha256", jwtSecret()).update(`${header}.${payload}`).digest("base64url");
+    const decodedHeader = JSON.parse(Buffer.from(header, "base64url").toString());
+    if (decodedHeader?.alg !== "HS256" || decodedHeader?.typ !== "JWT") return null;
+    const expected = createHmac("sha256", await jwtSecret()).update(`${header}.${payload}`).digest("base64url");
     const actualBytes = Buffer.from(signature);
     const expectedBytes = Buffer.from(expected);
     if (actualBytes.length !== expectedBytes.length || !timingSafeEqual(actualBytes, expectedBytes)) return null;
     const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (!data?.user?.id || Number(data.exp) < Date.now() / 1000) return null;
+    if (!data?.user?.id || !Number.isFinite(Number(data.iat)) || Number(data.exp) < Date.now() / 1000) return null;
     return data;
   } catch {
     return null;
   }
 }
 
-function sessionForUser(user) {
+async function sessionForUser(user) {
   const now = Math.floor(Date.now() / 1000);
-  return { user, token: sign({ user: { id: user.id }, iat: now, exp: now + 28800 }) };
+  return { user, token: await sign({ user: { id: user.id }, iat: now, exp: now + 28800 }) };
 }
 
 function cookieToken(req) {
@@ -153,10 +175,11 @@ export async function ensureSchema() {
           to_regclass('public.app_users') IS NOT NULL AS users_ok,
           to_regclass('public.auth_rate_events') IS NOT NULL AS rate_ok,
           to_regclass('public.class_members') IS NOT NULL AS memberships_ok,
-          to_regclass('public.classes') IS NOT NULL AS classes_ok
+          to_regclass('public.classes') IS NOT NULL AS classes_ok,
+          to_regclass('public.app_runtime_config') IS NOT NULL AS runtime_config_ok
       `);
       const state = result.rows[0] || {};
-      if (!state.users_ok || !state.rate_ok || !state.memberships_ok || !state.classes_ok) {
+      if (!state.users_ok || !state.rate_ok || !state.memberships_ok || !state.classes_ok || !state.runtime_config_ok) {
         throw new Error("AUTH_SCHEMA_MISSING");
       }
       return true;
@@ -201,7 +224,7 @@ export async function login(email, password) {
   const db = await pool();
   const cleanEmail = cleanText(email, 240).toLowerCase();
   const result = await db.query(
-    "SELECT id,password_hash,account_status FROM app_users WHERE lower(email)=$1",
+    "SELECT id,password_hash,account_status FROM app_users WHERE email=$1",
     [cleanEmail]
   );
   const row = result.rows[0];
@@ -268,12 +291,12 @@ export async function listUsers() {
   return result.rows;
 }
 
-export function getUser(req) {
-  return verifyPayload(cookieToken(req))?.user || null;
+export async function getUser(req) {
+  return (await verifyPayload(cookieToken(req)))?.user || null;
 }
 
 export async function authenticate(req) {
-  const payload = verifyPayload(cookieToken(req));
+  const payload = await verifyPayload(cookieToken(req));
   if (!payload?.user?.id) return null;
   await ensureSchema();
   const db = await pool();

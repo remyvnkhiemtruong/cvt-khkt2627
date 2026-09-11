@@ -295,13 +295,14 @@ export async function getUser(req) {
   return (await verifyPayload(cookieToken(req)))?.user || null;
 }
 
-export async function authenticate(req) {
+export async function authenticate(req, options = {}) {
   const payload = await verifyPayload(cookieToken(req));
   if (!payload?.user?.id) return null;
   await ensureSchema();
   const db = await pool();
   const row = await loadFullUser(db, payload.user.id);
   if (!row || row.account_status !== "active") return null;
+  if (row.must_change_password && options.allowPasswordChangeRequired !== true) return null;
   const tokenIssuedAt = Number(payload.iat || 0) * 1000;
   const accountUpdatedAt = new Date(row.updated_at).getTime();
   if (!Number.isFinite(tokenIssuedAt) || accountUpdatedAt > tokenIssuedAt + 2000) return null;

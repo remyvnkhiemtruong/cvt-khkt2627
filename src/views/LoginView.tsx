@@ -4,24 +4,15 @@ import { useAuthStore } from '../app/store/useAuthStore';
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
-  initialMode?: 'login' | 'register';
   onNavigate?: (view: string) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onLoginSuccess,
-  initialMode = 'login',
   onNavigate
 }) => {
   const { setAuthenticatedUser } = useAuthStore();
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-
-  React.useEffect(() => {
-    if (initialMode) setMode(initialMode);
-  }, [initialMode]);
-
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [mustChange, setMustChange] = useState(false);
@@ -46,11 +37,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(mode === 'login' ? '/api/auth/login' : '/api/auth/register', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(mode === 'login' ? { email, password } : { email, name, password })
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Không thể xác thực tài khoản');
@@ -87,11 +78,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const switchMode = (nextMode: 'login' | 'register') => {
-    setMode(nextMode);
-    setError(null);
   };
 
   return (
@@ -158,45 +144,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
             <div className="mb-7">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary-700">Học tốt Ngữ Văn</p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                {mustChange ? 'Thiết lập mật khẩu mới' : mode === 'login' ? 'Đăng nhập hệ thống' : 'Tạo tài khoản học sinh'}
+                {mustChange ? 'Thiết lập mật khẩu mới' : 'Đăng nhập hệ thống'}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {mustChange
                   ? 'Tài khoản cấp sẵn cần đổi mật khẩu trước khi tiếp tục.'
-                  : mode === 'login'
-                  ? 'Sử dụng tài khoản đã được cấp hoặc tài khoản học sinh đã đăng ký.'
-                  : 'Đăng ký nhanh trên điện thoại, iPad hoặc máy tính.'}
+                  : 'Sử dụng tài khoản đã được nhà trường hoặc quản trị viên cấp.'}
               </p>
             </div>
-
-            {!mustChange && (
-              <div className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Chế độ xác thực">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'login'}
-                  onClick={() => switchMode('login')}
-                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold ${mode === 'login' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  Đăng nhập
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === 'register'}
-                  onClick={() => switchMode('register')}
-                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold ${mode === 'register' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  Đăng ký
-                </button>
-              </div>
-            )}
 
             {error && (
               <div className="mb-5" role="alert">
                 <Alert
                   type="error"
-                  title={mustChange ? 'Đổi mật khẩu không thành công' : mode === 'login' ? 'Đăng nhập không thành công' : 'Đăng ký không thành công'}
+                  title={mustChange ? 'Đổi mật khẩu không thành công' : 'Đăng nhập không thành công'}
                 >
                   {error}
                 </Alert>
@@ -230,19 +191,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <form onSubmit={submit} className="space-y-5" autoComplete="off">
                 <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
-                {mode === 'register' && (
-                  <Input
-                    label="Họ và tên"
-                    required
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    name="student_name"
-                    autoComplete="one-time-code"
-                    data-lpignore="true"
-                    spellCheck={false}
-                  />
-                )}
                 <Input
                   label="Email đăng nhập"
                   type="email"
@@ -268,13 +216,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   data-lpignore="true"
                 />
                 <Button type="submit" variant="primary" size="lg" isLoading={loading} className="w-full">
-                  {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
+                  Đăng nhập
                 </Button>
               </form>
             )}
 
             <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">
-              Giao diện được tối ưu cho màn hình từ 320px đến desktop lớn; hỗ trợ thao tác cảm ứng và giảm chuyển động theo cài đặt thiết bị.
+              Tài khoản do nhà trường hoặc quản trị viên cấp. Không hỗ trợ đăng ký công khai.
             </div>
           </div>
         </section>

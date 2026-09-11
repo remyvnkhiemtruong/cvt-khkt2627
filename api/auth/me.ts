@@ -2,7 +2,7 @@ import { assertSameOrigin, authenticate, body, send, updateProfile } from "./aut
 
 export default async function handler(req:any,res:any) {
   if(req.method==="GET") {
-    const user=await authenticate(req);
+    const user=await authenticate(req,{allowPasswordChangeRequired:true});
     return user?send(res,200,{user}):send(res,401,{code:"UNAUTHENTICATED"});
   }
   if(req.method==="PATCH") {

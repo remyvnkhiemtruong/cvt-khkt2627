@@ -30,9 +30,11 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   const toggleAxis = (id: PoeticAxisId) => setAxes(prev => prev.includes(id) ? (prev.length > 1 ? prev.filter(x => x !== id) : prev) : [...prev, id]);
   const publish = async () => {
     if (!form.title.trim() || !form.classId || !form.textId || !form.rubricId) { setMessage('Thiếu tên nhiệm vụ, lớp, tác phẩm hoặc rubric.'); return; }
+    const textId = form.textId;
+    const rubricId = form.rubricId;
     setSaving(true); setMessage('');
     try {
-      await post({ action: 'create_assignment', title: form.title.trim(), textVersionId: form.textId, classId: form.classId, rubricId: form.rubricId, deadline: form.deadline || null, difficulty: form.difficulty, targetAxes: axes, prompt: form.prompt, workflowConfig: workflow, predictionTemplate: { enabled: workflow.predictionEnabled, requireConfidence: true }, guidingSteps: ['Hoàn thành V0 nếu được yêu cầu', 'Nộp V1', 'Đọc góp ý và chỉnh sửa V2', 'Hoàn thành REF1 và chờ Rubric'] });
+      await post({ action: 'create_assignment', title: form.title.trim(), textVersionId: textId, classId: form.classId, rubricId, deadline: form.deadline || null, difficulty: form.difficulty, targetAxes: axes, prompt: form.prompt, workflowConfig: workflow, predictionTemplate: { enabled: workflow.predictionEnabled, requireConfidence: true }, guidingSteps: ['Hoàn thành V0 nếu được yêu cầu', 'Nộp V1', 'Đọc góp ý và chỉnh sửa V2', 'Hoàn thành REF1 và chờ Rubric'] });
       await refreshAcademicData(); onNavigate('teacher-dashboard');
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Không thể tạo nhiệm vụ.'); } finally { setSaving(false); }
   };

@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { academicHealth } from './_lib/academic-v3.js';
+import { authSecretConfigured } from './auth/auth.js';
 
 export default async function handler(req: any, res: any) {
   const startedAt = Date.now();
@@ -15,6 +16,9 @@ export default async function handler(req: any, res: any) {
       academicData: 'postgresql',
       aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
       region: process.env.VERCEL_REGION || 'unknown',
+      security: {
+        jwtSecretConfigured: authSecretConfigured()
+      },
       counts: {
         assignments: counts.assignments,
         portfolios: counts.portfolios,

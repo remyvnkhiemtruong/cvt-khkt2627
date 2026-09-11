@@ -210,22 +210,6 @@ export async function login(email, password) {
   return sessionForUser(rowToUser(current));
 }
 
-export async function register(email, name, password) {
-  await ensureSchema();
-  const db = await pool();
-  const cleanEmail = cleanText(email, 240).toLowerCase();
-  const cleanName = cleanText(name, 120);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) || cleanName.length < 2 || String(password).length < 10) {
-    throw new Error("VALIDATION_ERROR");
-  }
-  const result = await db.query(`
-    INSERT INTO app_users(email,name,role,password_hash,must_change_password,last_login,account_status,profile_json)
-    VALUES($1,$2,'student',$3,false,now(),'active','{}'::jsonb) RETURNING id
-  `, [cleanEmail, cleanName, passwordHash(password)]);
-  const row = await loadFullUser(db, result.rows[0].id);
-  return sessionForUser(rowToUser(row));
-}
-
 export async function changePassword(userId, newPassword, currentPassword = "") {
   await ensureSchema();
   const db = await pool();

@@ -32,12 +32,14 @@ function b64(value) {
   return Buffer.from(typeof value === "string" ? value : JSON.stringify(value)).toString("base64url");
 }
 
+export function authSecretConfigured() {
+  return String(process.env.JWT_SECRET || "").length >= 32;
+}
+
 function jwtSecret() {
   const value = String(process.env.JWT_SECRET || "");
-  if (value.length >= 32) return value;
-  return createHmac("sha256", "hoc-tot-ngu-van:jwt-fallback:v1")
-    .update(databaseUrl())
-    .digest("hex");
+  if (value.length < 32) throw new Error("JWT_SECRET_NOT_CONFIGURED");
+  return value;
 }
 
 function sign(payload) {

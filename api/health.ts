@@ -6,7 +6,10 @@ export default async function handler(req: any, res: any) {
   const startedAt = Date.now();
   res.setHeader('Cache-Control', 'no-store');
   try {
-    const counts = await academicHealth();
+    const [counts, jwtSecretConfigured] = await Promise.all([
+      academicHealth(),
+      authSecretConfigured()
+    ]);
     res.setHeader('Server-Timing', `db;dur=${counts.dbRoundTripMs || 0}, total;dur=${Date.now() - startedAt}`);
     return res.status(200).json({
       ok: true,
@@ -17,7 +20,7 @@ export default async function handler(req: any, res: any) {
       aiFeedbackMode: 'manual-chatgpt-response-visible-to-student',
       region: process.env.VERCEL_REGION || 'unknown',
       security: {
-        jwtSecretConfigured: authSecretConfigured()
+        jwtSecretConfigured
       },
       counts: {
         assignments: counts.assignments,

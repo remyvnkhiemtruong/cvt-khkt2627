@@ -58,8 +58,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('login', { mode: 'login' })}>Đăng nhập</Button>
-            <Button variant="primary" size="sm" onClick={() => onNavigate('login', { mode: 'register' })}>Đăng ký</Button>
+            <Button variant="primary" size="sm" onClick={() => onNavigate('login')}>Đăng nhập</Button>
           </div>
         </div>
       </header>
@@ -83,14 +82,14 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                   variant="primary"
                   size="lg"
                   rightIcon={<ArrowRightIcon className="h-4 w-4" />}
-                  onClick={() => onNavigate('login', { mode: 'login' })}
+                  onClick={() => onNavigate('login')}
                 >
                   Đăng nhập
                 </Button>
-                <Button variant="outline" size="lg" onClick={() => onNavigate('login', { mode: 'register' })}>
-                  Đăng ký tài khoản
-                </Button>
               </div>
+              <p className="mt-4 text-sm leading-6 text-slate-500">
+                Tài khoản được nhà trường hoặc quản trị viên cấp; hệ thống không hỗ trợ đăng ký công khai.
+              </p>
             </div>
           </div>
         </section>

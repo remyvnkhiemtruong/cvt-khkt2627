@@ -1,6 +1,13 @@
 import type { StudentPortfolio, PortfolioVersion, RubricAssessmentSubmission } from '../types';
 import { POETIC_AXES } from '../data/seedData';
 
+const escapeHtml = (value: unknown): string => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
+
 export function exportPortfolioAsHTML(
   portfolio: StudentPortfolio,
   version: PortfolioVersion,
@@ -11,19 +18,22 @@ export function exportPortfolioAsHTML(
 
   const axisSections = POETIC_AXES.map(axis => {
     const resp = version.responses[axis.id];
+    const analysis = resp?.analysisText
+      ? escapeHtml(resp.analysisText)
+      : '<i>Chưa có nội dung phân tích</i>';
     return `
       <div style="margin-bottom: 24px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background-color: #ffffff;">
         <h3 style="color: #0f172a; margin-top: 0; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-          ${axis.title}
+          ${escapeHtml(axis.title)}
         </h3>
         <p style="white-space: pre-wrap; font-family: 'Be Vietnam Pro', 'Inter', sans-serif; font-size: 15px; line-height: 1.7; color: #334155;">
-          ${resp?.analysisText || '<i>Chưa có nội dung phân tích</i>'}
+          ${analysis}
         </p>
         ${resp?.evidenceQuotes && resp.evidenceQuotes.length > 0 ? `
           <div style="margin-top: 12px; background: #f8fafc; padding: 10px; border-left: 3px solid #3b82f6; border-radius: 4px;">
             <strong style="font-size: 12px; color: #1e40af; text-transform: uppercase;">Dẫn chứng văn bản:</strong>
             <ul style="margin: 6px 0 0 0; padding-left: 20px; font-size: 14px; color: #475569;">
-              ${resp.evidenceQuotes.map(q => `<li>"${q.text}" <em>(${q.pageOrParagraph || 'Văn bản'})</em></li>`).join('')}
+              ${resp.evidenceQuotes.map(q => `<li>"${escapeHtml(q.text)}" <em>(${escapeHtml(q.pageOrParagraph || 'Văn bản')})</em></li>`).join('')}
             </ul>
           </div>
         ` : ''}
@@ -36,8 +46,8 @@ export function exportPortfolioAsHTML(
       <h2 style="font-size: 18px; color: #0f172a;">Minh chứng Đánh giá Rubric</h2>
       ${rubrics.map(r => `
         <div style="margin-bottom: 16px; background: #f1f5f9; padding: 12px; border-radius: 6px;">
-          <strong>${r.evaluatorName}</strong> (${r.evaluatorRole.toUpperCase()}) - Điểm: <strong>${r.totalScore}/${r.maxScore}</strong> (${r.submittedAt.slice(0, 10)})
-          <p style="margin: 4px 0 0 0; font-style: italic; color: #475569;">Nhận xét chung: "${r.overallFeedback}"</p>
+          <strong>${escapeHtml(r.evaluatorName)}</strong> (${escapeHtml(r.evaluatorRole.toUpperCase())}) - Điểm: <strong>${escapeHtml(r.totalScore)}/${escapeHtml(r.maxScore)}</strong> (${escapeHtml(r.submittedAt.slice(0, 10))})
+          <p style="margin: 4px 0 0 0; font-style: italic; color: #475569;">Nhận xét chung: "${escapeHtml(r.overallFeedback)}"</p>
         </div>
       `).join('')}
     </div>
@@ -47,7 +57,7 @@ export function exportPortfolioAsHTML(
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Học tốt Ngữ Văn - ${portfolio.studentName} - ${version.versionNumber}</title>
+        <title>Học tốt Ngữ Văn - ${escapeHtml(portfolio.studentName)} - ${escapeHtml(version.versionNumber)}</title>
         <meta charset="utf-8" />
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; background: #fff; }
@@ -58,8 +68,8 @@ export function exportPortfolioAsHTML(
       <body>
         <div class="header">
           <span class="badge">HỌC TỐT NGỮ VĂN - THEO TRỤC THI PHÁP</span>
-          <h1 style="margin: 8px 0 4px 0;">Học sinh: ${portfolio.studentName} - Lớp: ${portfolio.className}</h1>
-          <p style="margin: 0; color: #64748b;">Phiên bản: <strong>${version.versionNumber}</strong> | Ngày tạo: ${version.createdAt.slice(0, 10)} | Chú thích: ${version.changeSummary}</p>
+          <h1 style="margin: 8px 0 4px 0;">Học sinh: ${escapeHtml(portfolio.studentName)} - Lớp: ${escapeHtml(portfolio.className)}</h1>
+          <p style="margin: 0; color: #64748b;">Phiên bản: <strong>${escapeHtml(version.versionNumber)}</strong> | Ngày tạo: ${escapeHtml(version.createdAt.slice(0, 10))} | Chú thích: ${escapeHtml(version.changeSummary)}</p>
         </div>
         ${axisSections}
         ${rubricSection}

@@ -18,7 +18,10 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({ onNa
   );
 
   const submissionsNeedingGrade = useMemo(() => {
-    return portfolioList.filter(p => p.status === 'submitted_waiting_ai' || p.status === 'revising' || p.versions.length > 0);
+    return portfolioList.filter(p => {
+      const submittedVersions = p.versions.filter(version => version.stage !== 'prediction');
+      return p.status !== 'completed' && submittedVersions.length > 0;
+    });
   }, [portfolioList]);
 
   const aiFeedbackAwaitingTeacherRead = useMemo(() => {
@@ -30,7 +33,7 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({ onNa
   const assignmentProgress = useMemo(() => {
     return assignments.map(a => {
       const classPortfolios = portfolioList.filter(p => p.assignmentId === a.id);
-      const submitted = classPortfolios.filter(p => p.versions.length > 0).length;
+      const submitted = classPortfolios.filter(p => p.versions.some(version => version.stage !== 'prediction')).length;
       const total = classPortfolios.length || 0;
       const percent = total > 0 ? Math.round((submitted / total) * 100) : 0;
       return { assignment: a, total, submitted, percent };
@@ -74,7 +77,7 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({ onNa
           ) : (
             <div className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white">
               {submissionsNeedingGrade.slice(0, 8).map(p => {
-                const latestVersion = p.versions.at(-1);
+                const latestVersion = [...p.versions].reverse().find(version => version.stage !== 'prediction');
                 const assignment = assignments.find(a => a.id === p.assignmentId);
                 const hasUnreadAiFeedback = aiFeedbackAwaitingTeacherRead.some(r => r.student_id === p.studentId && r.assignment_id === p.assignmentId);
                 return (

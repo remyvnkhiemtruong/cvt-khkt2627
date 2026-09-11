@@ -7,7 +7,7 @@ Nền tảng học tập Ngữ văn THPT hỗ trợ đọc hiểu theo 6 trục 
 - **Phiên bản nghiệp vụ:** Workflow V4 — KHKT 2026–2027
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS
 - **Backend:** Vercel Functions + PostgreSQL/Neon
-- **Xác thực:** cookie HttpOnly + JWT + RBAC
+- **Xác thực:** cookie HttpOnly + JWT + RBAC; tài khoản do nhà trường/quản trị viên cấp, không có đăng ký công khai
 - **AI hiện tại:** không gọi API trả phí. Tài khoản AI mở đúng bài/đúng version, người vận hành copy response từ ChatGPT và dán vào. Khi bấm gửi, học sinh thấy góp ý AI ngay.
 - **Điểm chính thức:** chỉ giáo viên chấm Rubric; máy chủ tính điểm từ rubric gắn đúng assignment.
 - **Production:** https://cvt-khkt2627.vercel.app
@@ -71,7 +71,7 @@ Không nhúng toàn văn tác phẩm có bản quyền vào seed. Nội dung ng�
 - `peer@cvt.edu.vn` — phản biện demo
 - `researcher@cvt.edu.vn` — nghiên cứu demo
 
-Mật khẩu không được lưu trong repository. Admin có thể tạo/reset tài khoản qua `/api/admin/manage`; mật khẩu tạm chỉ được trả về tại thời điểm thao tác.
+Mật khẩu không được lưu trong repository. Admin có thể tạo/reset tài khoản qua `/api/admin/manage`; mật khẩu tạm chỉ được trả về tại thời điểm thao tác. Hệ thống không có endpoint đăng ký tài khoản công khai.
 
 ## Phân hệ
 
@@ -125,7 +125,6 @@ Mật khẩu không được lưu trong repository. Admin có thể tạo/reset 
 
 - `GET /api/health` — health/schema counters
 - `POST /api/auth/login` — đăng nhập
-- `POST /api/auth/register` — đăng ký tài khoản học sinh
 - `GET/PATCH /api/auth/me` — session/hồ sơ
 - `POST /api/auth/logout`
 - `POST /api/auth/change-password`
@@ -171,6 +170,7 @@ Build chạy regression/invariant tests, TypeScript, lint và Vite build. Dự �
 
 - Không lưu JWT trong localStorage.
 - Cookie HttpOnly; API nhạy cảm xác thực server-side.
+- Không cho phép đăng ký tài khoản công khai; tài khoản chỉ được cấp/quản trị qua luồng admin.
 - Không dùng localStorage làm database.
 - Không dùng dữ liệu giả thay cho editor/version/review/audit/analytics production.
 - Draft autosave không tạo version.

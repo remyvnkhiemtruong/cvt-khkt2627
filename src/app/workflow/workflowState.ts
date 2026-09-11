@@ -60,7 +60,10 @@ export function deriveStudentWorkflow(input: {
   });
 
   if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Bài đã có Rubric chính thức của giáo viên.', 'emerald', false, true);
-  if (!portfolio || (predictionRequired && !prediction && academicVersions.length === 0)) return make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true);
+  if (!portfolio) return predictionRequired
+    ? make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true)
+    : make('Đang viết V1', 'Bắt đầu V1', 'Mở bài và hoàn thiện bản đầu tiên.', 'blue', true);
+  if (predictionRequired && !prediction && academicVersions.length === 0) return make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true);
   if (academicVersions.length === 0) return make('Đang viết V1', 'Tiếp tục và nộp V1', 'Hoàn thiện bản đầu tiên để gửi phản hồi.', 'blue', true);
   if (!hasFeedback) return make('Chờ phản hồi', 'Xem V1 đã nộp', 'V1 đã khóa và đang chờ phản hồi.', 'violet', false);
   if (!revision) return make('Cần chỉnh sửa', 'Xem góp ý và sửa V2', 'Đọc góp ý, chỉnh bài và nộp V2.', 'amber', true);

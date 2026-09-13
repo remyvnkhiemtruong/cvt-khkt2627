@@ -26,6 +26,7 @@ interface MobileDrawerProps {
 }
 
 type Nav = { id: string; label: string; icon: React.ElementType; params?: any };
+type Section = { label: string; items: Nav[] };
 
 const ROLE_NAMES: Record<string, string> = {
   student: 'Học sinh',
@@ -36,48 +37,54 @@ const ROLE_NAMES: Record<string, string> = {
   peer: 'Phản biện',
 };
 
+const sectionsForRole = (role: string): Section[] => {
+  if (role === 'student') return [{ label: 'Học tập', items: [
+    { id: 'dashboard', label: 'Bàn học', icon: HomeIcon },
+    { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
+    { id: 'portfolio-list', label: 'Hồ sơ học tập', icon: FolderIcon },
+    { id: 'student-analytics', label: 'Tiến bộ', icon: ChartBarIcon }
+  ] }];
+  if (role === 'teacher') return [
+    { label: 'Công việc', items: [
+      { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
+      { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon },
+      { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon }
+    ] },
+    { label: 'Giảng dạy', items: [
+      { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
+      { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
+      { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon },
+      { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon }
+    ] },
+    { label: 'Theo dõi', items: [{ id: 'class-analytics', label: 'Phân tích lớp', icon: UserGroupIcon }] }
+  ];
+  if (role === 'admin') return [
+    { label: 'Quản trị', items: [
+      { id: 'admin-view', label: 'Tài khoản & nhật ký', icon: ShieldCheckIcon },
+      { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
+      { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon }
+    ] },
+    { label: 'Theo dõi', items: [
+      { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon },
+      { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon }
+    ] }
+  ];
+  if (role === 'ai') return [{ label: 'AI Workspace', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] }];
+  if (role === 'researcher') return [{ label: 'Nghiên cứu', items: [
+    { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon },
+    { id: 'portfolio-list', label: 'Hồ sơ', icon: FolderIcon },
+    { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon }
+  ] }];
+  return [{ label: 'Phản biện', items: [
+    { id: 'portfolio-list', label: 'Hồ sơ phản biện', icon: FolderIcon },
+    { id: 'teacher-review', label: 'Đánh giá bạn học', icon: ClipboardDocumentCheckIcon }
+  ] }];
+};
+
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, currentView, onNavigate, onLogout }) => {
   const user = useAuthStore(s => s.currentUser);
   if (!isOpen) return null;
-
-  const items: Nav[] =
-    user.role === 'student'
-      ? [
-          { id: 'dashboard', label: 'Bàn học', icon: HomeIcon },
-          { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
-          { id: 'portfolio-list', label: 'Hồ sơ học tập', icon: FolderIcon }
-        ]
-      : user.role === 'teacher'
-      ? [
-          { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
-          { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
-          { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon },
-          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
-          { id: 'class-analytics', label: 'Phân tích lớp', icon: UserGroupIcon },
-          { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
-          { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon },
-          { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon }
-        ]
-      : user.role === 'admin'
-      ? [
-          { id: 'admin-view', label: 'Quản trị', icon: ShieldCheckIcon },
-          { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
-          { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon },
-          { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon },
-          { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon }
-        ]
-      : user.role === 'ai'
-      ? [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }]
-      : user.role === 'researcher'
-      ? [
-          { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon },
-          { id: 'portfolio-list', label: 'Hồ sơ', icon: FolderIcon },
-          { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon }
-        ]
-      : [
-          { id: 'portfolio-list', label: 'Hồ sơ phản biện', icon: FolderIcon },
-          { id: 'teacher-review', label: 'Đánh giá bạn học', icon: ClipboardDocumentCheckIcon }
-        ];
+  const sections = sectionsForRole(user.role);
 
   const go = (item: Nav) => {
     onNavigate(item.id, item.params);
@@ -95,36 +102,44 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, cur
                 <Avatar name={user.name} size="md" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-slate-900">{user.name}</div>
-                  <div className="mt-0.5 text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}</div>
+                  <div className="mt-0.5 text-xs text-slate-500">{ROLE_NAMES[user.role] || user.role}{user.className ? ` · ${user.className}` : ''}</div>
                 </div>
               </div>
               <button onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Đóng menu">
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <nav className="space-y-1">
-              {items.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={`${item.id}-${item.label}`}
-                    onClick={() => go(item)}
-                    className={cn(
-                      'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm',
-                      currentView === item.id
-                        ? 'bg-slate-900 font-semibold text-white shadow-sm'
-                        : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950'
-                    )}
-                  >
-                    <Icon className={cn('h-5 w-5 shrink-0', currentView === item.id ? 'text-white' : 'text-slate-500')} />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
+            <nav className="space-y-4" aria-label="Điều hướng di động">
+              {sections.map(section => (
+                <section key={section.label}>
+                  <div className="mb-1.5 px-3 text-xs font-bold uppercase tracking-wide text-slate-400">{section.label}</div>
+                  <div className="space-y-1">
+                    {section.items.map(item => {
+                      const Icon = item.icon;
+                      const active = currentView === item.id;
+                      return (
+                        <button
+                          key={`${item.id}-${item.label}`}
+                          type="button"
+                          onClick={() => go(item)}
+                          aria-current={active ? 'page' : undefined}
+                          className={cn(
+                            'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm',
+                            active ? 'bg-primary-50 font-semibold text-primary-900' : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                          )}
+                        >
+                          <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-primary-700' : 'text-slate-500')} />
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </nav>
           </div>
           {onLogout && (
-            <button onClick={() => { onClose(); onLogout(); }} className="mt-6 flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">
+            <button type="button" onClick={() => { onClose(); onLogout(); }} className="mt-6 flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">
               <ArrowRightOnRectangleIcon className="h-5 w-5" />Đăng xuất
             </button>
           )}

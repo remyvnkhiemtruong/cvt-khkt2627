@@ -188,7 +188,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           <div className="flex flex-1 flex-wrap items-center justify-end gap-2 text-xs sm:flex-none">
             <span className={`inline-flex items-center gap-1.5 font-semibold ${saveStatus.className}`} aria-live="polite">{saveStatus.icon}{saveStatus.text}</span>
             <Button size="sm" variant="outline" onClick={saveNow}>Lưu nháp</Button>
-            {predictionAvailable && <Button size="sm" variant="ghost" onClick={() => { setIsPredictionMode(true); setIsSubmitModalOpen(true); }}>Nộp V0</Button>}
+            {predictionAvailable && <Button size="sm" variant="ghost" onClick={() => { setIsPredictionMode(true); setIsSubmitModalOpen(true); }}>Nộp V0 (dự đoán)</Button>}
             <Button size="sm" variant="primary" onClick={() => { setIsPredictionMode(false); setIsSubmitModalOpen(true); }}>{isInitial ? 'Nộp bài V1' : `Nộp ${nextSubmissionVersion(versions)}`}</Button>
           </div>
         </div>

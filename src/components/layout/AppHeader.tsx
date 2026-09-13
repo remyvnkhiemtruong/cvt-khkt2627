@@ -94,6 +94,8 @@ const toForm = (user: any): ProfileForm => ({
   favoriteWorks: joinList(user.profile?.favoriteWorks)
 });
 
+const fieldClass = (readOnly?: boolean) => `w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${readOnly ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-slate-300 bg-white text-slate-900 focus:border-primary-600 focus:ring-3 focus:ring-primary-600/10'}`;
+
 const Field: React.FC<{
   label: string;
   value: string;
@@ -102,8 +104,8 @@ const Field: React.FC<{
   placeholder?: string;
   readOnly?: boolean;
 }> = ({ label, value, onChange, type = 'text', placeholder, readOnly }) => (
-  <label className="block space-y-1">
-    <span className="text-xs text-slate-600">{label}</span>
+  <label className="block space-y-1.5">
+    <span className="text-xs font-semibold text-slate-700">{label}</span>
     <input
       type={type}
       value={value}
@@ -117,7 +119,7 @@ const Field: React.FC<{
       autoCorrect="off"
       autoCapitalize="off"
       spellCheck={false}
-      className={`w-full rounded-md border px-3 py-2 text-sm outline-none ${readOnly ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-slate-300 bg-white text-slate-900 focus:border-slate-500'}`}
+      className={fieldClass(readOnly)}
     />
   </label>
 );
@@ -182,38 +184,51 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const lastLogin = currentUser.lastLogin ? new Date(currentUser.lastLogin).toLocaleString('vi-VN') : 'Chưa ghi nhận';
+  const currentTitle = VIEW_TITLES[currentView] || 'Học tốt Ngữ Văn';
 
   return (
-    <header className="sticky top-0 z-40 h-14 border-b border-slate-200 bg-white">
-      <div className="mx-auto h-full max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="flex h-full items-center justify-between gap-2">
+    <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto h-full max-w-[100rem] px-3 sm:px-5 lg:px-6">
+        <div className="flex h-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <button type="button" onClick={onOpenMobileDrawer} className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 md:hidden" aria-label="Mở menu">
+            <button type="button" onClick={onOpenMobileDrawer} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" aria-label="Mở menu">
               <Bars3Icon className="h-5 w-5" />
             </button>
-            <button type="button" onClick={() => onNavigate(home(currentUser.role))} className="flex shrink-0 items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white">
+            <button type="button" onClick={() => onNavigate(home(currentUser.role))} className="flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <img src="/Logo.png" alt="Logo THPT Vị Thanh" className="h-full w-full object-cover" />
               </span>
-              <span className="hidden text-sm font-semibold text-primary-900 sm:inline">Học tốt Ngữ Văn</span>
+              <span className="hidden text-sm font-bold tracking-tight text-primary-900 sm:inline">Học tốt Ngữ Văn</span>
             </button>
-            <span className="hidden text-slate-300 sm:inline">/</span>
-            <span className="max-w-[150px] truncate text-xs font-medium text-slate-600 sm:max-w-xs">{VIEW_TITLES[currentView] || 'Học tốt Ngữ Văn'}</span>
+            <span className="hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true" />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-slate-800">{currentTitle}</div>
+              <div className="hidden truncate text-xs text-slate-400 lg:block">{ROLE_LABELS[currentUser.role] || currentUser.role}{currentUser.className ? ` · ${currentUser.className}` : ''}</div>
+            </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={onOpenCommandPalette} className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-500 hover:bg-slate-100">
-              <MagnifyingGlassIcon className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">Tìm nhanh...</span>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <button type="button" onClick={onOpenCommandPalette} className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-medium text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-700">
+              <MagnifyingGlassIcon className="h-4 w-4" />
+              <span className="hidden md:inline">Tìm nhanh</span>
+              <span className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-xs text-slate-400 lg:inline">Ctrl K</span>
             </button>
-            <button type="button" onClick={() => addToast({ type: 'info', title: 'Thông báo', message: 'Hiện chưa có thông báo mới.' })} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100" aria-label="Thông báo">
+            <button type="button" onClick={() => addToast({ type: 'info', title: 'Thông báo', message: 'Hiện chưa có thông báo mới.' })} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Thông báo">
               <BellIcon className="h-4 w-4" />
             </button>
-            <button type="button" onClick={() => setHelpOpen(true)} className="hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 sm:block" aria-label="Trợ giúp">
+            <button type="button" onClick={() => setHelpOpen(true)} className="hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 sm:block" aria-label="Trợ giúp">
               <QuestionMarkCircleIcon className="h-4 w-4" />
             </button>
             <Dropdown
-              trigger={<div className="cursor-pointer"><Avatar name={currentUser.name || 'Người dùng'} size="sm" /></div>}
+              trigger={
+                <div className="flex cursor-pointer items-center gap-2 rounded-lg p-1 hover:bg-slate-50">
+                  <Avatar name={currentUser.name || 'Người dùng'} size="sm" />
+                  <div className="hidden max-w-[150px] text-left xl:block">
+                    <div className="truncate text-xs font-semibold text-slate-800">{currentUser.name}</div>
+                    <div className="truncate text-xs text-slate-400">{ROLE_LABELS[currentUser.role] || currentUser.role}</div>
+                  </div>
+                </div>
+              }
               items={[
                 { key: 'profile', label: 'Thông tin cá nhân', icon: <UserCircleIcon className="h-4 w-4" />, onClick: openProfile },
                 { key: 'logout', label: 'Đăng xuất', icon: <ArrowRightOnRectangleIcon className="h-4 w-4" />, danger: true, onClick: onLogout }
@@ -272,13 +287,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">Sở thích & Mục tiêu</h3>
-            <label className="block space-y-1">
-              <span className="text-xs text-slate-600">Mục tiêu môn học</span>
-              <textarea rows={3} value={form.learningGoal} onChange={e => change('learningGoal', e.target.value)} className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500" placeholder="Ví dụ: Rèn kĩ năng phân tích dẫn chứng, liên hệ bối cảnh..." />
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold text-slate-700">Mục tiêu môn học</span>
+              <textarea rows={3} value={form.learningGoal} onChange={e => change('learningGoal', e.target.value)} className={`${fieldClass()} resize-y`} placeholder="Ví dụ: Rèn kĩ năng phân tích dẫn chứng, liên hệ bối cảnh..." />
             </label>
-            <label className="block space-y-1">
-              <span className="text-xs text-slate-600">Giới thiệu ngắn</span>
-              <textarea rows={3} value={form.bio} onChange={e => change('bio', e.target.value)} className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none focus:border-slate-500" placeholder="Đôi nét về bản thân và cách học tập yêu thích..." />
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold text-slate-700">Giới thiệu ngắn</span>
+              <textarea rows={3} value={form.bio} onChange={e => change('bio', e.target.value)} className={`${fieldClass()} resize-y`} placeholder="Đôi nét về bản thân và cách học tập yêu thích..." />
             </label>
             <Field label="Thể loại yêu thích" value={form.favoriteGenres} onChange={v => change('favoriteGenres', v)} placeholder="Truyện ngắn, thơ..." />
             <Field label="Tác giả yêu thích" value={form.favoriteAuthors} onChange={v => change('favoriteAuthors', v)} placeholder="Kim Lân, Nam Cao..." />

@@ -7,12 +7,40 @@ import {
   ClipboardDocumentCheckIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
-import { Badge, Button, PageHeader, StatCard } from '../components/ui';
+import { Badge, Button, PageHeader } from '../components/ui';
 import { usePortfolio } from '../contexts/PortfolioContext';
 
 interface Props { onNavigate: (view: string, params?: any) => void; }
-
 type QueueTone = 'slate' | 'blue' | 'primary' | 'emerald' | 'amber' | 'rose' | 'purple' | 'outline';
+
+type MetricTileProps = {
+  label: string;
+  value: number;
+  note: string;
+  icon: React.ReactNode;
+  tone?: 'default' | 'success' | 'warning' | 'info';
+  onClick: () => void;
+};
+
+const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone = 'default', onClick }) => {
+  const toneClass = tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50/50'
+    : tone === 'warning'
+      ? 'border-amber-200 bg-amber-50/50'
+      : tone === 'info'
+        ? 'border-sky-200 bg-sky-50/50'
+        : 'border-slate-200 bg-white';
+  return (
+    <button type="button" onClick={onClick} className={`v3-panel v3-panel-interactive flex w-full items-start justify-between gap-3 p-4 text-left ${toneClass}`}>
+      <div className="min-w-0">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        <div className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
+        <div className="mt-1 truncate text-xs text-slate-500">{note}</div>
+      </div>
+      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-sm">{icon}</div>
+    </button>
+  );
+};
 
 const statusMeta = (status: string): { label: string; tone: QueueTone; priority: number } => {
   if (status === 'ai_proposed_waiting_teacher' || status === 'teacher_feedback_needed') return { label: 'Cần giáo viên xem', tone: 'amber', priority: 1 };
@@ -51,11 +79,11 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Cần giáo viên xem" value={teacherPending} subValue="AI/feedback đang chờ" variant={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
-        <StatCard label="AI chờ duyệt" value={aiPending} subValue="Response đã hoàn tất" variant={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
-        <StatCard label="Chờ Rubric" value={rubricPending} subValue="Cần chấm chính thức" variant={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
-        <StatCard label="HS đang sửa" value={revising} subValue="Sau phản hồi" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
-        <StatCard label="Hoàn thành" value={done} subValue="Workflow đã đóng" variant="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Cần giáo viên xem" value={teacherPending} note="AI/feedback đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
+        <MetricTile label="AI chờ duyệt" value={aiPending} note="Response đã hoàn tất" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
+        <MetricTile label="Chờ Rubric" value={rubricPending} note="Cần chấm chính thức" tone={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
+        <MetricTile label="HS đang sửa" value={revising} note="Sau phản hồi" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Hoàn thành" value={done} note="Workflow đã đóng" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
       </div>
 
       <section className="v3-panel overflow-hidden">
@@ -69,7 +97,7 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
 
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] border-collapse text-left">
-            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
+            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-3">Học sinh</th>
                 <th className="px-4 py-3">Lớp</th>
@@ -89,9 +117,7 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
                     <td className="max-w-[300px] px-4 py-3.5"><div className="truncate text-sm text-slate-700">{assignment?.title || portfolio.assignmentId}</div></td>
                     <td className="px-4 py-3.5 text-sm font-semibold text-slate-700">{latest?.versionNumber || portfolio.currentActiveVersion || '—'}</td>
                     <td className="px-4 py-3.5"><Badge variant={meta.tone}>{meta.label}</Badge></td>
-                    <td className="px-5 py-3.5 text-right">
-                      <Button size="sm" variant="ghost" rightIcon={<ArrowRightIcon className="h-3.5 w-3.5" />} onClick={() => onNavigate('teacher-review', { studentId: portfolio.studentId, assignmentId: portfolio.assignmentId })}>Mở</Button>
-                    </td>
+                    <td className="px-5 py-3.5 text-right"><Button size="sm" variant="ghost" rightIcon={<ArrowRightIcon className="h-3.5 w-3.5" />} onClick={() => onNavigate('teacher-review', { studentId: portfolio.studentId, assignmentId: portfolio.assignmentId })}>Mở</Button></td>
                   </tr>
                 );
               })}
@@ -104,12 +130,7 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
           {queue.map(({ portfolio, meta, assignment }) => {
             const latest = [...portfolio.versions].reverse().find(version => version.stage !== 'prediction');
             return (
-              <button
-                type="button"
-                key={portfolio.id}
-                onClick={() => onNavigate('teacher-review', { studentId: portfolio.studentId, assignmentId: portfolio.assignmentId })}
-                className="block w-full px-4 py-4 text-left hover:bg-slate-50"
-              >
+              <button type="button" key={portfolio.id} onClick={() => onNavigate('teacher-review', { studentId: portfolio.studentId, assignmentId: portfolio.assignmentId })} className="block w-full px-4 py-4 text-left hover:bg-slate-50">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-bold text-slate-900">{portfolio.studentName}</div>

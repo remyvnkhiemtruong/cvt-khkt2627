@@ -15,6 +15,21 @@ export const Tooltip: React.FC<TooltipProps> = ({
   className
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsVisible(true);
+    }, 280);
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsVisible(false);
+  };
 
   const positions = {
     top: "bottom-full left-1/2 -translate-x-1/2 mb-1.5",
@@ -26,17 +41,17 @@ export const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div
       className="relative inline-block"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-      onFocus={() => setIsVisible(true)}
-      onBlur={() => setIsVisible(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleMouseEnter}
+      onBlur={handleMouseLeave}
     >
       {children}
       {isVisible && content && (
         <div
           role="tooltip"
           className={cn(
-            "absolute z-50 px-2.5 py-1 text-[11px] font-medium text-white bg-slate-900 rounded-md shadow-md whitespace-nowrap pointer-events-none transition-opacity animate-fade-in",
+            "absolute z-50 px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-md whitespace-nowrap pointer-events-none transition-opacity animate-fade-in",
             positions[position],
             className
           )}

@@ -36,17 +36,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
 
   return (
     <div className="w-full space-y-1.5">
-      {label && (
-        <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700 sm:text-[13px]">
-          {label}
-        </label>
-      )}
+      {label && <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700 sm:text-[13px]">{label}</label>}
       <div className="relative flex items-center">
-        {leftIcon && (
-          <div className="pointer-events-none absolute left-3 text-slate-400">
-            {leftIcon}
-          </div>
-        )}
+        {leftIcon && <div className="pointer-events-none absolute left-3 text-slate-400">{leftIcon}</div>}
         <input
           ref={ref}
           id={inputId}
@@ -62,7 +54,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           autoCapitalize={disableAutofill ? "off" : undefined}
           spellCheck={disableAutofill ? false : undefined}
           className={cn(
-            "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[16px] text-slate-900 shadow-[0_1px_1px_rgba(15,23,42,0.02)] placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-3 focus:ring-slate-900/10 disabled:bg-slate-50 disabled:text-slate-400 sm:min-h-10 sm:text-sm",
+            "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[16px] text-slate-900 shadow-[0_1px_1px_rgba(15,23,42,0.02)] placeholder:text-slate-400 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/10 disabled:bg-slate-50 disabled:text-slate-400 sm:min-h-10 sm:text-sm",
             leftIcon && "pl-9",
             rightIcon && "pr-9",
             error && "border-rose-500 focus:border-rose-500 focus:ring-rose-500/10",
@@ -70,17 +62,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           )}
           {...props}
         />
-        {rightIcon && (
-          <div className="pointer-events-none absolute right-3 text-slate-400">
-            {rightIcon}
-          </div>
-        )}
+        {rightIcon && <div className="pointer-events-none absolute right-3 text-slate-400">{rightIcon}</div>}
       </div>
-      {error ? (
-        <p id={helperId} className="text-xs font-medium text-rose-600">{error}</p>
-      ) : helperText ? (
-        <p id={helperId} className="text-xs leading-5 text-slate-500">{helperText}</p>
-      ) : null}
+      {error ? <p id={helperId} className="text-xs font-medium text-rose-600">{error}</p> : helperText ? <p id={helperId} className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
     </div>
   );
 });

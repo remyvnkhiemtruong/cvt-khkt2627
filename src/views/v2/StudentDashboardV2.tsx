@@ -1,15 +1,169 @@
 import React from 'react';
+import {
+  ArrowRightIcon,
+  BookOpenIcon,
+  ChatBubbleLeftRightIcon,
+  CheckCircleIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../app/store/useAuthStore';
 import { usePortfolio } from '../../contexts/PortfolioContext';
 import { deriveStudentWorkflow } from '../../app/workflow/workflowState';
 import { WorkflowProgress } from '../../components/workflow/WorkflowProgress';
-import { Button } from '../../components/ui';
+import { Badge, Button, Card, PageHeader } from '../../components/ui';
+
+type MetricTileProps = {
+  label: string;
+  value: string | number;
+  note: string;
+  icon: React.ReactNode;
+  tone?: 'default' | 'success' | 'warning' | 'accent';
+};
+
+const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone = 'default' }) => {
+  const toneClass = tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50/50'
+    : tone === 'warning'
+      ? 'border-amber-200 bg-amber-50/50'
+      : tone === 'accent'
+        ? 'border-primary-200 bg-primary-50/50'
+        : 'border-slate-200 bg-white';
+  return (
+    <div className={`v3-panel flex items-start justify-between gap-3 p-4 ${toneClass}`}>
+      <div className="min-w-0">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        <div className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
+        <div className="mt-1 truncate text-xs text-slate-500">{note}</div>
+      </div>
+      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-sm">{icon}</div>
+    </div>
+  );
+};
 
 export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
   const { assignments, portfolios, feedbacks, rubricSubmissions, reflections } = usePortfolio();
   const reflectionIds = reflections.filter(r => r.studentId === user.id).map(r => r.versionId);
-  const items = assignments.map(assignment => ({ assignment, state: deriveStudentWorkflow({ assignment, portfolio: portfolios[`port-${user.id}-${assignment.id}`], feedbacks, rubricSubmissions, reflectionVersionIds: reflectionIds }) }));
+  const items = assignments.map(assignment => ({
+    assignment,
+    portfolio: portfolios[`port-${user.id}-${assignment.id}`],
+    state: deriveStudentWorkflow({
+      assignment,
+      portfolio: portfolios[`port-${user.id}-${assignment.id}`],
+      feedbacks,
+      rubricSubmissions,
+      reflectionVersionIds: reflectionIds
+    })
+  }));
   const next = items.find(item => !item.state.isComplete) || items[0];
-  return <div className="mx-auto max-w-6xl space-y-5 pb-16"><div className="border-b border-slate-200 pb-4"><h1 className="text-2xl font-semibold text-slate-950">Bàn học của {user.name}</h1><p className="mt-1 text-sm text-slate-500">{items.filter(i => i.state.isComplete).length}/{items.length} nhiệm vụ đã hoàn thành</p></div>{next && <section className="rounded-md border border-slate-200 bg-white p-5"><h2 className="text-lg font-semibold text-slate-900">{next.assignment.title}</h2><p className="mt-1 text-sm text-slate-600">{next.state.nextActionHint}</p><div className="mt-4"><WorkflowProgress state={next.state} /></div><div className="mt-4"><Button variant="primary" onClick={() => onNavigate('editor', { assignmentId: next.assignment.id })}>{next.state.nextActionLabel}</Button></div></section>}</div>;
+  const completed = items.filter(item => item.state.isComplete).length;
+  const averageProgress = items.length ? Math.round(items.reduce((sum, item) => sum + item.state.progress, 0) / items.length) : 0;
+  const studentFeedbacks = feedbacks.filter(item => item.studentId === user.id);
+  const unresolvedFeedbacks = studentFeedbacks.filter(item => !item.resolved);
+  const recentFeedbacks = [...studentFeedbacks].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 3);
+
+  return (
+    <div className="v3-page space-y-6 pb-20">
+      <PageHeader
+        eyebrow="Bàn học cá nhân"
+        title={`Chào ${user.name}`}
+        description={<span>{user.className ? `Lớp ${user.className} · ` : ''}{completed}/{items.length} nhiệm vụ đã hoàn thành. Tập trung vào bước tiếp theo thay vì phải tự dò quy trình.</span>}
+        actions={<Button variant="outline" onClick={() => onNavigate('assignment-list')}>Tất cả nhiệm vụ</Button>}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricTile label="Tiến độ chung" value={`${averageProgress}%`} note={`${completed}/${items.length} nhiệm vụ hoàn tất`} tone="accent" icon={<CheckCircleIcon className="h-5 w-5" />} />
+        <MetricTile label="Phản hồi cần xem" value={unresolvedFeedbacks.length} note="AI / giáo viên / phản biện" tone={unresolvedFeedbacks.length ? 'warning' : 'success'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} />
+        <MetricTile label="Nhiệm vụ đang học" value={Math.max(0, items.length - completed)} note="V0 · V1 · chỉnh sửa · REF1" icon={<BookOpenIcon className="h-5 w-5" />} />
+      </div>
+
+      {next ? (
+        <section className="v3-panel overflow-hidden border-primary-200">
+          <div className="border-b border-primary-100 bg-primary-50/65 px-4 py-3 sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="v3-kicker">Việc cần làm tiếp theo</div>
+              <Badge variant={next.state.isComplete ? 'emerald' : 'primary'}>{next.state.isComplete ? 'Đã hoàn thành' : `${next.state.progress}%`}</Badge>
+            </div>
+          </div>
+          <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{next.assignment.title}</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{next.state.nextActionHint}</p>
+              <div className="mt-5"><WorkflowProgress state={next.state} /></div>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              rightIcon={<ArrowRightIcon className="h-4 w-4" />}
+              onClick={() => onNavigate('editor', { assignmentId: next.assignment.id })}
+              className="w-full lg:w-auto"
+            >
+              {next.state.nextActionLabel}
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <Card><p className="text-sm text-slate-600">Chưa có nhiệm vụ nào được giao.</p></Card>
+      )}
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,.6fr)]">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-slate-950">Nhiệm vụ của bạn</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Theo dõi đúng trạng thái workflow của từng bài.</p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')}>Xem tất cả</Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {items.slice(0, 4).map(item => (
+              <button
+                type="button"
+                key={item.assignment.id}
+                onClick={() => onNavigate('editor', { assignmentId: item.assignment.id })}
+                className="v3-panel v3-panel-interactive p-4 text-left sm:p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-bold text-slate-900">{item.assignment.title}</div>
+                    <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{item.state.nextActionHint}</div>
+                  </div>
+                  <Badge size="sm" variant={item.state.isComplete ? 'emerald' : item.state.progress >= 50 ? 'primary' : 'slate'}>{item.state.progress}%</Badge>
+                </div>
+                <div className="mt-4"><WorkflowProgress state={item.state} compact /></div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-950">Phản hồi gần đây</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Mở bài để đọc phản hồi trong đúng ngữ cảnh.</p>
+          </div>
+          <div className="v3-panel divide-y divide-slate-100 overflow-hidden">
+            {recentFeedbacks.length ? recentFeedbacks.map(item => (
+              <button
+                type="button"
+                key={item.id}
+                onClick={() => onNavigate('editor', { assignmentId: item.assignmentId })}
+                className="flex w-full items-start gap-3 px-4 py-3.5 text-left hover:bg-slate-50"
+              >
+                <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${item.resolved ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                  {item.resolved ? <CheckCircleIcon className="h-4 w-4" /> : <ClockIcon className="h-4 w-4" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-xs font-bold text-slate-800">{item.authorName}</span>
+                    <Badge size="sm" variant={item.authorRole === 'ai' ? 'blue' : item.authorRole === 'teacher' ? 'primary' : 'slate'}>{item.authorRole === 'ai' ? 'AI' : item.authorRole === 'teacher' ? 'GV' : 'Peer'}</Badge>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{item.comment}</p>
+                </div>
+              </button>
+            )) : <div className="px-4 py-8 text-center text-sm text-slate-500">Chưa có phản hồi mới.</div>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 };

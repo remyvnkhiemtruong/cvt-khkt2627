@@ -34,7 +34,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        "min-w-0 overflow-hidden rounded-2xl border transition-[border-color,box-shadow,transform] duration-200 ease-out",
+        "min-w-0 overflow-hidden rounded-xl border transition-[border-color,box-shadow,transform] duration-200 ease-out",
         variants[variant],
         className
       )}

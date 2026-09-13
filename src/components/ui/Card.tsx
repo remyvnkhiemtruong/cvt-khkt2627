@@ -18,10 +18,10 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variants = {
-    default: "bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.025)]",
-    subtle: "bg-slate-50/80 rounded-xl border border-slate-200",
-    elevated: "bg-white rounded-xl border border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.055)]",
-    bordered: "bg-white rounded-xl border border-slate-300",
+    default: "bg-white border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.025)]",
+    subtle: "bg-slate-50/80 border-slate-200",
+    elevated: "bg-white border-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.06)]",
+    bordered: "bg-white border-slate-300",
   };
 
   const paddings = {
@@ -34,25 +34,15 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
+        "min-w-0 overflow-hidden rounded-2xl border transition-[border-color,box-shadow,transform] duration-200 ease-out",
         variants[variant],
-        "min-w-0 overflow-hidden transition-[border-color,box-shadow,transform] duration-200 ease-out",
         className
       )}
       {...props}
     >
-      {header && (
-        <div className="flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">
-          {header}
-        </div>
-      )}
-      <div className={paddings[padding]}>
-        {children}
-      </div>
-      {footer && (
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 sm:px-5">
-          {footer}
-        </div>
-      )}
+      {header && <div className="flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">{header}</div>}
+      <div className={paddings[padding]}>{children}</div>
+      {footer && <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500 sm:px-5">{footer}</div>}
     </div>
   );
 };

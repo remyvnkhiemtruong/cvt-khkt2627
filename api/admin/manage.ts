@@ -25,6 +25,7 @@ const safeError = (code: string) => {
   if (code === 'CSRF_ORIGIN_MISMATCH') return 'Yêu cầu không hợp lệ.';
   if (code === 'SELF_LOCKOUT_BLOCKED') return 'Không thể tự hạ quyền hoặc khóa tài khoản admin đang dùng.';
   if (code === 'ROLE_MISMATCH') return 'Vai trò tài khoản không khớp vai trò thành viên lớp.';
+  if (code === 'ROLE_CHANGE_HAS_ACADEMIC_HISTORY') return 'Không thể đổi vai trò học sinh khi tài khoản đã có hồ sơ học tập. Hãy giữ vai trò học sinh để bảo toàn lịch sử.';
   if (code.includes('NOT_FOUND')) return 'Không tìm thấy dữ liệu yêu cầu.';
   if (code.startsWith('INVALID') || code === 'VALIDATION_ERROR') return 'Dữ liệu quản trị không hợp lệ.';
   return 'Không thể hoàn tất thao tác quản trị.';
@@ -91,6 +92,14 @@ export default async function handler(req: any, res: any) {
           await client.query('ROLLBACK');
           return send(res, 400, { code: 'SELF_LOCKOUT_BLOCKED', message: safeError('SELF_LOCKOUT_BLOCKED') });
         }
+        if (before.role === 'student' && role !== 'student') {
+          const history = await client.query('SELECT 1 FROM portfolios WHERE student_id=$1 LIMIT 1', [targetId]);
+          if (history.rows.length) {
+            await client.query('ROLLBACK');
+            return send(res, 409, { code: 'ROLE_CHANGE_HAS_ACADEMIC_HISTORY', message: safeError('ROLE_CHANGE_HAS_ACADEMIC_HISTORY') });
+          }
+        }
+
         const result = await client.query(`
           UPDATE app_users SET role=$2,account_status=$3,updated_at=now() WHERE id=$1
           RETURNING id,email,name,role,account_status,must_change_password,created_at,last_login
@@ -100,6 +109,22 @@ export default async function handler(req: any, res: any) {
             await client.query('UPDATE class_members SET member_role=$2 WHERE user_id=$1', [targetId, role]);
           } else {
             await client.query('DELETE FROM class_members WHERE user_id=$1', [targetId]);
+          }
+          if (role === 'student') {
+            await client.query(`
+              INSERT INTO portfolios(assignment_id,student_id)
+              SELECT a.id,$1
+              FROM assignments a
+              JOIN class_members cm ON cm.class_id=a.class_id AND cm.user_id=$1 AND cm.member_role='student'
+              WHERE a.status='published'
+              ON CONFLICT(assignment_id,student_id) DO NOTHING
+            `, [targetId]);
+            await client.query(`
+              INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by)
+              SELECT p.id,$2::jsonb,$1 FROM portfolios p
+              WHERE p.student_id=$1
+              ON CONFLICT(portfolio_id) DO NOTHING
+            `, [targetId, JSON.stringify(emptyDraft())]);
           }
         }
         await audit(client, user, 'ADMIN_UPDATE_USER', 'user', targetId,

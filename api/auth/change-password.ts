@@ -4,11 +4,14 @@ export default async function handler(req:any,res:any) {
   if(req.method!=="POST") return send(res,405,{code:"METHOD_NOT_ALLOWED"});
   try {
     assertSameOrigin(req);
-    const user=await authenticate(req);
+    const user=await authenticate(req,{allowPasswordChangeRequired:true});
     if(!user) return send(res,401,{code:"UNAUTHENTICATED"});
     const {newPassword,currentPassword}=body(req);
-    if(!newPassword || String(newPassword).length<10) return send(res,400,{code:"VALIDATION_ERROR",message:"Mật khẩu mới phải có ít nhất 10 ký tự."});
-    const result=await changePassword(user.id,String(newPassword),String(currentPassword||""));
+    const next=String(newPassword||"");
+    const current=String(currentPassword||"");
+    if(next.length<10 || next.length>256) return send(res,400,{code:"VALIDATION_ERROR",message:"Mật khẩu mới phải có từ 10 đến 256 ký tự."});
+    if(current.length>512) return send(res,400,{code:"VALIDATION_ERROR",message:"Mật khẩu hiện tại không hợp lệ."});
+    const result=await changePassword(user.id,next,current);
     if(!result) return send(res,404,{code:"USER_NOT_FOUND"});
     return send(res,200,{user:result.user},result.token);
   } catch(error:any) {

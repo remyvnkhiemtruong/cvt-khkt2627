@@ -4,6 +4,47 @@ import { authenticate, body, send } from "../auth/auth.js";
 import { academicAction } from "../_lib/academic-workflow-v4.js";
 import { normalizeAcademicActionInput } from "../_lib/content-compat.js";
 
+const AXES = ["plot_situation", "character_detail", "narrator_pov", "space_time", "language_tone_symbol", "form_argument"];
+
+const boundedText = (value: unknown, max: number) => String(value ?? "").slice(0, max);
+
+function normalizeCreateAssignmentInput(input: any) {
+  const workflow = input?.workflowConfig && typeof input.workflowConfig === "object" && !Array.isArray(input.workflowConfig)
+    ? input.workflowConfig
+    : {};
+  const prediction = input?.predictionTemplate && typeof input.predictionTemplate === "object" && !Array.isArray(input.predictionTemplate)
+    ? input.predictionTemplate
+    : {};
+  const starter = input?.starterTemplate && typeof input.starterTemplate === "object" && !Array.isArray(input.starterTemplate)
+    ? input.starterTemplate
+    : {};
+
+  const starterTemplate = Object.fromEntries(
+    AXES.filter(axis => typeof starter[axis] === "string")
+      .map(axis => [axis, boundedText(starter[axis], 12000)])
+  );
+
+  return {
+    ...input,
+    starterTemplate,
+    predictionTemplate: {
+      enabled: workflow.predictionEnabled !== false && prediction.enabled !== false,
+      prompt: boundedText(prediction.prompt, 12000),
+      questions: Array.isArray(prediction.questions)
+        ? prediction.questions.slice(0, 30).map((item: unknown) => boundedText(item, 1500)).filter(Boolean)
+        : [],
+      requireConfidence: prediction.requireConfidence !== false
+    },
+    workflowConfig: {
+      predictionEnabled: workflow.predictionEnabled !== false,
+      aiReviewRequired: true,
+      teacherApprovalRequired: true,
+      reflectionRequired: true,
+      officialRubricRequired: true
+    }
+  };
+}
+
 const clientMessage = (code: string) => {
   const messages: Record<string, string> = {
     FORBIDDEN: "Bạn không có quyền thực hiện thao tác này.",
@@ -41,8 +82,13 @@ export default async function handler(req: any, res: any) {
       return send(res, 401, { code: "UNAUTHENTICATED" });
     }
 
+    const rawInput = body(req);
+    const rawBytes = Buffer.byteLength(JSON.stringify(rawInput), "utf8");
+    if (rawBytes > 1_000_000) throw new Error("CONTENT_TOO_LARGE");
+
     const actionStartedAt = Date.now();
-    const input = normalizeAcademicActionInput(body(req));
+    let input = normalizeAcademicActionInput(rawInput);
+    if (input?.action === "create_assignment") input = normalizeCreateAssignmentInput(input);
     const result = await academicAction(user, input, req);
     const actionMs = Date.now() - actionStartedAt;
     res.setHeader("Server-Timing", `auth;dur=${authMs}, action;dur=${actionMs}, total;dur=${Date.now() - startedAt}`);

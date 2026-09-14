@@ -31,6 +31,14 @@ await test('AF02: teacher dashboard does not count V0 prediction as a submitted 
   assert(!source.includes("p.versions.length > 0"), 'Teacher dashboard still treats any version, including V0, as a submission');
 });
 
+await test('AF03: authenticated login route always recovers to the role home without requiring refresh', () => {
+  const source = read('src/App.tsx');
+  assert(source.includes("if (sessionChecking || !isAuthenticated || currentView !== 'login' || !currentUser.id) return;"), 'Missing authenticated /login recovery guard');
+  assert(source.includes('replaceToView(homeViewForRole(currentUser.role));'), 'Missing role-home recovery redirect');
+  assert(source.includes("if (currentView === 'login') return <ViewLoading />;"), 'Authenticated /login must not render the public landing during route hand-off');
+  assert(source.includes('const replaceToView = useCallback('), 'Route replacement should be stable across auth effects');
+});
+
 const failed = results.filter(result => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} audit-fix tests passed.`);
 if (failed.length) process.exit(1);

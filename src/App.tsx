@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { AppProviders } from './app/providers/AppProviders';
 import { MainLayout } from './components/layout/MainLayout';
 import { LoginView } from './views/LoginView';
@@ -61,7 +61,7 @@ const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>(initial.view);
   const [navParams, setNavParams] = useState<any>(initial.params);
 
-  const replaceToView = (view:string, params:Record<string,any> = {}) => {
+  const replaceToView = useCallback((view:string, params:Record<string,any> = {}) => {
     const route = APP_ROUTES[view];
     if (!route) return;
     const query = new URLSearchParams();
@@ -69,7 +69,7 @@ const AppContent: React.FC = () => {
     const url = `${route.path}${query.size ? `?${query.toString()}` : ''}`;
     window.history.replaceState({},'',url);
     setCurrentView(view); setNavParams(params);
-  };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -110,7 +110,15 @@ const AppContent: React.FC = () => {
     const onPop = () => { const current=locationState(); setCurrentView(current.view); setNavParams(current.params); };
     window.addEventListener('popstate',onPop);
     return () => { active=false; window.removeEventListener('popstate',onPop); };
-  }, [clearAuth, setAuthenticatedUser]);
+  }, [clearAuth, replaceToView, setAuthenticatedUser]);
+
+  // LoginView updates the auth store synchronously before its success callback runs.
+  // Keep a parent-level recovery redirect so the app can never remain authenticated
+  // on /login (which previously left a blank/landing hand-off until a manual refresh).
+  useEffect(() => {
+    if (sessionChecking || !isAuthenticated || currentView !== 'login' || !currentUser.id) return;
+    replaceToView(homeViewForRole(currentUser.role));
+  }, [currentUser.id, currentUser.role, currentView, isAuthenticated, replaceToView, sessionChecking]);
 
   const handleLoginSuccess = () => replaceToView(homeViewForRole(useAuthStore.getState().currentUser.role));
 
@@ -134,7 +142,10 @@ const AppContent: React.FC = () => {
     if (currentView === 'login') return <LoginView onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
     return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
   }
-  if (currentView === 'landing' || currentView === 'login') {
+  // Never render the public landing page as an intermediate authenticated state
+  // while the login route is being replaced by the role home route.
+  if (currentView === 'login') return <ViewLoading />;
+  if (currentView === 'landing') {
     return <Suspense fallback={<ViewLoading />}><LandingView onNavigate={handleNavigate} /></Suspense>;
   }
 

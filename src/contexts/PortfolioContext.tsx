@@ -12,9 +12,8 @@ import type {
   EvidenceQuote,
   AiReviewRequest
 } from '../types';
-import { useAuth } from './AuthContext';
+import { useAuthStore } from '../app/store/useAuthStore';
 import { usePortfolioStore, type CreateSnapshotOptions } from '../app/store/usePortfolioStore';
-import { mockDb } from '../services/mockApi/mockDb';
 
 export interface StudentReflectionRecord {
   id: string;
@@ -76,7 +75,7 @@ async function postAction(payload: unknown) {
 }
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const currentUser = useAuthStore(state => state.currentUser);
   const portfolios = usePortfolioStore(state => state.portfolios);
   const autosaveStatus = usePortfolioStore(state => state.autosaveStatus);
   const lastSavedTime = usePortfolioStore(state => state.lastSavedTime);
@@ -99,7 +98,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [dataError, setDataError] = useState<string | null>(null);
 
   const applySnapshot = useCallback((snapshot: AcademicSnapshot) => {
-    mockDb.hydrate(snapshot);
     hydratePortfolios(snapshot.portfolios || {});
     setAssignments(snapshot.assignments || []);
     setLiteratureTexts(snapshot.literatureTexts || []);
@@ -112,6 +110,20 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setAiReviews(snapshot.aiReviews || []);
     const extended = snapshot as AcademicSnapshot & { reflections?: StudentReflectionRecord[] };
     setReflections(Array.isArray(extended.reflections) ? extended.reflections : []);
+  }, [hydratePortfolios]);
+
+  const clearAcademicState = useCallback(() => {
+    hydratePortfolios({});
+    setAssignments([]);
+    setLiteratureTexts([]);
+    setRubric(emptyRubric);
+    setRubrics({});
+    setFeedbacks([]);
+    setRubricSubmissions([]);
+    setAuditLogs([]);
+    setAiReviews([]);
+    setReflections([]);
+    setDataError(null);
   }, [hydratePortfolios]);
 
   const refreshAcademicData = useCallback(async () => {
@@ -132,8 +144,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     if (currentUser.id) void refreshAcademicData();
-    else mockDb.reset();
-  }, [currentUser.id, refreshAcademicData]);
+    else clearAcademicState();
+  }, [clearAcademicState, currentUser.id, refreshAcademicData]);
 
   const getPortfolioForStudentAndAssignment = useCallback(
     (studentId: string, assignmentId: string) => getPortfolio(

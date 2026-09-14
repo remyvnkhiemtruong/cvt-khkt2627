@@ -94,4 +94,25 @@ await test('PA09: health statistics use a short in-instance cache without changi
   assert(source.includes('jwtSecretConfigured'));
 });
 
-console.log(`Production audit regressions: ${passed}/9 passed`);
+await test('PA10: Zustand is the single production authentication source', () => {
+  const app = read('src/App.tsx');
+  const portfolio = read('src/contexts/PortfolioContext.tsx');
+  const rubric = read('src/components/rubric/RubricAssessmentGrid.tsx');
+  const feedback = read('src/components/feedback/AnchoredFeedbackPanel.tsx');
+  assert(!fs.existsSync('src/contexts/AuthContext.tsx'));
+  assert(!app.includes('AuthProvider'));
+  assert(portfolio.includes("from '../app/store/useAuthStore'"));
+  assert(rubric.includes("from '../../app/store/useAuthStore'"));
+  assert(feedback.includes("from '../../app/store/useAuthStore'"));
+});
+
+await test('PA11: obsolete mock academic cache is removed from production state flow', () => {
+  const store = read('src/app/store/usePortfolioStore.ts');
+  const context = read('src/contexts/PortfolioContext.tsx');
+  assert(!fs.existsSync('src/services/mockApi/mockDb.ts'));
+  assert(!store.includes('mockDb'));
+  assert(!context.includes('mockDb'));
+  assert(!store.includes('loadPortfolios'));
+});
+
+console.log(`Production audit regressions: ${passed}/11 passed`);

@@ -8,7 +8,6 @@ import { useAuthStore } from './app/store/useAuthStore';
 import { APP_ROUTES } from './app/router/routes';
 import { canAccessRoute } from './app/auth/accessControl';
 import { PortfolioProvider } from './contexts/PortfolioContext';
-import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
 
 const LandingView = lazy(() => import('./views/LandingView').then((module) => ({ default: module.LandingView })));
@@ -181,7 +180,7 @@ const AppContent: React.FC = () => {
 };
 
 export function App() {
-  return <AuthProvider><PortfolioProvider><AppProviders><AppContent /></AppProviders></PortfolioProvider></AuthProvider>;
+  return <PortfolioProvider><AppProviders><AppContent /></AppProviders></PortfolioProvider>;
 }
 
 export default App;

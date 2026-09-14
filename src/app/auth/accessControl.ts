@@ -14,6 +14,14 @@ export const ROLE_ACCESS_TIER: Partial<Record<UserRole, AccessTier>> = {
   student: 3
 };
 
+const INHERITABLE_VIEW_PATHS = new Set([
+  '/assignments',
+  '/portfolios',
+  '/student/diff',
+  '/student/analytics',
+  '/teacher/literature-texts'
+]);
+
 export function accessTierForRole(role: UserRole): AccessTier | null {
   return ROLE_ACCESS_TIER[role] ?? null;
 }
@@ -27,10 +35,10 @@ export function canViewRole(actorRole: UserRole, targetRole: UserRole): boolean 
 
 export function canAccessRoute(
   actorRole: UserRole,
-  route?: { allowedRoles?: UserRole[]; inheritableView?: boolean }
+  route?: { path?: string; allowedRoles?: UserRole[] }
 ): boolean {
   if (!route?.allowedRoles?.length) return true;
   if (route.allowedRoles.includes(actorRole)) return true;
-  if (!route.inheritableView) return false;
+  if (!route.path || !INHERITABLE_VIEW_PATHS.has(route.path)) return false;
   return route.allowedRoles.some(targetRole => canViewRole(actorRole, targetRole));
 }

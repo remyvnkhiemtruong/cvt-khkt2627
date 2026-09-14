@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { StudentPortfolio, PoeticAxisId, PortfolioVersion, EvidenceQuote } from '../../types';
-import { mockDb } from '../../services/mockApi/mockDb';
 import { POETIC_AXES } from '../../data/seedData';
 
 export interface CreateSnapshotOptions {
@@ -17,7 +16,6 @@ interface PortfolioState {
   autosaveStatus: 'saved' | 'saving' | 'dirty';
   lastSavedTime: string;
   hydratePortfolios: (portfolios: Record<string, StudentPortfolio>) => void;
-  loadPortfolios: () => void;
   getPortfolio: (studentId: string, assignmentId: string, studentName?: string, className?: string) => StudentPortfolio;
   updateDraft: (studentId: string, assignmentId: string, axisId: PoeticAxisId, text: string, quotes?: EvidenceQuote[]) => void;
   manualSaveDraft: (studentId: string, assignmentId: string) => Promise<void>;
@@ -76,12 +74,9 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
       merged[key] = dirtyPortfolioKeys.has(key) && localPortfolio
         ? { ...serverPortfolio, currentDraft: localPortfolio.currentDraft, lastAutosavedAt: localPortfolio.lastAutosavedAt }
         : serverPortfolio;
-      mockDb.savePortfolio(merged[key]);
     }
     set({ portfolios: merged, autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved' });
   },
-
-  loadPortfolios: () => set({ portfolios: mockDb.getPortfolios() }),
 
   getPortfolio: (studentId, assignmentId, studentName = 'Học sinh', className = '') => {
     const key = `port-${studentId}-${assignmentId}`;
@@ -105,7 +100,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     };
     dirtyPortfolioKeys.add(key);
     pendingSubmissionKeys.delete(key);
-    mockDb.savePortfolio(updated);
     set(state => ({ portfolios: { ...state.portfolios, [key]: updated }, autosaveStatus: 'dirty' }));
 
     const existing = saveTimers.get(key);
@@ -206,7 +200,6 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
           versions: previousVersions
         };
         pendingSubmissionKeys.delete(key);
-        mockDb.savePortfolio(updated);
         set(state => ({
           portfolios: { ...state.portfolios, [key]: updated },
           autosaveStatus: dirtyPortfolioKeys.size ? 'dirty' : 'saved',

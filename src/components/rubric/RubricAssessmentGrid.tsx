@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { RubricMatrix, RubricAssessmentSubmission } from '../../types';
 import { POETIC_AXES } from '../../data/seedData';
 import { CheckCircle, Award, MessageSquare } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthStore } from '../../app/store/useAuthStore';
 
 interface RubricAssessmentGridProps {
   rubric: RubricMatrix;
@@ -23,7 +23,7 @@ export const RubricAssessmentGrid: React.FC<RubricAssessmentGridProps> = ({
   onSubmitAssessment,
   isReadOnly = false
 }) => {
-  const { currentUser } = useAuth();
+  const currentUser = useAuthStore(state => state.currentUser);
 
   // Find submissions for this version
   const versionSubs = existingSubmissions.filter(s => s.versionNumber === versionNumber);

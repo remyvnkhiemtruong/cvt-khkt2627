@@ -119,7 +119,6 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
   const integrityError = Boolean(currentPortfolio && selectedVersion && !selectedSnapshot);
   const activeResponse = selectedSnapshot?.responses?.[activeAxisId];
 
-  // Invariant TC18 & TC19: reset rubricScores when student or version changes
   useEffect(() => {
     const reset = Object.fromEntries((activeRubric.criteria || []).map(criterion => [criterion.id, 0]));
     if (!currentPortfolio || !assignment || !selectedVersion || !selectedSnapshot) {
@@ -171,13 +170,15 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     setIsEditingAiProposal(false);
   }, [pendingAiProposal?.id, pendingAiProposal?.response]);
 
-  // Current reflection for this student & assignment
   const currentReflection = useMemo(() => {
-    if (!currentPortfolio || !assignment) return null;
-    return reflections.find(r => r.studentId === currentPortfolio.studentId && r.assignmentId === assignment.id) || null;
-  }, [reflections, currentPortfolio, assignment]);
+    if (!currentPortfolio || !assignment || !selectedSnapshot) return null;
+    return reflections.find(r =>
+      r.studentId === currentPortfolio.studentId &&
+      r.assignmentId === assignment.id &&
+      r.versionId === selectedSnapshot.id
+    ) || null;
+  }, [reflections, currentPortfolio, assignment, selectedSnapshot]);
 
-  // Rubric status for current student & version
   const currentRubricSubmission = useMemo(() => {
     if (!currentPortfolio || !assignment || !selectedVersion) return null;
     return rubricSubmissions.find(item =>
@@ -198,12 +199,50 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
     return sum + max * Number(criterion.weight || 1);
   }, 0);
 
-  // Keyboard navigation
+  const filteredQueue = useMemo(() => queue.filter(item => {
+    const matchQuery = !searchQuery.trim() ||
+      item.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.className && item.className.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (!matchQuery) return false;
+
+    if (filterState === 'all') return true;
+    const hasRubric = rubricSubmissions.some(r =>
+      r.studentId === item.studentId &&
+      r.assignmentId === item.assignmentId &&
+      r.evaluatorRole === evaluatorRole
+    );
+    if (filterState === 'graded') return hasRubric;
+    if (filterState === 'pending') return !hasRubric;
+    return true;
+  }), [queue, searchQuery, filterState, rubricSubmissions, evaluatorRole]);
+
+  const visibleQueueIndex = currentPortfolio
+    ? filteredQueue.findIndex(item => item.id === currentPortfolio.id)
+    : -1;
+
+  useEffect(() => {
+    if (!filteredQueue.length || visibleQueueIndex >= 0) return;
+    const firstVisibleIndex = queue.findIndex(item => item.id === filteredQueue[0].id);
+    if (firstVisibleIndex >= 0) {
+      setCurrentIndex(firstVisibleIndex);
+      setSelectedText('');
+    }
+  }, [filteredQueue, visibleQueueIndex, queue]);
+
+  const changeStudent = (offset: number) => {
+    if (visibleQueueIndex < 0) return;
+    const nextItem = filteredQueue[visibleQueueIndex + offset];
+    if (!nextItem) return;
+    const nextIndex = queue.findIndex(item => item.id === nextItem.id);
+    if (nextIndex >= 0) {
+      setCurrentIndex(nextIndex);
+      setSelectedText('');
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
-        return;
-      }
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if (e.altKey && (e.key === '[' || e.key === 'ArrowLeft')) {
         e.preventDefault();
         changeStudent(-1);
@@ -331,54 +370,17 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
   const captureSelection = () => {
     const text = window.getSelection()?.toString().trim() || '';
-    if (text.length >= 5) {
-      setSelectedText(text.slice(0, 1000));
-    }
+    if (text.length >= 5) setSelectedText(text.slice(0, 1000));
   };
 
-  const attachSnippetToComment = () => {
-    setActiveTab('comment');
-  };
-
-  const changeStudent = (offset: number) => {
-    const next = currentIndex + offset;
-    if (next >= 0 && next < queue.length) {
-      setCurrentIndex(next);
-      setSelectedText('');
-    }
-  };
-
-  // Filter queue
-  const filteredQueue = queue.filter(item => {
-    const matchQuery = !searchQuery.trim() ||
-      item.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.className && item.className.toLowerCase().includes(searchQuery.toLowerCase()));
-    if (!matchQuery) return false;
-
-    if (filterState === 'all') return true;
-    const hasRubric = rubricSubmissions.some(r =>
-      r.studentId === item.studentId &&
-      r.assignmentId === assignment.id &&
-      r.evaluatorRole === evaluatorRole
-    );
-    if (filterState === 'graded') return hasRubric;
-    if (filterState === 'pending') return !hasRubric;
-    return true;
-  });
+  const attachSnippetToComment = () => setActiveTab('comment');
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white text-slate-800">
-      {/* Fixed Grading Console Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-2.5 backdrop-blur sm:px-5">
         <div className="mx-auto flex max-w-[100rem] flex-wrap items-center justify-between gap-3">
-          {/* Left: Student Identity & Version */}
           <div className="flex min-w-0 items-center gap-3">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onNavigate(isPeerMode ? 'portfolio-list' : 'teacher-dashboard')}
-              leftIcon={<ArrowLeftIcon className="h-4 w-4" />}
-            >
+            <Button size="sm" variant="ghost" onClick={() => onNavigate(isPeerMode ? 'portfolio-list' : 'teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
               Quay lại
             </Button>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
@@ -387,620 +389,123 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
                 <strong className="truncate text-base font-bold text-slate-900">{currentPortfolio.studentName}</strong>
                 <Badge size="sm" variant="outline">Lớp {currentPortfolio.className || '—'}</Badge>
                 <Badge size="sm" variant="primary">{selectedSnapshot.versionNumber}</Badge>
-                {currentRubricSubmission ? (
-                  <Badge size="sm" variant="emerald">Đã chấm: {currentRubricSubmission.totalScore}/{currentRubricSubmission.maxScore}đ</Badge>
-                ) : (
-                  <Badge size="sm" variant="amber">Chưa chấm Rubric</Badge>
-                )}
-                {pendingAiProposal && evaluatorRole === 'teacher' && (
-                  <Badge size="sm" variant="blue">Có đề xuất AI</Badge>
-                )}
+                {currentRubricSubmission ? <Badge size="sm" variant="emerald">Đã chấm: {currentRubricSubmission.totalScore}/{currentRubricSubmission.maxScore}đ</Badge> : <Badge size="sm" variant="amber">Chưa chấm Rubric</Badge>}
+                {pendingAiProposal && evaluatorRole === 'teacher' && <Badge size="sm" variant="blue">Có đề xuất AI</Badge>}
               </div>
-              <div className="mt-0.5 truncate text-xs text-slate-500">
-                {assignment.title}{literatureText ? ` · ${literatureText.title}` : ''}
-              </div>
+              <div className="mt-0.5 truncate text-xs text-slate-500">{assignment.title}{literatureText ? ` · ${literatureText.title}` : ''}</div>
             </div>
           </div>
 
-          {/* Right: Quick Student Switcher */}
           <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center gap-1 text-xs text-slate-400 mr-2">
-              <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-xs">Alt+[</kbd>
-              <span>/</span>
-              <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-xs">Alt+]</kbd>
+              <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-xs">Alt+[</kbd><span>/</span><kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-xs">Alt+]</kbd>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentIndex === 0}
-              onClick={() => changeStudent(-1)}
-              leftIcon={<ChevronLeftIcon className="h-4 w-4" />}
-            >
+            <Button size="sm" variant="outline" disabled={visibleQueueIndex <= 0} onClick={() => changeStudent(-1)} leftIcon={<ChevronLeftIcon className="h-4 w-4" />}>
               Học sinh trước
             </Button>
-            <span className="min-w-16 text-center text-xs font-semibold text-slate-600">
-              {currentIndex + 1} / {queue.length}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentIndex >= queue.length - 1}
-              onClick={() => changeStudent(1)}
-              rightIcon={<ChevronRightIcon className="h-4 w-4" />}
-            >
+            <span className="min-w-16 text-center text-xs font-semibold text-slate-600">{visibleQueueIndex >= 0 ? visibleQueueIndex + 1 : 0} / {filteredQueue.length}</span>
+            <Button size="sm" variant="outline" disabled={visibleQueueIndex < 0 || visibleQueueIndex >= filteredQueue.length - 1} onClick={() => changeStudent(1)} rightIcon={<ChevronRightIcon className="h-4 w-4" />}>
               Học sinh tiếp
             </Button>
           </div>
         </div>
       </header>
 
-      {/* 3-Pane Responsive Layout */}
       <div className="mx-auto grid w-full max-w-[100rem] grid-cols-1 lg:grid-cols-[250px_minmax(0,1fr)_390px]">
-        {/* Left Pane: Student Queue & Version Selector */}
         <aside className="space-y-3.5 border-b border-slate-200 bg-slate-50/75 p-3.5 lg:border-b-0 lg:border-r lg:p-4">
-          {/* Version Selector */}
           <div>
             <label className="block space-y-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
               <span>Phiên bản chấm</span>
-              <select
-                value={selectedVersion}
-                onChange={event => setSelectedVersion(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium normal-case tracking-normal text-slate-800 outline-none transition focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
-              >
-                {currentPortfolio.versions.map(version => (
-                  <option key={version.id} value={version.versionNumber}>
-                    {version.versionNumber} · {version.stage === 'prediction' ? 'Dự đoán' : version.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}
-                  </option>
-                ))}
+              <select value={selectedVersion} onChange={event => setSelectedVersion(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium normal-case tracking-normal text-slate-800 outline-none transition focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10">
+                {currentPortfolio.versions.map(version => <option key={version.id} value={version.versionNumber}>{version.versionNumber} · {version.stage === 'prediction' ? 'Dự đoán' : version.stage === 'initial' ? 'Bản đầu' : 'Bản chỉnh sửa'}</option>)}
               </select>
             </label>
           </div>
 
-          {/* Student Queue List */}
           <div className="border-t border-slate-200 pt-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Danh sách học sinh</span>
-              <Badge size="sm" variant="outline">{queue.length}</Badge>
-            </div>
-
-            {/* Quick search */}
+            <div className="mb-2 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-slate-500">Danh sách học sinh</span><Badge size="sm" variant="outline">{filteredQueue.length}</Badge></div>
             <div className="relative mb-2">
               <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm học sinh..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 outline-none placeholder:text-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-              />
+              <input type="text" placeholder="Tìm học sinh..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 outline-none placeholder:text-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
             </div>
-
-            {/* Queue Filter Tabs */}
             <div className="mb-2 flex gap-1 rounded-md border border-slate-200 bg-white p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setFilterState('all')}
-                className={`flex-1 rounded py-1 font-medium transition ${filterState === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                Tất cả
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterState('pending')}
-                className={`flex-1 rounded py-1 font-medium transition ${filterState === 'pending' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                Chờ chấm
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterState('graded')}
-                className={`flex-1 rounded py-1 font-medium transition ${filterState === 'graded' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                Đã chấm
-              </button>
+              <button type="button" onClick={() => setFilterState('all')} className={`flex-1 rounded py-1 font-medium transition ${filterState === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}>Tất cả</button>
+              <button type="button" onClick={() => setFilterState('pending')} className={`flex-1 rounded py-1 font-medium transition ${filterState === 'pending' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}>Chờ chấm</button>
+              <button type="button" onClick={() => setFilterState('graded')} className={`flex-1 rounded py-1 font-medium transition ${filterState === 'graded' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}>Đã chấm</button>
             </div>
 
             <div className="max-h-[58vh] space-y-1 overflow-y-auto pr-0.5">
-              {filteredQueue.length === 0 ? (
-                <p className="p-3 text-center text-xs text-slate-400">Không tìm thấy học sinh phù hợp.</p>
-              ) : (
-                filteredQueue.map((item) => {
-                  const actualIndex = queue.findIndex(q => q.id === item.id);
-                  const active = actualIndex === currentIndex;
-                  const isGraded = rubricSubmissions.some(r =>
-                    r.studentId === item.studentId &&
-                    r.assignmentId === assignment.id &&
-                    r.evaluatorRole === evaluatorRole
-                  );
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setCurrentIndex(actualIndex);
-                        setSelectedText('');
-                      }}
-                      aria-current={active ? 'true' : undefined}
-                      className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
-                        active
-                          ? 'border-primary-300 bg-primary-50/90 font-semibold text-primary-950 shadow-xs'
-                          : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="truncate">{item.studentName}</span>
-                        {isGraded ? (
-                          <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" title="Đã chấm Rubric" />
-                        ) : (
-                          <ClockIcon className="h-3.5 w-3.5 shrink-0 text-amber-500" title="Chưa chấm" />
-                        )}
-                      </div>
-                      <div className={`mt-0.5 text-xs ${active ? 'text-primary-700' : 'text-slate-400'}`}>
-                        Lớp {item.className || '—'} · {item.versions[item.versions.length - 1]?.versionNumber}
-                      </div>
-                    </button>
-                  );
-                })
-              )}
+              {filteredQueue.length === 0 ? <p className="p-3 text-center text-xs text-slate-400">Không tìm thấy học sinh phù hợp.</p> : filteredQueue.map(item => {
+                const actualIndex = queue.findIndex(q => q.id === item.id);
+                const active = actualIndex === currentIndex;
+                const isGraded = rubricSubmissions.some(r => r.studentId === item.studentId && r.assignmentId === item.assignmentId && r.evaluatorRole === evaluatorRole);
+                return (
+                  <button key={item.id} type="button" onClick={() => { setCurrentIndex(actualIndex); setSelectedText(''); }} aria-current={active ? 'true' : undefined} className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${active ? 'border-primary-300 bg-primary-50/90 font-semibold text-primary-950 shadow-xs' : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900'}`}>
+                    <div className="flex items-center justify-between gap-1"><span className="truncate">{item.studentName}</span>{isGraded ? <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" title="Đã chấm Rubric" /> : <ClockIcon className="h-3.5 w-3.5 shrink-0 text-amber-500" title="Chưa chấm" />}</div>
+                    <div className={`mt-0.5 text-xs ${active ? 'text-primary-700' : 'text-slate-400'}`}>Lớp {item.className || '—'} · {item.versions[item.versions.length - 1]?.versionNumber}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
 
-        {/* Center Pane: Student Submission & Axes */}
         <main className="min-w-0 space-y-5 p-4 sm:p-6 lg:p-7">
-          {/* Axis Navigation Tabs */}
           <div className="flex gap-1 overflow-x-auto border-b border-slate-200 pb-px" role="tablist" aria-label="Trục thi pháp">
             {POETIC_AXES.map((axis, index) => {
               const resp = selectedSnapshot?.responses?.[axis.id];
               const hasText = Boolean(resp?.analysisText?.trim());
-              const axisFeedbacks = feedbacks.filter(f =>
-                f.studentId === currentPortfolio.studentId &&
-                f.assignmentId === assignment.id &&
-                f.axisId === axis.id &&
-                f.versionNumber === selectedVersion
-              );
+              const axisFeedbacks = feedbacks.filter(f => f.studentId === currentPortfolio.studentId && f.assignmentId === assignment.id && f.axisId === axis.id && f.versionNumber === selectedVersion);
               const isCurrent = activeAxisId === axis.id;
-
               return (
-                <button
-                  key={axis.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isCurrent}
-                  onClick={() => setActiveAxisId(axis.id)}
-                  className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors ${
-                    isCurrent
-                      ? 'border-primary-700 text-primary-900 font-semibold'
-                      : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
-                  }`}
-                >
-                  <span className="text-xs font-mono text-slate-400">{index + 1}.</span>
-                  <span>{axis.shortName}</span>
-                  {hasText && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" title="Có nội dung" />}
-                  {axisFeedbacks.length > 0 && (
-                    <span className="rounded-full bg-amber-100 px-1.5 py-0.2 text-xs font-bold text-amber-800">
-                      {axisFeedbacks.length}
-                    </span>
-                  )}
+                <button key={axis.id} type="button" role="tab" aria-selected={isCurrent} onClick={() => setActiveAxisId(axis.id)} className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors ${isCurrent ? 'border-primary-700 text-primary-900 font-semibold' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}>
+                  <span className="text-xs font-mono text-slate-400">{index + 1}.</span><span>{axis.shortName}</span>{hasText && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" title="Có nội dung" />}{axisFeedbacks.length > 0 && <span className="rounded-full bg-amber-100 px-1.5 py-0.2 text-xs font-bold text-amber-800">{axisFeedbacks.length}</span>}
                 </button>
               );
             })}
           </div>
 
-          {/* Pending AI Review Proposal Callout (Preserving exact required tokens) */}
           {pendingAiProposal && evaluatorRole === 'teacher' && (
             <section className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/70 p-4 shadow-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-sky-700">Lịch sử AI</div>
-                  <h3 className="mt-0.5 text-sm font-bold text-slate-900">Góp ý AI đã gửi học sinh</h3>
-                </div>
-                <Badge variant="blue">Chờ giáo viên xem</Badge>
-              </div>
-              {isEditingAiProposal ? (
-                <textarea
-                  rows={5}
-                  value={editedAiText}
-                  onChange={event => setEditedAiText(event.target.value)}
-                  placeholder="Nhập nội dung bổ sung hoặc sửa đổi..."
-                  className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
-                />
-              ) : (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 bg-white/70 p-3 rounded-lg border border-sky-100">
-                  {pendingAiProposal.response}
-                </p>
-              )}
-              <p className="text-xs leading-5 text-slate-500">
-                Học sinh đã thấy góp ý này. Giáo viên có thể lưu một phần bổ sung riêng mà không ghi đè lịch sử AI.
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-xs font-bold uppercase tracking-wider text-sky-700">Lịch sử AI</div><h3 className="mt-0.5 text-sm font-bold text-slate-900">Góp ý AI đã gửi học sinh</h3></div><Badge variant="blue">Chờ giáo viên xem</Badge></div>
+              {isEditingAiProposal ? <textarea rows={5} value={editedAiText} onChange={event => setEditedAiText(event.target.value)} placeholder="Nhập nội dung bổ sung hoặc sửa đổi..." className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /> : <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 bg-white/70 p-3 rounded-lg border border-sky-100">{pendingAiProposal.response}</p>}
+              <p className="text-xs leading-5 text-slate-500">Học sinh đã thấy góp ý này. Giáo viên có thể lưu một phần bổ sung riêng mà không ghi đè lịch sử AI.</p>
               <div className="flex flex-wrap gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant="primary"
-                  isLoading={isSubmittingAiReview}
-                  onClick={() => handleTeacherAiDecision(isEditingAiProposal ? 'revised' : 'approved')}
-                >
-                  {isEditingAiProposal ? 'Gửi bổ sung của giáo viên' : 'Đã xem góp ý AI'}
-                </Button>
-                {!isEditingAiProposal && (
-                  <Button size="sm" variant="outline" onClick={() => setIsEditingAiProposal(true)}>
-                    Chỉnh sửa và bổ sung
-                  </Button>
-                )}
-                {isEditingAiProposal && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditedAiText(pendingAiProposal.response || '');
-                      setIsEditingAiProposal(false);
-                    }}
-                  >
-                    Hủy sửa
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  isLoading={isSubmittingAiReview}
-                  onClick={() => handleTeacherAiDecision('rejected')}
-                >
-                  Đánh dấu không sử dụng
-                </Button>
+                <Button size="sm" variant="primary" isLoading={isSubmittingAiReview} onClick={() => handleTeacherAiDecision(isEditingAiProposal ? 'revised' : 'approved')}>{isEditingAiProposal ? 'Gửi bổ sung của giáo viên' : 'Đã xem góp ý AI'}</Button>
+                {!isEditingAiProposal && <Button size="sm" variant="outline" onClick={() => setIsEditingAiProposal(true)}>Chỉnh sửa và bổ sung</Button>}
+                {isEditingAiProposal && <Button size="sm" variant="ghost" onClick={() => { setEditedAiText(pendingAiProposal.response || ''); setIsEditingAiProposal(false); }}>Hủy sửa</Button>}
+                <Button size="sm" variant="ghost" isLoading={isSubmittingAiReview} onClick={() => handleTeacherAiDecision('rejected')}>Đánh dấu không sử dụng</Button>
               </div>
             </section>
           )}
 
-          {/* Student Essay Reading Section */}
           <section className="space-y-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-3">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Phiên bản bất biến</div>
-                <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">
-                  {POETIC_AXES.find(axis => axis.id === activeAxisId)?.title}
-                </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{selectedSnapshot.versionNumber}</Badge>
-                <span className="text-xs text-slate-400">
-                  {activeResponse?.analysisText ? `${activeResponse.analysisText.trim().split(/\s+/).length} từ` : '0 từ'}
-                </span>
-              </div>
-            </div>
-
-            {/* Selection Hint / Action bar */}
-            {selectedText && (
-              <div className="flex items-center justify-between rounded-lg border border-primary-200 bg-primary-50/80 px-3.5 py-2 text-xs">
-                <div className="truncate text-primary-900">
-                  <span className="font-semibold">Đã chọn đoạn:</span> &ldquo;{selectedText.slice(0, 70)}{selectedText.length > 70 ? '...' : ''}&rdquo;
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <Button size="sm" variant="primary" onClick={attachSnippetToComment} leftIcon={<PencilSquareIcon className="h-3.5 w-3.5" />}>
-                    Gắn nhận xét
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSelectedText('')}>
-                    Bỏ chọn
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Essay Text with text selection capture */}
-            <div
-              onMouseUp={captureSelection}
-              className="min-h-64 select-text whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-5 text-[15px] leading-8 text-slate-800 shadow-xs selection:bg-primary-100 selection:text-primary-900"
-            >
-              {activeResponse?.analysisText?.trim() || (
-                <span className="italic text-slate-400">Học sinh chưa viết nội dung ở trục này.</span>
-              )}
-            </div>
-
-            {/* Evidence Quotes */}
-            {activeResponse?.evidenceQuotes && activeResponse.evidenceQuotes.length > 0 && (
-              <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Dẫn chứng học sinh trích xuất ({activeResponse.evidenceQuotes.length})
-                </div>
-                <div className="space-y-2">
-                  {activeResponse.evidenceQuotes.map(item => (
-                    <blockquote key={item.id} className="rounded-md border-l-3 border-primary-400 bg-white p-3 text-xs italic leading-relaxed text-slate-700 shadow-xs">
-                      &ldquo;{item.text}&rdquo;
-                    </blockquote>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-3"><div><div className="text-xs font-bold uppercase tracking-wider text-slate-400">Phiên bản bất biến</div><h2 className="mt-1 text-lg font-bold tracking-tight text-slate-950">{POETIC_AXES.find(axis => axis.id === activeAxisId)?.title}</h2></div><div className="flex items-center gap-2"><Badge variant="outline">{selectedSnapshot.versionNumber}</Badge><span className="text-xs text-slate-400">{activeResponse?.analysisText ? `${activeResponse.analysisText.trim().split(/\s+/).length} từ` : '0 từ'}</span></div></div>
+            {selectedText && <div className="flex items-center justify-between rounded-lg border border-primary-200 bg-primary-50/80 px-3.5 py-2 text-xs"><div className="truncate text-primary-900"><span className="font-semibold">Đã chọn đoạn:</span> &ldquo;{selectedText.slice(0, 70)}{selectedText.length > 70 ? '...' : ''}&rdquo;</div><div className="flex items-center gap-1.5 shrink-0 ml-2"><Button size="sm" variant="primary" onClick={attachSnippetToComment} leftIcon={<PencilSquareIcon className="h-3.5 w-3.5" />}>Gắn nhận xét</Button><Button size="sm" variant="ghost" onClick={() => setSelectedText('')}>Bỏ chọn</Button></div></div>}
+            <div onMouseUp={captureSelection} className="min-h-64 select-text whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-5 text-[15px] leading-8 text-slate-800 shadow-xs selection:bg-primary-100 selection:text-primary-900">{activeResponse?.analysisText?.trim() || <span className="italic text-slate-400">Học sinh chưa viết nội dung ở trục này.</span>}</div>
+            {activeResponse?.evidenceQuotes && activeResponse.evidenceQuotes.length > 0 && <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/60 p-4"><div className="text-xs font-bold uppercase tracking-wider text-slate-500">Dẫn chứng học sinh trích xuất ({activeResponse.evidenceQuotes.length})</div><div className="space-y-2">{activeResponse.evidenceQuotes.map(item => <blockquote key={item.id} className="rounded-md border-l-3 border-primary-400 bg-white p-3 text-xs italic leading-relaxed text-slate-700 shadow-xs">&ldquo;{item.text}&rdquo;</blockquote>)}</div></div>}
           </section>
 
-          {/* Feedback History on This Axis */}
-          {currentFeedbacks.length > 0 && (
-            <section className="space-y-3 border-t border-slate-200 pt-5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-800">
-                  Nhận xét đã lưu trên trục này ({currentFeedbacks.length})
-                </h3>
-              </div>
-              <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-                {currentFeedbacks.map(item => (
-                  <div key={item.id} className="space-y-1.5 p-3.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <strong className="font-semibold text-slate-800">{item.authorName}</strong>
-                      <Badge size="sm" variant={item.authorRole === 'teacher' ? 'primary' : 'outline'}>
-                        {item.authorRole === 'teacher' ? 'Giáo viên' : 'Học sinh'}
-                      </Badge>
-                    </div>
-                    {item.selectedSnippet && (
-                      <div className="rounded border-l-2 border-slate-300 bg-slate-50 p-2 italic text-slate-600">
-                        &ldquo;{item.selectedSnippet}&rdquo;
-                      </div>
-                    )}
-                    <p className="leading-relaxed text-slate-800">{item.comment}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {currentFeedbacks.length > 0 && <section className="space-y-3 border-t border-slate-200 pt-5"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-800">Nhận xét đã lưu trên trục này ({currentFeedbacks.length})</h3></div><div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">{currentFeedbacks.map(item => <div key={item.id} className="space-y-1.5 p-3.5 text-xs"><div className="flex items-center justify-between"><strong className="font-semibold text-slate-800">{item.authorName}</strong><Badge size="sm" variant={item.authorRole === 'teacher' ? 'primary' : 'outline'}>{item.authorRole === 'teacher' ? 'Giáo viên' : 'Học sinh'}</Badge></div>{item.selectedSnippet && <div className="rounded border-l-2 border-slate-300 bg-slate-50 p-2 italic text-slate-600">&ldquo;{item.selectedSnippet}&rdquo;</div>}<p className="leading-relaxed text-slate-800">{item.comment}</p></div>)}</div></section>}
         </main>
 
-        {/* Right Pane: Inspector Panel with Tabs */}
         <aside className="space-y-4 border-t border-slate-200 bg-slate-50/60 p-4 lg:border-l lg:border-t-0 lg:p-5">
-          {/* Inspector Tab Switcher */}
           <div className="flex rounded-lg border border-slate-200 bg-white p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('comment')}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${
-                activeTab === 'comment' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5" />
-              <span>Nhận xét</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('rubric')}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${
-                activeTab === 'rubric' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <DocumentCheckIcon className="h-3.5 w-3.5" />
-              <span>Rubric ({totalScore}/{maxScore})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('ai')}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${
-                activeTab === 'ai' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <SparklesIcon className="h-3.5 w-3.5" />
-              <span>AI</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('reflection')}
-              className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${
-                activeTab === 'reflection' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <BookOpenIcon className="h-3.5 w-3.5" />
-              <span>REF1</span>
-            </button>
+            <button type="button" onClick={() => setActiveTab('comment')} className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${activeTab === 'comment' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}><ChatBubbleLeftRightIcon className="h-3.5 w-3.5" /><span>Nhận xét</span></button>
+            <button type="button" onClick={() => setActiveTab('rubric')} className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${activeTab === 'rubric' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}><DocumentCheckIcon className="h-3.5 w-3.5" /><span>Rubric ({totalScore}/{maxScore})</span></button>
+            <button type="button" onClick={() => setActiveTab('ai')} className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${activeTab === 'ai' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}><SparklesIcon className="h-3.5 w-3.5" /><span>AI</span></button>
+            <button type="button" onClick={() => setActiveTab('reflection')} className={`flex-1 flex items-center justify-center gap-1 rounded-md py-1.5 font-medium transition ${activeTab === 'reflection' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}><BookOpenIcon className="h-3.5 w-3.5" /><span>REF1</span></button>
           </div>
 
-          {/* Tab 1: Anchored Comment */}
-          {activeTab === 'comment' && (
-            <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Nhận xét trực tiếp</h3>
-                <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">
-                  Bôi đen một đoạn trong bài để gắn nhận xét vào đúng dẫn chứng, hoặc nhập nhận xét chung cho trục này.
-                </p>
-              </div>
+          {activeTab === 'comment' && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs"><div><h3 className="text-sm font-bold text-slate-900">Nhận xét trực tiếp</h3><p className="mt-0.5 text-xs text-slate-500 leading-relaxed">Bôi đen một đoạn trong bài để gắn nhận xét vào đúng dẫn chứng, hoặc nhập nhận xét chung cho trục này.</p></div>{selectedText ? <div className="rounded-lg border-l-2 border-primary-400 bg-primary-50/70 p-2.5 text-xs italic leading-relaxed text-slate-700"><div className="flex items-center justify-between font-semibold not-italic text-primary-900 mb-1"><span>Đoạn trích gắn kèm</span><button type="button" onClick={() => setSelectedText('')} className="text-slate-400 hover:text-slate-600">×</button></div>&ldquo;{selectedText}&rdquo;</div> : <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center text-xs text-slate-400">Chưa chọn đoạn trích (nhận xét sẽ gắn vào toàn trục)</div>}<div><textarea rows={5} value={feedbackText} onChange={event => setFeedbackText(event.target.value)} placeholder="Nhập nhận xét cụ thể cho học sinh..." className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div><Button className="w-full" size="sm" variant="primary" isLoading={isSubmittingFeedback} onClick={createFeedback}>Gửi nhận xét</Button></section>}
 
-              {selectedText ? (
-                <div className="rounded-lg border-l-2 border-primary-400 bg-primary-50/70 p-2.5 text-xs italic leading-relaxed text-slate-700">
-                  <div className="flex items-center justify-between font-semibold not-italic text-primary-900 mb-1">
-                    <span>Đoạn trích gắn kèm</span>
-                    <button type="button" onClick={() => setSelectedText('')} className="text-slate-400 hover:text-slate-600">×</button>
-                  </div>
-                  &ldquo;{selectedText}&rdquo;
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2.5 text-center text-xs text-slate-400">
-                  Chưa chọn đoạn trích (nhận xét sẽ gắn vào toàn trục)
-                </div>
-              )}
+          {activeTab === 'rubric' && <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs"><div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"><div><h3 className="text-sm font-bold text-slate-900">{activeRubric.title || 'Rubric đánh giá'}</h3><p className="mt-0.5 text-xs text-slate-500">Chọn đủ mức cho 6 tiêu chí trước khi lưu.</p></div><div className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-bold text-white shadow-xs">{totalScore}/{maxScore}đ</div></div>{!activeRubric.criteria.length ? <p className="text-xs text-slate-500">Nhiệm vụ chưa có rubric hợp lệ.</p> : <div className="space-y-3 max-h-[44vh] overflow-y-auto pr-1">{activeRubric.criteria.map((criterion, idx) => { const currentLevel = rubricScores[criterion.id] || 0; return <div key={criterion.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0"><div className="flex items-center justify-between"><span className="text-xs font-semibold leading-5 text-slate-800">{idx + 1}. {criterion.title}</span>{currentLevel > 0 ? <span className="text-xs font-bold text-primary-700">Mức {currentLevel}</span> : <span className="text-xs text-amber-600 font-medium">Chưa chọn</span>}</div><div className="grid grid-cols-4 gap-1.5">{criterion.levels.map(level => { const isSelected = currentLevel === level.level; return <button key={level.level} type="button" title={`${criterion.title}: mức ${level.level} - ${level.label}`} onClick={() => setRubricScores(previous => ({ ...previous, [criterion.id]: level.level }))} className={`flex flex-col items-center justify-center rounded-lg border py-1.5 px-1 text-xs transition ${isSelected ? 'border-primary-700 bg-primary-700 text-white font-bold shadow-xs' : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50'}`}><span className="font-bold">M{level.level}</span><span className={`text-xs truncate max-w-full ${isSelected ? 'text-primary-100' : 'text-slate-400'}`}>{level.score}đ</span></button>; })}</div></div>; })}</div>}<div><label className="block text-xs font-semibold text-slate-700 mb-1">Nhận xét tổng kết toàn bài</label><textarea rows={3} value={overallFeedback} onChange={event => setOverallFeedback(event.target.value)} placeholder="Nhận xét tổng thể, khích lệ và định hướng..." className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs leading-relaxed outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10" /></div><Button className="w-full" size="sm" variant="primary" disabled={!activeRubric.criteria.length} isLoading={isSubmittingRubric} onClick={saveRubric}>Lưu điểm rubric</Button></section>}
 
-              <div>
-                <textarea
-                  rows={5}
-                  value={feedbackText}
-                  onChange={event => setFeedbackText(event.target.value)}
-                  placeholder="Nhập nhận xét cụ thể cho học sinh..."
-                  className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm leading-relaxed outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
-                />
-              </div>
-              <Button
-                className="w-full"
-                size="sm"
-                variant="primary"
-                isLoading={isSubmittingFeedback}
-                onClick={createFeedback}
-              >
-                Gửi nhận xét
-              </Button>
-            </section>
-          )}
+          {activeTab === 'ai' && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Trạng thái phản hồi AI</h3>{pendingAiProposal ? <Badge variant="blue">Chờ duyệt</Badge> : <Badge variant="outline">Đã gửi / Không có</Badge>}</div>{pendingAiProposal ? <div className="space-y-3 text-xs"><div className="rounded-lg bg-sky-50 border border-sky-200 p-3 leading-relaxed text-slate-800"><div className="font-semibold text-sky-900 mb-1">Đề xuất AI cho học sinh:</div><p className="whitespace-pre-wrap">{pendingAiProposal.response}</p></div><Button size="sm" variant="primary" className="w-full" onClick={() => handleTeacherAiDecision('approved')}>Đã xem góp ý AI</Button></div> : <p className="text-xs text-slate-500 leading-relaxed">Không có yêu cầu AI đang chờ xử lý cho phiên bản này. Nếu có yêu cầu trước đó, nội dung đã được lưu vào lịch sử phản hồi.</p>}</section>}
 
-          {/* Tab 2: Rubric Scoring */}
-          {activeTab === 'rubric' && (
-            <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">{activeRubric.title || 'Rubric đánh giá'}</h3>
-                  <p className="mt-0.5 text-xs text-slate-500">Chọn đủ mức cho 6 tiêu chí trước khi lưu.</p>
-                </div>
-                <div className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-bold text-white shadow-xs">
-                  {totalScore}/{maxScore}đ
-                </div>
-              </div>
+          {activeTab === 'reflection' && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Phiếu tự phản tư (REF1)</h3>{currentReflection ? <Badge variant="emerald">Đã nộp REF1</Badge> : <Badge variant="amber">Chưa nộp REF1</Badge>}</div>{currentReflection ? <div className="space-y-3 text-xs leading-relaxed max-h-[50vh] overflow-y-auto pr-1"><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">1. Nhận thức thay đổi thế nào sau V1:</span><p className="text-slate-600">{currentReflection.reflection.changedUnderstanding || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">2. Góp ý hữu ích nhất:</span><p className="text-slate-600">{currentReflection.reflection.mostUsefulFeedback || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">3. Điểm chưa đạt ở V1:</span><p className="text-slate-600">{currentReflection.reflection.incompleteInV1 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">4. Điểm tiến bộ ở V2:</span><p className="text-slate-600">{currentReflection.reflection.improvedInV2 || '—'}</p></div><div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1"><span className="font-semibold text-slate-800 block">5. Vận dụng cho bài đọc sau:</span><p className="text-slate-600">{currentReflection.reflection.transferToNextReading || '—'}</p></div></div> : <p className="text-xs text-slate-500 leading-relaxed">Học sinh chưa hoàn thành phiếu REF1 cho phiên bản đang chấm. Theo quy trình, học sinh cần tự phản tư sau V2 trước khi nhận điểm chính thức.</p>}</section>}
 
-              {!activeRubric.criteria.length ? (
-                <p className="text-xs text-slate-500">Nhiệm vụ chưa có rubric hợp lệ.</p>
-              ) : (
-                <div className="space-y-3 max-h-[44vh] overflow-y-auto pr-1">
-                  {activeRubric.criteria.map((criterion, idx) => {
-                    const currentLevel = rubricScores[criterion.id] || 0;
-                    return (
-                      <div key={criterion.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold leading-5 text-slate-800">
-                            {idx + 1}. {criterion.title}
-                          </span>
-                          {currentLevel > 0 ? (
-                            <span className="text-xs font-bold text-primary-700">Mức {currentLevel}</span>
-                          ) : (
-                            <span className="text-xs text-amber-600 font-medium">Chưa chọn</span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {criterion.levels.map(level => {
-                            const isSelected = currentLevel === level.level;
-                            return (
-                              <button
-                                key={level.level}
-                                type="button"
-                                title={`${criterion.title}: mức ${level.level} - ${level.label}`}
-                                onClick={() => setRubricScores(previous => ({ ...previous, [criterion.id]: level.level }))}
-                                className={`flex flex-col items-center justify-center rounded-lg border py-1.5 px-1 text-xs transition ${
-                                  isSelected
-                                    ? 'border-primary-700 bg-primary-700 text-white font-bold shadow-xs'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50'
-                                }`}
-                              >
-                                <span className="font-bold">M{level.level}</span>
-                                <span className={`text-xs truncate max-w-full ${isSelected ? 'text-primary-100' : 'text-slate-400'}`}>
-                                  {level.score}đ
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nhận xét tổng kết toàn bài</label>
-                <textarea
-                  rows={3}
-                  value={overallFeedback}
-                  onChange={event => setOverallFeedback(event.target.value)}
-                  placeholder="Nhận xét tổng thể, khích lệ và định hướng..."
-                  className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs leading-relaxed outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
-                />
-              </div>
-
-              <Button
-                className="w-full"
-                size="sm"
-                variant="primary"
-                disabled={!activeRubric.criteria.length}
-                isLoading={isSubmittingRubric}
-                onClick={saveRubric}
-              >
-                Lưu điểm rubric
-              </Button>
-            </section>
-          )}
-
-          {/* Tab 3: AI Proposal / History */}
-          {activeTab === 'ai' && (
-            <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">Trạng thái phản hồi AI</h3>
-                {pendingAiProposal ? (
-                  <Badge variant="blue">Chờ duyệt</Badge>
-                ) : (
-                  <Badge variant="outline">Đã gửi / Không có</Badge>
-                )}
-              </div>
-
-              {pendingAiProposal ? (
-                <div className="space-y-3 text-xs">
-                  <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 leading-relaxed text-slate-800">
-                    <div className="font-semibold text-sky-900 mb-1">Đề xuất AI cho học sinh:</div>
-                    <p className="whitespace-pre-wrap">{pendingAiProposal.response}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    className="w-full"
-                    onClick={() => handleTeacherAiDecision('approved')}
-                  >
-                    Đã xem góp ý AI
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Không có yêu cầu AI đang chờ xử lý cho phiên bản này. Nếu có yêu cầu trước đó, nội dung đã được lưu vào lịch sử phản hồi.
-                </p>
-              )}
-            </section>
-          )}
-
-          {/* Tab 4: Student REF1 Self-Reflection */}
-          {activeTab === 'reflection' && (
-            <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">Phiếu tự phản tư (REF1)</h3>
-                {currentReflection ? (
-                  <Badge variant="emerald">Đã nộp REF1</Badge>
-                ) : (
-                  <Badge variant="amber">Chưa nộp REF1</Badge>
-                )}
-              </div>
-
-              {currentReflection ? (
-                <div className="space-y-3 text-xs leading-relaxed max-h-[50vh] overflow-y-auto pr-1">
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1">
-                    <span className="font-semibold text-slate-800 block">1. Nhận thức thay đổi thế nào sau V1:</span>
-                    <p className="text-slate-600">{currentReflection.reflection.changedUnderstanding || '—'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1">
-                    <span className="font-semibold text-slate-800 block">2. Góp ý hữu ích nhất:</span>
-                    <p className="text-slate-600">{currentReflection.reflection.mostUsefulFeedback || '—'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1">
-                    <span className="font-semibold text-slate-800 block">3. Điểm chưa đạt ở V1:</span>
-                    <p className="text-slate-600">{currentReflection.reflection.incompleteInV1 || '—'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1">
-                    <span className="font-semibold text-slate-800 block">4. Điểm tiến bộ ở V2:</span>
-                    <p className="text-slate-600">{currentReflection.reflection.improvedInV2 || '—'}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-1">
-                    <span className="font-semibold text-slate-800 block">5. Vận dụng cho bài đọc sau:</span>
-                    <p className="text-slate-600">{currentReflection.reflection.transferToNextReading || '—'}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Học sinh chưa hoàn thành phiếu REF1 cho bài này. Theo quy trình, học sinh cần tự phản tư sau V2 trước khi nhận điểm chính thức.
-                </p>
-              )}
-            </section>
-          )}
-
-          {/* Reference text footer */}
-          {literatureText && (
-            <div className="border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
-              Ngữ liệu: <strong className="font-semibold text-slate-700">{literatureText.title}</strong> · {literatureText.author}
-            </div>
-          )}
+          {literatureText && <div className="border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">Ngữ liệu: <strong className="font-semibold text-slate-700">{literatureText.title}</strong> · {literatureText.author}</div>}
         </aside>
       </div>
     </div>

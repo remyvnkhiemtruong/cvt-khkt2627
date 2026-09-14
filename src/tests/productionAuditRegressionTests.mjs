@@ -36,7 +36,7 @@ await test('PA03: dropdown exposes keyboard and ARIA menu semantics', () => {
   assert(source.includes("event.key === 'ArrowDown'"));
   assert(source.includes("event.key === 'ArrowUp'"));
   assert(source.includes("event.key === 'Escape'"));
-  assert(source.includes("role=\"menuitem\""));
+  assert(source.includes('role="menuitem"'));
 });
 
 await test('PA04: production CSP blocks framing/object injection while allowing app fonts', () => {
@@ -48,4 +48,31 @@ await test('PA04: production CSP blocks framing/object injection while allowing 
   assert(source.includes('fonts.gstatic.com'));
 });
 
-console.log(`Production audit regressions: ${passed}/4 passed`);
+await test('PA05: REF1 follows the exact immutable version selected by the reviewer', () => {
+  const source = read('src/views/TeacherReviewView.tsx');
+  assert(source.includes('r.versionId === selectedSnapshot.id'));
+  assert(source.includes('[reflections, currentPortfolio, assignment, selectedSnapshot]'));
+});
+
+await test('PA06: previous/next review navigation operates on the filtered queue', () => {
+  const source = read('src/views/TeacherReviewView.tsx');
+  assert(source.includes('const visibleQueueIndex = currentPortfolio'));
+  assert(source.includes('const nextItem = filteredQueue[visibleQueueIndex + offset]'));
+  assert(source.includes('/ {filteredQueue.length}'));
+  assert(source.includes('disabled={visibleQueueIndex <= 0}'));
+});
+
+await test('PA07: three-tier view hierarchy is role-derived and mutation routes do not inherit', () => {
+  const access = read('src/app/auth/accessControl.ts');
+  const app = read('src/App.tsx');
+  assert(access.includes('admin: 1'));
+  assert(access.includes('teacher: 2'));
+  assert(access.includes('ai: 2'));
+  assert(access.includes('student: 3'));
+  assert(access.includes("'/student/analytics'"));
+  assert(!access.includes("'/student/editor'"));
+  assert(!access.includes("'/teacher/assignment-builder'"));
+  assert(app.includes('canAccessRoute(currentUser.role, routeConfig)'));
+});
+
+console.log(`Production audit regressions: ${passed}/7 passed`);

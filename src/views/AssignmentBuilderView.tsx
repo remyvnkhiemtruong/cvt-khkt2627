@@ -59,12 +59,12 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         setClasses(cs);
         setForm(f => ({
           ...f,
-          classId: f.classId || cs[0]?.code || '',
-          textId: f.textId || texts[0]?.id || '',
-          rubricId: f.rubricId || rubricOptions[0]?.id || rubric.id || ''
+          classId: cs.some((c: AcademicClass) => c.code === f.classId) ? f.classId : cs[0]?.code || '',
+          textId: texts.some(t => t.id === f.textId) ? f.textId : texts[0]?.id || '',
+          rubricId: rubricOptions.some(r => r.id === f.rubricId) ? f.rubricId : rubricOptions[0]?.id || ''
         }));
       });
-  }, [texts, rubricOptions, rubric.id]);
+  }, [texts, rubricOptions]);
 
   const set = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
   const toggleAxis = (id: PoeticAxisId) =>
@@ -88,8 +88,8 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         setMessage('Vui lòng chọn tác phẩm ngữ liệu.');
         return false;
       }
-      if (!form.rubricId) {
-        setMessage('Vui lòng chọn ma trận Rubric đánh giá.');
+      if (!form.rubricId || !rubricOptions.some(option => option.id === form.rubricId)) {
+        setMessage('Vui lòng chọn ma trận Rubric đang có trong hệ thống.');
         return false;
       }
     }
@@ -112,6 +112,10 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   const publish = async () => {
     if (!form.title.trim() || !form.classId || !form.textId || !form.rubricId) {
       setMessage('Thiếu tên nhiệm vụ, lớp, tác phẩm hoặc rubric.');
+      return;
+    }
+    if (!rubricOptions.some(option => option.id === form.rubricId)) {
+      setMessage('Rubric đã chọn không còn hợp lệ. Vui lòng chọn lại ma trận Rubric trước khi xuất bản.');
       return;
     }
     const textId = form.textId;

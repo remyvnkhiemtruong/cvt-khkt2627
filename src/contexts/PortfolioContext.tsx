@@ -61,7 +61,7 @@ interface PortfolioContextType {
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
-const emptyRubric: RubricMatrix = { id: 'rubric-poetics-std', title: 'Rubric', criteria: [] };
+const emptyRubric: RubricMatrix = { id: '', title: 'Rubric', criteria: [] };
 
 async function postAction(payload: unknown) {
   const response = await fetch('/api/academic/action', {
@@ -252,6 +252,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 // eslint-disable-next-line react/only-export-components
 export const usePortfolio = () => {
   const context = useContext(PortfolioContext);
-  if (!context) throw new Error('usePortfolio must be used within a PortfolioProvider');
+  if (!context) throw new Error('usePortfolio must be used within an PortfolioProvider');
   return context;
 };

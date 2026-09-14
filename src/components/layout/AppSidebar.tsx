@@ -80,10 +80,32 @@ const adminSections: NavSection[] = [
     ]
   },
   {
+    label: 'Xem tầng dưới',
+    items: [
+      { id: 'assignment-list', label: 'Nhiệm vụ học sinh', icon: BookOpenIcon },
+      { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
+      { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon }
+    ]
+  },
+  {
     label: 'Theo dõi',
     items: [
       { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon },
       { id: 'researcher-view', label: 'Nghiên cứu', icon: AcademicCapIcon }
+    ]
+  }
+];
+
+const aiSections: NavSection[] = [
+  {
+    label: 'AI Workspace',
+    items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }]
+  },
+  {
+    label: 'Xem học sinh',
+    items: [
+      { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
+      { id: 'portfolio-list', label: 'Hồ sơ trong hàng đợi', icon: FolderIcon }
     ]
   }
 ];
@@ -97,7 +119,7 @@ const sectionsForRole = (role: string): NavSection[] => {
     { id: 'portfolio-list', label: 'Hồ sơ', icon: FolderIcon },
     { id: 'class-analytics', label: 'Phân tích lớp', icon: ChartBarIcon }
   ] }];
-  if (role === 'ai') return [{ label: 'AI Workspace', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] }];
+  if (role === 'ai') return aiSections;
   return [{ label: 'Phản biện', items: [
     { id: 'portfolio-list', label: 'Hồ sơ phản biện', icon: FolderIcon },
     { id: 'teacher-review', label: 'Đánh giá bạn học', icon: ClipboardDocumentCheckIcon }

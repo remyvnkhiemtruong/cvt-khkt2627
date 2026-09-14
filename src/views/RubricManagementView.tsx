@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import type { RubricCriterion } from '../types';
-import { Alert, Button, Input } from '../components/ui';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Alert, Badge, Button, Input } from '../components/ui';
+import { ArrowLeftIcon, BookmarkSquareIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface RubricManagementViewProps {
-  onNavigate: (view: string, extraParams?: any) => void;
+  onNavigate: (view: string, extraParams?: unknown) => void;
 }
 
 async function saveCatalog(payload: unknown) {
@@ -27,6 +27,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
   const [criteria, setCriteria] = useState<RubricCriterion[]>(rubric.criteria);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [previewScores, setPreviewScores] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setTitle(rubric.title);
@@ -56,31 +57,47 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
         text: `Đã tạo phiên bản Rubric mới (${d.id}). Các bài đã chấm trước đó vẫn giữ nguyên tiêu chí cũ.`
       });
       await refreshAcademicData();
-    } catch (e: any) {
-      setMessage({ type: 'error', text: e.message });
+    } catch (e: unknown) {
+      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể lưu rubric' });
     } finally {
       setSaving(false);
     }
   };
 
+  const simulatedTotal = criteria.reduce((sum, c) => {
+    const lvl = previewScores[c.id] || 3;
+    const item = c.levels.find(l => l.level === lvl);
+    return sum + (item?.score || lvl) * (c.weight || 1);
+  }, 0);
+
+  const simulatedMax = criteria.reduce((sum, c) => {
+    const maxLvl = c.levels.reduce((m, l) => Math.max(m, l.score || l.level), 0);
+    return sum + maxLvl * (c.weight || 1);
+  }, 0);
+
   return (
-    <div className="max-w-6xl space-y-6 pb-16">
+    <div className="max-w-6xl space-y-6 pb-20">
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between border-b border-slate-200 pb-4">
         <div>
           <div className="mb-1">
-            <Button size="sm" variant="ghost" onClick={() => onNavigate('teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
-              Quay lại
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onNavigate('teacher-dashboard')}
+              leftIcon={<ArrowLeftIcon className="h-4 w-4" />}
+            >
+              Quay lại bàn giáo viên
             </Button>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">Ma trận Rubric</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Tiêu chí đánh giá năng lực đọc hiểu theo 6 trục thi pháp
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Ma trận Rubric học thuật</h1>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Tiêu chí chuẩn hóa đánh giá năng lực đọc hiểu theo 6 trục thi pháp (thang 4 mức độ: 1 đến 4).
           </p>
         </div>
 
-        <div className="text-xs text-slate-500">
-          Mã phiên bản: <span className="font-mono">{rubric.id}</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">Mã phiên bản: {rubric.id}</Badge>
         </div>
       </div>
 
@@ -91,13 +108,17 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       )}
 
       {/* Meta configuration */}
-      <div className="border border-slate-200 rounded-md bg-white p-4 space-y-3">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
-          <Input label="Tên ma trận Rubric" value={title} onChange={e => setTitle(e.target.value)} />
+          <Input
+            label="Tên ma trận Rubric"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Mô tả ma trận</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả mục đích ma trận</label>
             <textarea
-              className="w-full rounded-md border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:border-slate-500"
+              className="w-full rounded-lg border border-slate-300 p-2.5 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               rows={2}
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -106,47 +127,97 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
         </div>
       </div>
 
-      {/* Matrix Criteria: Table format instead of 24 nested cards! */}
-      <div className="border border-slate-200 rounded-md bg-white overflow-hidden divide-y divide-slate-200">
-        <div className="p-4 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">Bảng mô tả các mức độ đạt chuẩn</h2>
-          <span className="text-xs text-slate-500">Thang 4 mức: 1 (Chưa đạt) đến 4 (Xuất sắc)</span>
+      {/* Simulator Preview Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs">
+        <div className="flex items-center gap-2">
+          <BookmarkSquareIcon className="h-4 w-4 text-primary-700" />
+          <span className="font-semibold text-slate-800">Mô phỏng tính điểm theo trọng số:</span>
+          <span className="text-slate-500">6 tiêu chí × thang điểm chuẩn hóa</span>
+        </div>
+        <div className="flex items-center gap-2 font-mono">
+          <span className="text-slate-500">Điểm giả định:</span>
+          <strong className="rounded bg-slate-900 px-2 py-0.5 text-xs text-white">
+            {simulatedTotal}/{simulatedMax}đ ({Math.round((simulatedTotal / simulatedMax) * 100)}%)
+          </strong>
+        </div>
+      </div>
+
+      {/* Matrix Criteria Table */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs divide-y divide-slate-200">
+        <div className="flex items-center justify-between bg-slate-50/80 px-5 py-3.5">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Bảng chi tiết các mức độ đạt chuẩn</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Mỗi trục gồm 4 mức phân hóa từ cơ bản đến sáng tạo chuyên sâu</p>
+          </div>
+          <span className="text-xs font-medium text-slate-500">6 trục thi pháp</span>
         </div>
 
         {criteria.map((criterion, ci) => (
-          <div key={criterion.id} className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
+          <div key={criterion.id} className="p-5 space-y-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-baseline gap-2">
-                <span className="text-xs font-semibold text-slate-500">Trục {ci + 1}:</span>
-                <h3 className="text-sm font-semibold text-slate-900">{criterion.title}</h3>
+                <span className="text-xs font-mono font-bold text-slate-400">Trục {ci + 1}:</span>
+                <h3 className="text-sm font-bold text-slate-900">{criterion.title}</h3>
               </div>
-              <span className="text-xs text-slate-500">Trọng số: {criterion.weight}</span>
+              <div className="flex items-center gap-2">
+                <Badge size="sm" variant="outline">Trọng số: {criterion.weight}</Badge>
+                {/* Level preview selector */}
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-slate-400 mr-1">Thử mức:</span>
+                  {[1, 2, 3, 4].map(lvl => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setPreviewScores(p => ({ ...p, [criterion.id]: lvl }))}
+                      className={`h-6 w-6 rounded text-xs font-bold transition ${
+                        (previewScores[criterion.id] || 3) === lvl
+                          ? 'bg-primary-700 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {criterion.levels.map((level, li) => (
-                <div key={level.level} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-slate-600">
-                    <span className="font-medium">Mức {level.level}: {level.label}</span>
-                    <span>{level.score}đ</span>
+              {criterion.levels.map((level, li) => {
+                const isTested = (previewScores[criterion.id] || 3) === level.level;
+                return (
+                  <div
+                    key={level.level}
+                    className={`space-y-1.5 rounded-lg border p-3 transition ${
+                      isTested ? 'border-primary-300 bg-primary-50/40 shadow-xs' : 'border-slate-200 bg-slate-50/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-800">
+                        Mức {level.level}: {level.label}
+                      </span>
+                      <Badge size="sm" variant={isTested ? 'primary' : 'outline'}>
+                        {level.score}đ
+                      </Badge>
+                    </div>
+                    <textarea
+                      value={level.description}
+                      onChange={e => updateDescription(ci, li, e.target.value)}
+                      rows={4}
+                      className="w-full rounded-md border border-slate-200 bg-white p-2 text-xs leading-relaxed text-slate-800 outline-none transition focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    />
                   </div>
-                  <textarea
-                    value={level.description}
-                    onChange={e => updateDescription(ci, li, e.target.value)}
-                    rows={4}
-                    className="w-full rounded-md border border-slate-200 bg-slate-50/50 p-2 text-xs leading-relaxed text-slate-800 outline-none focus:bg-white focus:border-slate-400"
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Save Action */}
-      <div className="flex items-center justify-between gap-4 pt-2">
+      {/* Action Footer */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
         <p className="text-xs text-slate-500">
-          * Các bài nộp đã được chấm bằng phiên bản trước sẽ giữ nguyên kết quả đánh giá cũ.
+          * Các bài nộp đã được chấm bằng phiên bản trước sẽ giữ nguyên kết quả đánh giá cũ (bảo toàn tính bất biến học thuật).
         </p>
         <Button
           variant="primary"
@@ -154,6 +225,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
           onClick={saveVersion}
           isLoading={saving}
           disabled={!criteria.length || !title.trim()}
+          leftIcon={<CheckIcon className="h-4 w-4" />}
         >
           Lưu phiên bản Rubric mới
         </Button>

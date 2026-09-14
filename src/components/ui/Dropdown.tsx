@@ -44,8 +44,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
       {isOpen && (
         <div
+          role="menu"
           className={cn(
-            "absolute z-50 mt-1.5 w-48 rounded-xl bg-white border border-slate-200 shadow-elevated py-1 focus:outline-none animate-fade-in",
+            "absolute z-50 mt-1.5 w-48 rounded-lg bg-white border border-slate-200 shadow-dropdown py-1 focus:outline-none animate-dropdown-panel",
             align === 'right' ? "right-0" : "left-0",
             className
           )}
@@ -53,6 +54,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
           {items.map(item => (
             <button
               key={item.key}
+              role="menuitem"
               disabled={item.disabled}
               onClick={() => {
                 item.onClick?.();

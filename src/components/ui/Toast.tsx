@@ -23,7 +23,11 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
   };
 
   return (
-    <div className={cn("flex items-start gap-3 p-3.5 bg-white border border-slate-200 rounded-xl shadow-elevated text-xs text-slate-800 animate-fade-in min-w-[280px] max-w-sm pointer-events-auto")}>
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn("flex items-start gap-3 p-3.5 bg-white border border-slate-200 rounded-lg shadow-dropdown text-xs text-slate-800 animate-toast-slide min-w-[280px] max-w-sm pointer-events-auto")}
+    >
       {icons[toast.type]}
       <div className="flex-1">
         {toast.title && <h4 className="font-bold text-slate-900">{toast.title}</h4>}

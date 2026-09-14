@@ -43,6 +43,7 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   const [selectedStudentId, setSelectedStudentId] = useState(isStudent ? currentUser.id : (initialStudentId || ''));
   const [selectedV1, setSelectedV1] = useState(v1Number || '');
   const [selectedV2, setSelectedV2] = useState(v2Number || '');
+  const [diffMode, setDiffMode] = useState<'split' | 'unified'>('split');
 
   const assignment = assignments.find(item => item.id === assignmentId);
   const relevantPortfolios = useMemo(
@@ -135,52 +136,278 @@ export const VersionDiffView: React.FC<VersionDiffViewProps> = ({
   const sameVersion = before.id === after.id;
   const formatDate = (version: PortfolioVersion) => new Date(version.createdAt).toLocaleDateString('vi-VN');
 
+  const scrollToAxis = (axisId: string) => {
+    const el = document.getElementById(`axis-diff-${axisId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <div className="max-w-6xl space-y-6 pb-12">
+    <div className="max-w-7xl space-y-6 pb-16">
+      {/* Header */}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="mb-1 flex items-center gap-2 text-sm text-slate-500">
-            <Button size="sm" variant="ghost" onClick={() => onNavigate(isStudent ? 'portfolio-list' : 'teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>Quay lại</Button>
-            <span>·</span><span>{assignment.title}</span><span>·</span><strong className="text-slate-700">{portfolio.studentName}</strong>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onNavigate(isStudent ? 'portfolio-list' : 'teacher-dashboard')}
+              leftIcon={<ArrowLeftIcon className="h-4 w-4" />}
+            >
+              Quay lại
+            </Button>
+            <span>·</span>
+            <span>{assignment.title}</span>
+            <span>·</span>
+            <strong className="text-slate-700">{portfolio.studentName}</strong>
           </div>
           <h1 className="text-2xl font-semibold text-slate-900">So sánh phiên bản</h1>
         </div>
         <div className="flex items-center gap-2">
-          {!isStudent && <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:border-slate-500 focus:outline-none">{relevantPortfolios.map(p => <option key={p.id} value={p.studentId}>{p.studentName} ({p.className})</option>)}</select>}
-          <Button variant="outline" size="sm" onClick={() => window.print()} leftIcon={<PrinterIcon className="h-4 w-4" />}>In</Button>
+          {!isStudent && (
+            <select
+              value={selectedStudentId}
+              onChange={e => setSelectedStudentId(e.target.value)}
+              className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:border-slate-500 focus:outline-none"
+            >
+              {relevantPortfolios.map(p => (
+                <option key={p.id} value={p.studentId}>{p.studentName} ({p.className})</option>
+              ))}
+            </select>
+          )}
+          <Button variant="outline" size="sm" onClick={() => window.print()} leftIcon={<PrinterIcon className="h-4 w-4" />}>
+            In
+          </Button>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
-          <label className="flex items-center gap-2"><span className="text-sm text-slate-500">Bản trước:</span><select value={selectedV1} onChange={e => setSelectedV1(e.target.value)} className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-slate-500 focus:outline-none">{versions.map(version => <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>)}</select></label>
-          <span className="text-slate-400">→</span>
-          <label className="flex items-center gap-2"><span className="text-sm text-slate-500">Bản sau:</span><select value={selectedV2} onChange={e => setSelectedV2(e.target.value)} className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-slate-500 focus:outline-none">{versions.map(version => <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>)}</select></label>
+      {/* Toolbar & Summary Strip */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bản trước:</span>
+              <select
+                value={selectedV1}
+                onChange={e => setSelectedV1(e.target.value)}
+                className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 focus:border-primary-600 focus:outline-none"
+              >
+                {versions.map(version => (
+                  <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>
+                ))}
+              </select>
+            </label>
+            <span className="text-slate-400 font-bold">→</span>
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bản sau:</span>
+              <select
+                value={selectedV2}
+                onChange={e => setSelectedV2(e.target.value)}
+                className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-800 focus:border-primary-600 focus:outline-none"
+              >
+                {versions.map(version => (
+                  <option key={version.id} value={version.versionNumber}>{version.versionNumber} ({formatDate(version)})</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {/* Mode Switcher */}
+          <div className="flex items-center gap-1 rounded-md bg-slate-100 p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setDiffMode('split')}
+              className={`rounded px-2.5 py-1 font-medium transition-colors ${
+                diffMode === 'split' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Song song
+            </button>
+            <button
+              type="button"
+              onClick={() => setDiffMode('unified')}
+              className={`rounded px-2.5 py-1 font-medium transition-colors ${
+                diffMode === 'unified' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Dòng chảy
+            </button>
+          </div>
         </div>
-        {sameVersion && <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Bạn đang chọn cùng một phiên bản ở hai bên. Vui lòng chọn hai phiên bản khác nhau.</div>}
-        <div className="rounded-r border-l-2 border-slate-400 bg-slate-50/70 py-1 pl-3 text-sm text-slate-600">+{aggregateMetrics.totalAdded} từ mới · −{aggregateMetrics.totalRemoved} từ lược bớt · {aggregateMetrics.changedAxesCount}/6 trục thay đổi{after.confidence ? ` · Mức tự tin bản sau: ${after.confidence}/5` : ''}</div>
-        {(after.revisionReason || after.changeSummary) && <div className="space-y-0.5 pt-1 text-sm text-slate-600">{after.changeSummary && <div><strong>Đã sửa:</strong> {after.changeSummary}</div>}{after.revisionReason && <div><strong>Lí do sửa:</strong> {after.revisionReason}</div>}</div>}
+
+        {sameVersion && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            Bạn đang chọn cùng một phiên bản ở hai bên. Vui lòng chọn hai phiên bản khác nhau.
+          </div>
+        )}
+
+        {/* Diff Metrics Grid */}
+        <div className="grid gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3.5">
+            <div className="text-xs font-semibold text-emerald-800 uppercase tracking-wide">+ Thêm mới</div>
+            <div className="mt-1 text-xl font-bold text-emerald-950">+{aggregateMetrics.totalAdded} từ</div>
+          </div>
+          <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-3.5">
+            <div className="text-xs font-semibold text-rose-800 uppercase tracking-wide">− Lược bớt</div>
+            <div className="mt-1 text-xl font-bold text-rose-950">−{aggregateMetrics.totalRemoved} từ</div>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
+            <div className="text-xs font-semibold text-amber-800 uppercase tracking-wide">✎ Trục thay đổi</div>
+            <div className="mt-1 text-xl font-bold text-amber-950">{aggregateMetrics.changedAxesCount}/6 trục</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3.5">
+            <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tự tin bản sau</div>
+            <div className="mt-1 text-xl font-bold text-slate-900">
+              {after.confidence ? `${after.confidence}/5` : 'Không đánh giá'}
+            </div>
+          </div>
+        </div>
+
+        {(after.revisionReason || after.changeSummary) && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-xs text-slate-600 space-y-1">
+            {after.changeSummary && <div><strong>Đã sửa:</strong> {after.changeSummary}</div>}
+            {after.revisionReason && <div><strong>Lí do sửa:</strong> {after.revisionReason}</div>}
+          </div>
+        )}
       </div>
 
-      <div className="space-y-6">
-        {POETIC_AXES.map(axis => {
-          const diffResult = diffByAxis[axis.id];
-          const hasChange = Boolean(diffResult && (diffResult.wordsAdded > 0 || diffResult.wordsRemoved > 0));
-          const causal = feedbacks.filter(item => item.assignmentId === assignment.id && item.studentId === portfolio.studentId && item.axisId === axis.id && item.versionNumber === before.versionNumber && (!item.resolvedByVersionId || item.resolvedByVersionId === after.id));
-          return (
-            <section key={axis.id} className="overflow-hidden rounded-md border border-slate-200 bg-white">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-                <div className="flex items-center gap-2"><h2 className="text-sm font-semibold text-slate-900">{axis.title}</h2><span className="text-sm text-slate-500">{hasChange ? `(+${diffResult?.wordsAdded || 0}, −${diffResult?.wordsRemoved || 0})` : '(không đổi)'}</span></div>
-                <span className="text-sm text-slate-500">{hasChange ? 'Đã chỉnh sửa' : 'Giữ nguyên'}</span>
-              </div>
-              <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-                <div className="p-4"><div className="mb-2 text-sm font-medium text-slate-500">{before.versionNumber}</div><div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">{diffResult?.v1Text || <span className="italic text-slate-400">Chưa có nội dung</span>}</div></div>
-                <div className="bg-slate-50/30 p-4"><div className="mb-2 text-sm font-medium text-slate-700">{after.versionNumber}</div><div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800">{diffResult?.diffSegments?.length ? diffResult.diffSegments.map((seg: DiffSegment, idx: number) => seg.type === 'added' ? <span key={idx} className="rounded bg-emerald-100 px-0.5 text-emerald-950">{seg.value}</span> : seg.type === 'removed' ? <span key={idx} className="rounded bg-rose-100 px-0.5 text-rose-900 line-through opacity-70">{seg.value}</span> : <span key={idx}>{seg.value}</span>) : <span className="italic text-slate-400">Chưa có nội dung</span>}</div></div>
-              </div>
-              {causal.length > 0 && <div className="space-y-1 border-t border-slate-100 bg-slate-50/60 px-4 py-2 text-sm text-slate-600"><div className="font-medium text-slate-700">Phản hồi liên quan đến lần sửa này:</div>{causal.map(f => <div key={f.id} className="border-l-2 border-slate-300 pl-2"><span>{f.authorName || (f.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học')}: </span><span>{f.comment}</span></div>)}</div>}
-            </section>
-          );
-        })}
+      {/* Main Diff Content with Axis Navigator Sidebar */}
+      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        {/* Sticky Axis Navigator */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 px-2">Điều hướng trục</span>
+            <nav className="space-y-1">
+              {POETIC_AXES.map(axis => {
+                const diff = diffByAxis[axis.id];
+                const hasChange = Boolean(diff && (diff.wordsAdded > 0 || diff.wordsRemoved > 0));
+                return (
+                  <button
+                    key={axis.id}
+                    type="button"
+                    onClick={() => scrollToAxis(axis.id)}
+                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors hover:bg-slate-50"
+                  >
+                    <span className="truncate text-slate-700 font-medium">{axis.shortName}</span>
+                    <span className="shrink-0 text-xs">
+                      {hasChange ? (
+                        <span className="font-semibold text-emerald-700">+{diff?.wordsAdded} −{diff?.wordsRemoved}</span>
+                      ) : (
+                        <span className="text-slate-400">giữ</span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
+        {/* Diff Sections */}
+        <div className="space-y-6">
+          {POETIC_AXES.map(axis => {
+            const diffResult = diffByAxis[axis.id];
+            const hasChange = Boolean(diffResult && (diffResult.wordsAdded > 0 || diffResult.wordsRemoved > 0));
+            const causal = feedbacks.filter(item =>
+              item.assignmentId === assignment.id &&
+              item.studentId === portfolio.studentId &&
+              item.axisId === axis.id &&
+              item.versionNumber === before.versionNumber &&
+              (!item.resolvedByVersionId || item.resolvedByVersionId === after.id)
+            );
+
+            return (
+              <section
+                key={axis.id}
+                id={`axis-diff-${axis.id}`}
+                className="overflow-hidden rounded-lg border border-slate-200 bg-white scroll-mt-20"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50/75 px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-slate-900">{axis.title}</h2>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {hasChange ? `(+${diffResult?.wordsAdded || 0}, −${diffResult?.wordsRemoved || 0})` : '(không đổi)'}
+                    </span>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${
+                    hasChange ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {hasChange ? '✎ Đã chỉnh sửa' : '○ Giữ nguyên'}
+                  </span>
+                </div>
+
+                {diffMode === 'split' ? (
+                  /* Side-by-Side Mode */
+                  <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+                    <div className="p-4">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {before.versionNumber} (Bản trước)
+                      </div>
+                      <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
+                        {diffResult?.v1Text || <span className="italic text-slate-400">Chưa có nội dung</span>}
+                      </div>
+                    </div>
+                    <div className="bg-slate-50/30 p-4">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        {after.versionNumber} (Bản sau đối chiếu)
+                      </div>
+                      <div className="min-h-16 whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800">
+                        {diffResult?.diffSegments?.length ? (
+                          diffResult.diffSegments.map((seg: DiffSegment, idx: number) =>
+                            seg.type === 'added' ? (
+                              <span key={idx} className="diff-tag-added mx-0.5 rounded px-1 py-0.5">{seg.value}</span>
+                            ) : seg.type === 'removed' ? (
+                              <span key={idx} className="diff-tag-removed mx-0.5 rounded px-1 py-0.5">{seg.value}</span>
+                            ) : (
+                              <span key={idx}>{seg.value}</span>
+                            )
+                          )
+                        ) : (
+                          <span className="italic text-slate-400">Chưa có nội dung</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Unified/Inline Mode */
+                  <div className="p-5">
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Dòng chảy chỉnh sửa ({before.versionNumber} → {after.versionNumber})
+                    </div>
+                    <div className="whitespace-pre-wrap font-sans text-sm leading-7 text-slate-800">
+                      {diffResult?.diffSegments?.length ? (
+                        diffResult.diffSegments.map((seg: DiffSegment, idx: number) =>
+                          seg.type === 'added' ? (
+                            <span key={idx} className="diff-tag-added mx-0.5 inline-block rounded px-1 py-0.5">{seg.value}</span>
+                          ) : seg.type === 'removed' ? (
+                            <span key={idx} className="diff-tag-removed mx-0.5 inline-block rounded px-1 py-0.5">{seg.value}</span>
+                          ) : (
+                            <span key={idx}>{seg.value}</span>
+                          )
+                        )
+                      ) : (
+                        <span className="italic text-slate-400">Không có thay đổi trong trục này.</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {causal.length > 0 && (
+                  <div className="space-y-1.5 border-t border-slate-100 bg-slate-50/60 px-4 py-2.5 text-xs text-slate-600">
+                    <div className="font-semibold text-slate-700">Phản hồi gắn với lần chỉnh sửa này:</div>
+                    {causal.map(f => (
+                      <div key={f.id} className="border-l-2 border-primary-500 pl-2">
+                        <span className="font-medium text-slate-800">{f.authorName || (f.authorRole === 'teacher' ? 'Giáo viên' : 'Bạn học')}: </span>
+                        <span>{f.comment}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

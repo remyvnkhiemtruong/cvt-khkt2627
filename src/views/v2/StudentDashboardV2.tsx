@@ -10,7 +10,7 @@ import { useAuthStore } from '../../app/store/useAuthStore';
 import { usePortfolio } from '../../contexts/PortfolioContext';
 import { deriveStudentWorkflow } from '../../app/workflow/workflowState';
 import { WorkflowProgress } from '../../components/workflow/WorkflowProgress';
-import { Badge, Button, Card, PageHeader } from '../../components/ui';
+import { Badge, Button, Card, PageHeader, Skeleton, SkeletonCard } from '../../components/ui';
 
 type MetricTileProps = {
   label: string;
@@ -29,20 +29,20 @@ const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone 
         ? 'border-primary-200 bg-primary-50/50'
         : 'border-slate-200 bg-white';
   return (
-    <div className={`v3-panel flex items-start justify-between gap-3 p-4 ${toneClass}`}>
+    <div className={`v3-panel academic-card-hover flex items-start justify-between gap-3 p-4 ${toneClass}`}>
       <div className="min-w-0">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
         <div className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
         <div className="mt-1 truncate text-xs text-slate-500">{note}</div>
       </div>
-      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-sm">{icon}</div>
+      <div className="rounded-lg border border-white/80 bg-white p-2 text-slate-600 shadow-xs">{icon}</div>
     </div>
   );
 };
 
 export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?: any) => void }> = ({ onNavigate }) => {
   const user = useAuthStore(s => s.currentUser);
-  const { assignments, portfolios, feedbacks, rubricSubmissions, reflections } = usePortfolio();
+  const { assignments, portfolios, feedbacks, rubricSubmissions, reflections, isLoading } = usePortfolio();
   const reflectionIds = reflections.filter(r => r.studentId === user.id).map(r => r.versionId);
   const items = assignments.map(assignment => ({
     assignment,
@@ -61,6 +61,24 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
   const studentFeedbacks = feedbacks.filter(item => item.studentId === user.id);
   const unresolvedFeedbacks = studentFeedbacks.filter(item => !item.resolved);
   const recentFeedbacks = [...studentFeedbacks].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 3);
+
+  if (isLoading && assignments.length === 0) {
+    return (
+      <div className="v3-page space-y-6 pb-20">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Skeleton className="h-24 rounded-lg" />
+          <Skeleton className="h-24 rounded-lg" />
+          <Skeleton className="h-24 rounded-lg" />
+        </div>
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   return (
     <div className="v3-page space-y-6 pb-20">

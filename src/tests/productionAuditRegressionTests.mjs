@@ -65,6 +65,8 @@ await test('PA06: previous/next review navigation operates on the filtered queue
 await test('PA07: three-tier view hierarchy is role-derived and mutation routes do not inherit', () => {
   const access = read('src/app/auth/accessControl.ts');
   const app = read('src/App.tsx');
+  const desktop = read('src/components/layout/AppSidebar.tsx');
+  const mobile = read('src/components/layout/MobileDrawer.tsx');
   assert(access.includes('admin: 1'));
   assert(access.includes('teacher: 2'));
   assert(access.includes('ai: 2'));
@@ -73,6 +75,23 @@ await test('PA07: three-tier view hierarchy is role-derived and mutation routes 
   assert(!access.includes("'/student/editor'"));
   assert(!access.includes("'/teacher/assignment-builder'"));
   assert(app.includes('canAccessRoute(currentUser.role, routeConfig)'));
+  assert(desktop.includes("label: 'Xem tầng dưới'"));
+  assert(mobile.includes("label: 'Xem học sinh'"));
 });
 
-console.log(`Production audit regressions: ${passed}/7 passed`);
+await test('PA08: assignment builder only keeps and submits a rubric from the hydrated catalog', () => {
+  const source = read('src/views/AssignmentBuilderView.tsx');
+  assert(source.includes('rubricOptions.some(r => r.id === f.rubricId) ? f.rubricId'));
+  assert(source.includes('!rubricOptions.some(option => option.id === form.rubricId)'));
+  assert(!source.includes("rubricId: f.rubricId || rubricOptions[0]?.id || rubric.id || ''"));
+});
+
+await test('PA09: health statistics use a short in-instance cache without changing the response contract', () => {
+  const source = read('api/health.ts');
+  assert(source.includes('HEALTH_CACHE_MS = 30_000'));
+  assert(source.includes('cachedAcademicHealth()'));
+  assert(source.includes('assignments: counts.assignments'));
+  assert(source.includes('jwtSecretConfigured'));
+});
+
+console.log(`Production audit regressions: ${passed}/9 passed`);

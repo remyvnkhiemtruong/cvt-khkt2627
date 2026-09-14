@@ -6,6 +6,7 @@ import { ForbiddenView } from './views/ForbiddenView';
 import { NotFoundView } from './views/NotFoundView';
 import { useAuthStore } from './app/store/useAuthStore';
 import { APP_ROUTES } from './app/router/routes';
+import { canAccessRoute } from './app/auth/accessControl';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { AuthProvider } from './contexts/AuthContext';
 import type { UserRole } from './types';
@@ -150,7 +151,7 @@ const AppContent: React.FC = () => {
   }
 
   const routeConfig = APP_ROUTES[currentView];
-  if (routeConfig?.allowedRoles && !routeConfig.allowedRoles.includes(currentUser.role)) return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig.allowedRoles.join(', ')} /></MainLayout>;
+  if (!canAccessRoute(currentUser.role, routeConfig)) return <MainLayout currentView={currentView} onNavigate={handleNavigate} onLogout={handleLogout}><ForbiddenView onNavigate={handleNavigate} requiredRole={routeConfig?.allowedRoles?.join(', ') || 'authorized'} /></MainLayout>;
 
   const targetAssignmentId = navParams.assignmentId || '';
 

@@ -75,7 +75,7 @@ const sectionsForRole = (role: string): Section[] => {
     ] }
   ];
   if (role === 'ai') return [
-    { label: 'AI Workspace', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] },
+    { label: 'Phản hồi AI', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] },
     { label: 'Xem học sinh', items: [
       { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
       { id: 'portfolio-list', label: 'Hồ sơ trong hàng đợi', icon: FolderIcon }

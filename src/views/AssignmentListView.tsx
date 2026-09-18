@@ -12,7 +12,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
   const { assignments, literatureTexts, portfolios, feedbacks, rubricSubmissions, reflections } = usePortfolio();
   const reflectionIds = reflections.filter(r => r.studentId === user.id).map(r => r.versionId);
   return <div className="mx-auto max-w-6xl space-y-5 pb-16">
-    <div className="flex items-end justify-between border-b border-slate-200 pb-4"><div><h1 className="text-2xl font-semibold text-slate-950">Nhiệm vụ học tập</h1><p className="mt-1 text-sm text-slate-500">Mỗi bài hiển thị đúng bước cần làm tiếp theo.</p></div><Button variant="outline" onClick={() => onNavigate('dashboard')}>Bàn học</Button></div>
+    <div className="flex items-end justify-between border-b border-slate-200 pb-4"><div><h1 className="text-2xl font-semibold text-slate-950">Nhiệm vụ học tập</h1><p className="mt-1 text-sm text-slate-500">Xem tiến độ và tiếp tục các nhiệm vụ được giao.</p></div><Button variant="outline" onClick={() => onNavigate('dashboard')}>Bàn học</Button></div>
     <div className="grid gap-3 md:grid-cols-2">{assignments.map(assignment => {
       const state = deriveStudentWorkflow({ assignment, portfolio: portfolios[`port-${user.id}-${assignment.id}`], feedbacks, rubricSubmissions, reflectionVersionIds: reflectionIds });
       const text = literatureTexts.find(t => t.id === assignment.textId);

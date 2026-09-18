@@ -24,19 +24,23 @@ function normalizeCreateAssignmentInput(input: any) {
       .map(axis => [axis, boundedText(starter[axis], 12000)])
   );
 
+  const predictionEnabled = workflow.predictionEnabled !== false && prediction.enabled !== false;
+  const predictionQuestions = Array.isArray(prediction.questions)
+    ? prediction.questions.slice(0, 30).map((item: unknown) => boundedText(item, 1500).trim()).filter(Boolean)
+    : [];
+  if (predictionEnabled && predictionQuestions.length === 0) throw new Error("PREDICTION_QUESTIONS_REQUIRED");
+
   return {
     ...input,
     starterTemplate,
     predictionTemplate: {
-      enabled: workflow.predictionEnabled !== false && prediction.enabled !== false,
+      enabled: predictionEnabled,
       prompt: boundedText(prediction.prompt, 12000),
-      questions: Array.isArray(prediction.questions)
-        ? prediction.questions.slice(0, 30).map((item: unknown) => boundedText(item, 1500)).filter(Boolean)
-        : [],
+      questions: predictionQuestions,
       requireConfidence: prediction.requireConfidence !== false
     },
     workflowConfig: {
-      predictionEnabled: workflow.predictionEnabled !== false,
+      predictionEnabled,
       aiReviewRequired: true,
       teacherApprovalRequired: true,
       reflectionRequired: true,
@@ -59,7 +63,8 @@ const clientMessage = (code: string) => {
     VALIDATION_ERROR: "Dữ liệu gửi lên không hợp lệ.",
     REFLECTION_REQUIRED: "Em cần hoàn thành đủ phần tự phản tư trước khi gửi.",
     REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
-    REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức."
+    REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức.",
+    PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc."
   };
   if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";

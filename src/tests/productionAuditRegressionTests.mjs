@@ -244,4 +244,30 @@ await test('PA20: remaining visible copy avoids technical implementation wording
   ]) assert(!source.includes(phrase), phrase);
 });
 
-console.log(`Production audit regressions: ${passed}/20 passed`);
+await test('PA21: shared routes match the roles that their screens support', () => {
+  const routes = read('src/app/router/routes.tsx');
+  const desktop = read('src/components/layout/AppSidebar.tsx');
+  const mobile = read('src/components/layout/MobileDrawer.tsx');
+  assert(routes.includes("dashboard: { id:'dashboard', path:'/dashboard', title:'Bàn học', allowedRoles:['student'] }"));
+  assert(routes.includes("allowedRoles:['student','teacher','peer','researcher','admin','ai']"));
+  assert(routes.includes("'student-dashboard': { id:'student-dashboard', path:'/student/assignments', title:'Nhiệm vụ của tôi', allowedRoles:['student'] }"));
+  assert(routes.includes("'version-diff': { id:'version-diff', path:'/student/diff', title:'So sánh phiên bản', allowedRoles:['student','teacher'] }"));
+  assert(desktop.includes("if (role === 'ai') return aiSections"));
+  assert(mobile.includes("if (role === 'ai') return ["));
+});
+
+await test('PA22: AI role gets scoped list navigation instead of dead 403 links', () => {
+  const routes = read('src/app/router/routes.tsx');
+  const assignments = read('src/views/AssignmentListView.tsx');
+  const portfolios = read('src/views/PortfolioListV2.tsx');
+  const palette = read('src/components/layout/CommandPalette.tsx');
+  assert(routes.includes("'assignment-list'") && routes.includes("'portfolio-list'"));
+  assert(assignments.includes("user.role === 'ai' ? 'Nhập phản hồi'"));
+  assert(assignments.includes("user.role === 'ai'"));
+  assert(portfolios.includes("user.role === 'ai' ? 'Hồ sơ cần phản hồi'"));
+  assert(portfolios.includes("canOpenAi"));
+  assert(palette.includes("'admin', 'ai']"));
+  assert(!palette.includes('Mở không gian viết'));
+});
+
+console.log(`Production audit regressions: ${passed}/22 passed`);

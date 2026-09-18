@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { academicVersionsOf } from '../app/workflow/workflowState';
 import type { PoeticAxisId } from '../types';
 import { Badge, Button } from '../components/ui';
 import {
@@ -26,10 +27,71 @@ const labels: Record<PoeticAxisId, string> = {
 
 export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ studentId, assignmentId, onNavigate }) => {
   const { portfolios, feedbacks, rubricSubmissions, rubrics, assignments } = usePortfolio();
+
+  const overviewAssignments = useMemo(() => assignments.map(item => {
+    const itemPortfolio = portfolios[`port-${studentId}-${item.id}`];
+    const versions = academicVersionsOf(itemPortfolio);
+    const teacherScores = rubricSubmissions
+      .filter(submission => submission.studentId === studentId && submission.assignmentId === item.id && submission.evaluatorRole === 'teacher')
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    return {
+      assignment: item,
+      portfolio: itemPortfolio,
+      versions,
+      latestScore: teacherScores[0] || null
+    };
+  }), [assignments, portfolios, rubricSubmissions, studentId]);
+
+  if (!assignmentId) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6 pb-20">
+        <div className="border-b border-slate-200 pb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tiến độ học tập</h1>
+          <p className="mt-1 text-sm text-slate-500">Chọn một nhiệm vụ để xem điểm, góp ý và lịch sử các bản đã nộp.</p>
+        </div>
+        {overviewAssignments.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            Chưa có nhiệm vụ để xem tiến độ.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {overviewAssignments.map(({ assignment: item, portfolio: itemPortfolio, versions, latestScore }) => (
+              <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-semibold text-slate-900">{item.title}</h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {versions.length} bản đã nộp
+                      {itemPortfolio?.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
+                    </p>
+                  </div>
+                  <Badge size="sm" variant="outline">
+                    {latestScore ? `${latestScore.totalScore}/${latestScore.maxScore}` : 'Chưa có điểm'}
+                  </Badge>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={!itemPortfolio}
+                    onClick={() => onNavigate('student-analytics', { assignmentId: item.id, studentId })}
+                  >
+                    Xem tiến độ
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const portfolio = portfolios[`port-${studentId}-${assignmentId}`];
   const assignment = assignments.find(item => item.id === assignmentId);
   const activeRubric = assignment ? rubrics[assignment.rubricId] : undefined;
   const studentFeedback = feedbacks.filter(item => item.studentId === studentId && item.assignmentId === assignmentId);
+  const academicVersions = academicVersionsOf(portfolio);
 
   const officialSubmissions = useMemo(() => rubricSubmissions
     .filter(item => item.studentId === studentId && item.assignmentId === assignmentId && item.evaluatorRole === 'teacher')
@@ -128,7 +190,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           </p>
         </div>
 
-        {portfolio.versions.length >= 2 && (
+        {academicVersions.length >= 2 && (
           <Button
             size="sm"
             variant="outline"
@@ -147,7 +209,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
             <span>Phiên bản đã nộp</span>
             <DocumentDuplicateIcon className="h-4 w-4 text-slate-400" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-slate-900">{portfolio.versions.length}</div>
+          <div className="mt-2 text-2xl font-bold text-slate-900">{academicVersions.length}</div>
           <div className="mt-1 text-xs text-slate-500">phiên bản đã lưu</div>
         </div>
 
@@ -256,11 +318,11 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
           <p className="mt-0.5 text-xs text-slate-500">Xem các phiên bản đã nộp theo thời gian.</p>
         </div>
 
-        {!portfolio.versions.length ? (
+        {!academicVersions.length ? (
           <div className="p-6 text-center text-xs text-slate-500">Chưa có phiên bản nào.</div>
         ) : (
           <div className="space-y-3">
-            {portfolio.versions.map(version => {
+            {academicVersions.map(version => {
               const linked = studentFeedback.filter(
                 item => item.versionId === version.id || item.versionNumber === version.versionNumber
               );

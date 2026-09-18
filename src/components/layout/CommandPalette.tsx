@@ -38,7 +38,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     currentUser.role === 'teacher' ? 'teacher-dashboard' :
     currentUser.role === 'admin' ? 'admin-view' :
     currentUser.role === 'researcher' ? 'researcher-view' :
-    currentUser.role === 'ai' ? 'ai-workspace' : 'dashboard';
+    currentUser.role === 'ai' ? 'ai-workspace' :
+    currentUser.role === 'peer' ? 'portfolio-list' : 'dashboard';
 
   const commands = useMemo<CommandItem[]>(() => {
     const base: CommandItem[] = [

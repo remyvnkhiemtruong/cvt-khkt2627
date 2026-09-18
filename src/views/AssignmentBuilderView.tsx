@@ -27,7 +27,7 @@ async function post(payload: unknown) {
 const STEPS = [
   { id: 1, title: 'Lớp & Ngữ liệu', desc: 'Thông tin cơ bản' },
   { id: 2, title: 'Yêu cầu & Trục', desc: 'Đề bài và 6 trục' },
-  { id: 3, title: 'Quy trình', desc: 'Quy chuẩn sư phạm' },
+  { id: 3, title: 'Quy trình', desc: 'Quy trình làm bài' },
   { id: 4, title: 'Kiểm tra', desc: 'Xem lại và xuất bản' }
 ];
 
@@ -204,7 +204,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Thiết kế nhiệm vụ học tập</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Khởi tạo nhiệm vụ đọc hiểu phân tích theo 6 trục thi pháp với quy chuẩn học thuật khép kín.
+            Tạo nhiệm vụ đọc hiểu theo 6 trục thi pháp.
           </p>
         </div>
       </div>
@@ -258,7 +258,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
             <div>
               <h2 className="text-base font-bold text-slate-900">1. Thông tin cơ bản nhiệm vụ</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Đặt tên nhiệm vụ, chọn lớp học và liên kết với ngữ liệu văn học chính thức.
+                Đặt tên nhiệm vụ, chọn lớp, ngữ liệu và Rubric.
               </p>
             </div>
 
@@ -308,7 +308,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
             <div>
               <h2 className="text-base font-bold text-slate-900">2. Yêu cầu đề bài & Trục thi pháp</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Nhập yêu cầu định hướng cho học sinh và chọn các trục thi pháp trọng tâm của bài đọc hiểu.
+                Nhập đề bài và chọn các trục thi pháp cần dùng.
               </p>
             </div>
 
@@ -333,13 +333,13 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Đề bài / Lời dẫn hướng dẫn học sinh
+                  Đề bài / Hướng dẫn
                 </label>
                 <textarea
                   rows={4}
                   value={form.prompt}
                   onChange={e => set('prompt', e.target.value)}
-                  placeholder="Ghi rõ yêu cầu phân tích, câu hỏi gợi mở hoặc định hướng tìm hiểu cho học sinh..."
+                  placeholder="Nhập yêu cầu, câu hỏi hoặc hướng dẫn cho học sinh..."
                   className="w-full rounded-lg border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
                 />
               </div>
@@ -390,9 +390,9 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-base font-bold text-slate-900">3. Cấu hình quy trình học thuật</h2>
+              <h2 className="text-base font-bold text-slate-900">3. Quy trình làm bài</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Quy trình học thuật đảm bảo tính bất biến, minh bạch phản hồi và sự tự giác phản tư của học sinh.
+                Chọn các bước học sinh phải hoàn thành trong nhiệm vụ này.
               </p>
             </div>
 
@@ -405,7 +405,7 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
                     <Badge size="sm" variant="outline">Tùy chọn</Badge>
                   </div>
                   <p className="mt-1 leading-relaxed text-slate-500">
-                    Cho phép học sinh ghi lại dự đoán ban đầu trước khi tiếp cận toàn văn bản ngữ liệu. Có thể tắt nếu muốn học sinh viết thẳng V1.
+                    Cho học sinh trả lời câu hỏi V0 trước khi đọc toàn văn. Có thể tắt để bắt đầu từ V1.
                   </p>
                 </div>
                 <input
@@ -418,28 +418,28 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               {/* Required Steps (Invariants) */}
               <RequiredStep
-                title="Phản hồi AI sư phạm"
+                title="Góp ý AI"
                 tag="Bắt buộc"
-                description="Học sinh nộp V1 sẽ nhận góp ý định hướng từ AI theo 6 trục để sửa sang V2. Đảm bảo tính nhất quán provenance."
+                description="Sau khi nộp V1, học sinh nhận góp ý AI để sửa bài."
               />
               <RequiredStep
-                title="REF1 – Phiếu tự phản tư"
+                title="REF1 – Tự phản tư"
                 tag="Bắt buộc"
-                description="Bắt buộc sau khi nộp V2. Học sinh phải tự đánh giá sự tiến bộ của bản thân trước khi nhận điểm chính thức."
+                description="Học sinh hoàn thành REF1 sau bản chỉnh sửa và trước khi giáo viên chấm."
               />
               <RequiredStep
-                title="Đánh giá Rubric giáo viên"
+                title="Rubric giáo viên"
                 tag="Bắt buộc"
-                description="Điểm chính thức do giáo viên chấm theo ma trận Rubric của nhiệm vụ và được server tính toán bảo mật."
+                description="Giáo viên chấm theo Rubric của nhiệm vụ."
               />
             </div>
 
             {predictionEnabled && (
               <div className="space-y-4 rounded-lg border border-sky-200 bg-sky-50/60 p-4">
                 <div>
-                  <div className="text-sm font-bold text-sky-950">Bộ câu hỏi V0 hiển thị cho học sinh</div>
+                  <div className="text-sm font-bold text-sky-950">Câu hỏi V0</div>
                   <p className="mt-1 text-xs leading-5 text-sky-800">
-                    Mỗi dòng là một câu hỏi. Hệ thống tự nạp bộ câu hỏi gần nhất của cùng ngữ liệu nếu đã có; giáo viên có thể chỉnh sửa trước khi xuất bản.
+                    Mỗi dòng là một câu hỏi. Nếu ngữ liệu đã có bộ V0, hệ thống sẽ tự nạp để giáo viên chỉnh sửa.
                   </p>
                 </div>
                 <div>
@@ -473,9 +473,9 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         {step === 4 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-base font-bold text-slate-900">4. Xem lại và xuất bản nhiệm vụ</h2>
+              <h2 className="text-base font-bold text-slate-900">4. Kiểm tra và xuất bản</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Kiểm tra lại toàn bộ thông số nhiệm vụ trước khi mở cho học sinh nộp bài.
+                Kiểm tra thông tin trước khi giao cho học sinh.
               </p>
             </div>
 
@@ -521,13 +521,13 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
 
               {predictionEnabled && (
                 <div className="border-t border-slate-200 pt-3">
-                  <span className="font-semibold text-slate-500 block mb-1">Bộ câu hỏi V0:</span>
+                  <span className="font-semibold text-slate-500 block mb-1">Câu hỏi V0:</span>
                   <span className="text-slate-800 font-medium">{predictionQuestions.length} câu hỏi sẽ hiển thị cho học sinh</span>
                 </div>
               )}
 
               <div className="border-t border-slate-200 pt-3">
-                <span className="font-semibold text-slate-500 block mb-1">Luồng học thuật sẽ kích hoạt:</span>
+                <span className="font-semibold text-slate-500 block mb-1">Quy trình làm bài:</span>
                 <div className="rounded border border-slate-200 bg-white p-2.5 font-mono text-xs text-slate-700">
                   {predictionEnabled ? 'V0 (Dự đoán) → ' : ''}V1 (Bản đầu) → AI/GV Góp ý → V2 (Chỉnh sửa) → REF1 (Tự phản tư) → Rubric Giáo viên
                 </div>

@@ -116,6 +116,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
   const evaluatorRole = currentUser.role === 'peer' || isPeerMode ? 'peer' : 'teacher';
   const isAdminReadOnly = currentUser.role === 'admin';
+  const reviewHome = currentUser.role === 'peer' ? 'portfolio-list' : currentUser.role === 'admin' ? 'admin-view' : 'teacher-dashboard';
   const selectedSnapshot = currentPortfolio?.versions.find(item => item.versionNumber === selectedVersion);
   const integrityError = Boolean(currentPortfolio && selectedVersion && !selectedSnapshot);
   const activeResponse = selectedSnapshot?.responses?.[activeAxisId];
@@ -265,9 +266,9 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
 
   if (isLoading && queue.length === 0) return <StatePanel loading title="Đang mở bài chấm" message="Đang tải các phiên bản đã nộp..." />;
   if (dataError && queue.length === 0) return <StatePanel title="Không thể tải dữ liệu" message={dataError} actionLabel="Thử lại" onAction={() => void refreshAcademicData()} />;
-  if (assignmentId && queue.length === 0) return <StatePanel title="Chưa có bài đã nộp" message="Nhiệm vụ này chưa có phiên bản nào thuộc phạm vi bạn được phép chấm." actionLabel="Về bàn giáo viên" onAction={() => onNavigate('teacher-dashboard')} />;
-  if (requestedStudentMissing) return <StatePanel title="Không tìm thấy bài của học sinh" message="Học sinh được yêu cầu không có bài thuộc phạm vi bạn được phép chấm." actionLabel="Về bàn giáo viên" onAction={() => onNavigate('teacher-dashboard')} />;
-  if (!queue.length) return <StatePanel title="Chưa có bài để chấm" message="Khi học sinh nộp phiên bản, bài sẽ xuất hiện tại đây." actionLabel="Về bàn giáo viên" onAction={() => onNavigate('teacher-dashboard')} />;
+  if (assignmentId && queue.length === 0) return <StatePanel title="Chưa có bài đã nộp" message="Nhiệm vụ này chưa có phiên bản nào thuộc phạm vi bạn được phép chấm." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
+  if (requestedStudentMissing) return <StatePanel title="Không tìm thấy bài của học sinh" message="Học sinh được yêu cầu không có bài thuộc phạm vi bạn được phép chấm." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
+  if (!queue.length) return <StatePanel title="Chưa có bài để chấm" message="Khi học sinh nộp phiên bản, bài sẽ xuất hiện tại đây." actionLabel="Về trang chính" onAction={() => onNavigate(reviewHome)} />;
   if (!currentPortfolio || !assignment) return <StatePanel title="Dữ liệu chưa hoàn chỉnh" message="Hồ sơ không còn liên kết với nhiệm vụ hợp lệ." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
   if (!selectedSnapshot || integrityError) return <StatePanel title="Không tìm thấy phiên bản đã nộp" message="Không thể chấm bằng bản nháp thay thế. Hãy tải lại dữ liệu hoặc chọn một phiên bản hợp lệ." actionLabel="Tải lại" onAction={() => void refreshAcademicData()} />;
 
@@ -383,7 +384,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-2.5 backdrop-blur sm:px-5">
         <div className="mx-auto flex max-w-[100rem] flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Button size="sm" variant="ghost" onClick={() => onNavigate(isPeerMode ? 'portfolio-list' : 'teacher-dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
+            <Button size="sm" variant="ghost" onClick={() => onNavigate(reviewHome)} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>
               Quay lại
             </Button>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />

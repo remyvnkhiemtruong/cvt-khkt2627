@@ -8,8 +8,17 @@ interface ForbiddenViewProps {
   requiredRole?: string;
 }
 
-export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate, requiredRole }) => {
+const homeForRole = (role: string) =>
+  role === 'ai' ? 'ai-workspace'
+    : role === 'teacher' ? 'teacher-dashboard'
+      : role === 'researcher' ? 'researcher-view'
+        : role === 'admin' ? 'admin-view'
+          : role === 'peer' ? 'portfolio-list'
+            : 'dashboard';
+
+export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate }) => {
   const { currentUser } = useAuthStore();
+  const homeView = homeForRole(currentUser.role);
 
   return (
     <div className="max-w-lg mx-auto py-16 px-4 text-center space-y-6 animate-fade-in">
@@ -19,30 +28,30 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({ onNavigate, requir
 
       <div className="space-y-2">
         <span className="text-caption font-bold text-rose-600 uppercase tracking-wider bg-rose-100/70 px-2.5 py-1 rounded-md">
-          Mã lỗi 403 • Quyền truy cập bị từ chối
+          403 • Không có quyền truy cập
         </span>
         <h1 className="text-h2 font-bold text-slate-900">
-          Không Đủ Quyền Hạn Truy Cập
+          Bạn không có quyền mở trang này
         </h1>
         <p className="text-small text-slate-600 leading-relaxed">
-          Tài khoản hiện tại <strong>{currentUser.name}</strong> với vai trò <strong className="uppercase">[{currentUser.role}]</strong> không được cấp quyền truy cập vào phân hệ này {requiredRole ? `(Yêu cầu vai trò: ${requiredRole})` : ''}.
+          Tài khoản <strong>{currentUser.name}</strong> không được phép truy cập trang này.
         </p>
       </div>
 
       <div className="pt-2 flex items-center justify-center gap-3">
         <Button
           variant="outline"
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => onNavigate(homeView)}
           leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
         >
-          Quay lại Bàn làm việc
+          Về trang chính
         </Button>
         <Button
           variant="primary"
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => onNavigate(homeView)}
           leftIcon={<HomeIcon className="w-4 h-4" />}
         >
-          Trang chủ
+          Trang chính
         </Button>
       </div>
     </div>

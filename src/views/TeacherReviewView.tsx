@@ -354,7 +354,7 @@ export const TeacherReviewView: React.FC<TeacherReviewViewProps> = ({
           decision,
           finalResponse,
           axisId: activeAxisId,
-          teacherNote: decision === 'revised' ? 'Giáo viên chỉnh sửa đề xuất AI' : decision === 'rejected' ? 'Giáo viên không sử dụng đề xuất AI' : 'Giáo viên duyệt đề xuất AI'
+          teacherNote: decision === 'revised' ? 'Giáo viên chỉnh góp ý AI' : decision === 'rejected' ? 'Giáo viên không sử dụng góp ý AI' : 'Giáo viên đã xem góp ý AI'
         })
       });
       const data = await response.json().catch(() => ({}));

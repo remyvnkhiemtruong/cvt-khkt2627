@@ -65,38 +65,38 @@ const WORKFLOW_STEPS = [
   {
     code: 'V0',
     title: 'Dự đoán trước khi đọc',
-    desc: 'Học sinh ghi nhận cách hiểu ban đầu, căn cứ dự đoán và mức độ tự tin trước khi tiếp cận toàn văn.',
-    artifact: 'Phiên bản V0 độc lập · Không tính điểm đúng – sai'
+    desc: 'Học sinh ghi lại dự đoán, căn cứ và mức tự tin trước khi đọc toàn văn.',
+    artifact: 'Lưu V0 riêng · Không chấm đúng – sai'
   },
   {
     code: 'V1',
     title: 'Bản phân tích đầu tiên',
-    desc: 'Học sinh phân tích sâu theo từng trục thi pháp, trích xuất dẫn chứng cụ thể từ ngữ liệu văn học.',
-    artifact: 'Tạo phiên bản bất biến V1 được khóa an toàn'
+    desc: 'Học sinh phân tích theo từng trục thi pháp và trích dẫn dẫn chứng từ ngữ liệu.',
+    artifact: 'Lưu V1 · Không ghi đè bản cũ'
   },
   {
     code: 'PHẢN HỒI',
-    title: 'Góp ý sư phạm & AI',
-    desc: 'Góp ý gợi mở từ AI và giáo viên được gắn trực tiếp vào từng trục đọc và từng đoạn dẫn chứng.',
-    artifact: 'Lịch sử phản hồi gắn liền phiên bản · Không ghi đè bài làm cũ'
+    title: 'Góp ý AI & giáo viên',
+    desc: 'AI và giáo viên góp ý theo từng trục và dẫn chứng.',
+    artifact: 'Phản hồi được lưu theo từng phiên bản'
   },
   {
     code: 'V2',
-    title: 'Bản chỉnh sửa hoàn thiện',
-    desc: 'Học sinh đọc lại góp ý, hoàn thiện lập luận, giải trình lí do sửa đổi và đối chiếu trực quan với V1.',
-    artifact: 'Phiên bản V2 bất biến · Bản so sánh Diff hai phiên bản'
+    title: 'Bản chỉnh sửa',
+    desc: 'Học sinh đọc góp ý, sửa lập luận và ghi lí do thay đổi.',
+    artifact: 'Lưu V2 · Có thể so sánh với V1'
   },
   {
     code: 'REF1',
     title: 'Phiếu tự phản tư',
-    desc: 'Học sinh tự đánh giá sự chuyển biến trong nhận thức, chỉ ra điều mình hiểu sâu hơn sau lần sửa.',
-    artifact: 'Hồ sơ tự phản tư học thuật bắt buộc trước khi chấm điểm'
+    desc: 'Học sinh ghi lại điều đã hiểu rõ hơn sau khi sửa bài.',
+    artifact: 'Hoàn thành REF1 trước khi giáo viên chấm'
   },
   {
     code: 'RUBRIC',
-    title: 'Đánh giá Rubric chính thức',
-    desc: 'Giáo viên đánh giá toàn diện bài viết theo ma trận Rubric 4 mức chuẩn hóa được gắn với nhiệm vụ.',
-    artifact: 'Điểm số chính thức do máy chủ tính toán bảo mật'
+    title: 'Rubric giáo viên',
+    desc: 'Giáo viên chấm bài theo Rubric của nhiệm vụ.',
+    artifact: 'Điểm được tính từ Rubric đã chọn'
   }
 ];
 
@@ -212,10 +212,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           <div className="border-b border-slate-200 bg-white px-4 py-4 shadow-lg lg:hidden">
             <nav className="flex flex-col space-y-2 text-sm font-medium" aria-label="Điều hướng di động">
               {[
-                { id: 'trai-nghiem', label: 'Trải nghiệm học tập' },
-                { id: 'quy-trinh', label: 'Quy trình sư phạm' },
-                { id: 'truc-doc', label: '6 trục đọc thi pháp' },
-                { id: 'giao-vien', label: 'Không gian giáo viên' },
+                { id: 'trai-nghiem', label: 'Trải nghiệm' },
+                { id: 'quy-trinh', label: 'Quy trình' },
+                { id: 'truc-doc', label: '6 trục đọc' },
+                { id: 'giao-vien', label: 'Giáo viên' },
                 { id: 've-he-thong', label: 'Về hệ thống' }
               ].map(item => (
                 <a
@@ -262,7 +262,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 </h1>
 
                 <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-[62ch]">
-                  Hệ thống hồ sơ đọc số giúp học sinh lưu lại cách hiểu ban đầu, nhận phản hồi sư phạm, chỉnh sửa bài viết và nhìn thấy chính quá trình tiến bộ của mình.
+                  Học sinh lưu từng phiên bản bài làm, nhận góp ý và xem lại quá trình sửa bài.
                 </p>
 
                 {/* CTAs */}
@@ -281,14 +281,14 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                     href="#quy-trinh"
                     className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition"
                   >
-                    Xem cách hoạt động
+                    Xem quy trình
                   </a>
                 </div>
 
                 {/* Mini Workflow Nodes */}
                 <div className="pt-4 border-t border-slate-100">
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-                    Luồng học thuật khép kín
+                    Quy trình làm bài
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
                     <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">V0 Dự đoán</span>
@@ -798,7 +798,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               {/* Teacher Copy */}
               <div className="order-1 lg:order-2 space-y-6">
                 <div className="text-xs font-bold uppercase tracking-wider text-primary-700">
-                  Không gian giáo viên
+                  Giáo viên
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 leading-tight">
                   Giáo viên nhìn thấy cả quá trình, không chỉ kết quả cuối.
@@ -1091,10 +1091,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 Điều hướng nhanh
               </span>
               <ul className="space-y-1.5 text-slate-600">
-                <li><a href="#trai-nghiem" className="hover:text-slate-950">Trải nghiệm học tập</a></li>
-                <li><a href="#quy-trinh" className="hover:text-slate-950">Quy trình sư phạm</a></li>
-                <li><a href="#truc-doc" className="hover:text-slate-950">6 trục đọc thi pháp</a></li>
-                <li><a href="#giao-vien" className="hover:text-slate-950">Không gian giáo viên</a></li>
+                <li><a href="#trai-nghiem" className="hover:text-slate-950">Trải nghiệm</a></li>
+                <li><a href="#quy-trinh" className="hover:text-slate-950">Quy trình</a></li>
+                <li><a href="#truc-doc" className="hover:text-slate-950">6 trục đọc</a></li>
+                <li><a href="#giao-vien" className="hover:text-slate-950">Giáo viên</a></li>
                 <li><button type="button" onClick={() => onNavigate('login')} className="hover:text-slate-950 text-left">Đăng nhập tài khoản</button></li>
               </ul>
             </div>

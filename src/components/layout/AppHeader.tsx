@@ -72,7 +72,8 @@ const home = (role: string) =>
   role === 'teacher' ? 'teacher-dashboard' :
   role === 'researcher' ? 'researcher-view' :
   role === 'admin' ? 'admin-view' :
-  role === 'ai' ? 'ai-workspace' : 'dashboard';
+  role === 'ai' ? 'ai-workspace' :
+  role === 'peer' ? 'portfolio-list' : 'dashboard';
 
 const joinList = (value?: string[]) => Array.isArray(value) ? value.join(', ') : '';
 const splitList = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);

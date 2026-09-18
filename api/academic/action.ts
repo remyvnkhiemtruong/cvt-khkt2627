@@ -56,7 +56,7 @@ const clientMessage = (code: string) => {
     PEER_ASSIGNMENT_FORBIDDEN: "Bài hoặc phiên bản này không được phân công cho bạn.",
     PORTFOLIO_NOT_FOUND: "Không tìm thấy hồ sơ phù hợp.",
     ASSIGNMENT_CLOSED: "Nhiệm vụ này đã đóng. Bạn không thể lưu hoặc nộp thêm.",
-    VERSION_NOT_FOUND: "Không tìm thấy phiên bản bất biến phù hợp.",
+    VERSION_NOT_FOUND: "Không tìm thấy phiên bản phù hợp.",
     VERSION_REQUIRED: "Cần chọn đúng phiên bản đã nộp.",
     SUBMISSION_KEY_REQUIRED: "Khóa nộp bài không hợp lệ. Vui lòng thử lại.",
     SCHEMA_MIGRATION_REQUIRED: "Hệ thống đang nâng cấp dữ liệu ngữ liệu. Vui lòng thử lại sau.",

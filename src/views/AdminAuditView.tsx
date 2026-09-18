@@ -263,7 +263,7 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
                         {u.account_status === 'locked' ? 'Đã khóa' : 'Hoạt động'}
                       </Badge>
                       {u.must_change_password && (
-                        <span className="ml-2 text-amber-700 font-medium">Cần đổi MK</span>
+                        <span className="ml-2 text-amber-700 font-medium">Cần đổi mật khẩu</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-500">{fmt(u.last_login)}</td>
@@ -397,7 +397,7 @@ export const AdminAuditView: React.FC<AdminAuditViewProps> = ({ onNavigate: _onN
           </div>
           {newPassword && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
-              <div className="text-xs font-semibold text-amber-900">Mật khẩu tạm (sao chép ngay):</div>
+              <div className="text-xs font-semibold text-amber-900">Mật khẩu tạm thời:</div>
               <div className="mt-1 select-all rounded border border-amber-200 bg-white p-2 font-mono text-sm font-bold text-slate-900">
                 {newPassword}
               </div>

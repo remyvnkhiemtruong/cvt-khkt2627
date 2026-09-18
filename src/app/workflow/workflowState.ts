@@ -59,14 +59,14 @@ export function deriveStudentWorkflow(input: {
     statusLabel, nextActionLabel, nextActionHint, tone, canEdit, isComplete, progress: isComplete ? 100 : progress, steps
   });
 
-  if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Bài đã có Rubric chính thức của giáo viên.', 'emerald', false, true);
+  if (hasTeacherRubric || portfolio?.status === 'completed') return make('Hoàn thành', 'Xem hồ sơ hoàn chỉnh', 'Giáo viên đã chấm Rubric.', 'emerald', false, true);
   if (!portfolio) return predictionRequired
     ? make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true)
-    : make('Đang viết V1', 'Bắt đầu V1', 'Mở bài và hoàn thiện bản đầu tiên.', 'blue', true);
+    : make('Đang viết V1', 'Bắt đầu V1', 'Mở bài và viết bản đầu tiên.', 'blue', true);
   if (predictionRequired && !prediction && academicVersions.length === 0) return make('Cần làm V0', 'Hoàn thành V0', 'Ghi dự đoán trước đọc rồi mới nộp V1.', 'blue', true);
-  if (academicVersions.length === 0) return make('Đang viết V1', 'Tiếp tục và nộp V1', 'Hoàn thiện bản đầu tiên để gửi phản hồi.', 'blue', true);
-  if (!hasFeedback) return make('Chờ phản hồi', 'Xem V1 đã nộp', 'V1 đã khóa và đang chờ phản hồi.', 'violet', false);
+  if (academicVersions.length === 0) return make('Đang viết V1', 'Tiếp tục và nộp V1', 'Hoàn thành V1 để nhận góp ý.', 'blue', true);
+  if (!hasFeedback) return make('Chờ phản hồi', 'Xem V1 đã nộp', 'V1 đã nộp. Đang chờ góp ý.', 'violet', false);
   if (!revision) return make('Cần chỉnh sửa', 'Xem góp ý và sửa V2', 'Đọc góp ý, chỉnh bài và nộp V2.', 'amber', true);
-  if (reflectionRequired && !hasReflection) return make('Cần REF1', 'Hoàn thành tự phản tư', 'V2 đã nộp. Hoàn thành REF1 trước Rubric.', 'blue', false);
-  return make('Chờ chấm Rubric', 'Xem hồ sơ đã nộp', 'Hồ sơ đang chờ giáo viên chấm chính thức.', 'violet', false);
+  if (reflectionRequired && !hasReflection) return make('Cần REF1', 'Làm REF1', 'V2 đã nộp. Làm REF1 trước khi giáo viên chấm.', 'blue', false);
+  return make('Chờ chấm Rubric', 'Xem hồ sơ đã nộp', 'Đang chờ giáo viên chấm Rubric.', 'violet', false);
 }

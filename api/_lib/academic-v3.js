@@ -491,6 +491,7 @@ export async function getAcademicSnapshot(user) {
         ? pseudonym('SUB', row.student_id)
         : row.student_id;
     const id = `port-${studentId}-${row.assignment_public_id}`;
+    const versions = versionsByPortfolio.get(row.id) || [];
     portfolios[id] = {
       id,
       dbId: researcher || peerOrAi ? '' : row.id,
@@ -500,8 +501,8 @@ export async function getAcademicSnapshot(user) {
       className: researcher ? pseudonym('COHORT', row.class_code) : peerOrAi ? '' : row.class_code,
       currentDraft: role === 'student' ? (row.content_json || emptyDraft()) : emptyDraft(),
       lastAutosavedAt: role === 'student' ? (row.draft_updated_at || row.updated_at) : row.updated_at,
-      versions: versionsByPortfolio.get(row.id) || [],
-      currentActiveVersion: row.active_version,
+      versions,
+      currentActiveVersion: versions.length ? row.active_version : 'Bản nháp',
       status: row.status
     };
   }
@@ -1189,8 +1190,8 @@ async function createAssignment(user, input, req) {
         JSON.stringify(input.workflowConfig && typeof input.workflowConfig === 'object' ? input.workflowConfig : {}), user.id]);
     const assignmentDbId = inserted.rows[0].id;
     await client.query(`
-      INSERT INTO portfolios(assignment_id,student_id)
-      SELECT $1,cm.user_id FROM class_members cm
+      INSERT INTO portfolios(assignment_id,student_id,active_version)
+      SELECT $1,cm.user_id,'Bản nháp' FROM class_members cm
       JOIN app_users u ON u.id=cm.user_id AND u.role='student' AND u.account_status='active'
       WHERE cm.class_id=$2 AND cm.member_role='student'
       ON CONFLICT(assignment_id,student_id) DO NOTHING

@@ -90,7 +90,16 @@ export const AiWorkspaceView: React.FC = () => {
   const integrityError = Boolean(selected && (!currentPortfolio || !currentVersion));
 
   const copyFullStudentContextForChatGPT = async () => {
-    if (!selected || !currentVersion) return;
+    if (!selected || !currentVersion || !canPublish) return;
+    if (selected.status !== 'completed') {
+      try {
+        await postAction({ action: 'ai_claim_review', reviewId: selected.id });
+        await refresh();
+      } catch (e: unknown) {
+        setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể nhận xử lý bài này.' });
+        return;
+      }
+    }
     const essayParts = axes.map(a => {
       const text = currentVersion.responses?.[a.id]?.analysisText || '';
       return `### ${a.label}\n${text || '(Chưa viết)'}`;
@@ -292,7 +301,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                       onClick={copyFullStudentContextForChatGPT}
                       leftIcon={copiedPrompt ? <CheckIcon className="h-4 w-4 text-emerald-600" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
                     >
-                      {copiedPrompt ? 'Đã sao chép' : 'Sao chép bài để dán vào ChatGPT'}
+                      {copiedPrompt ? 'Đã sao chép' : selected.status === 'completed' ? 'Sao chép lại bài' : 'Nhận xử lý & sao chép bài'}
                     </Button>
                   </div>
                 )}

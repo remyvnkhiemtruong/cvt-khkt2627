@@ -83,9 +83,9 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
   return (
     <div className="v3-page space-y-6 pb-20">
       <PageHeader
-        eyebrow="Bàn học cá nhân"
+        eyebrow="Bàn học"
         title={`Chào ${user.name}`}
-        description={<span>{user.className ? `Lớp ${user.className} · ` : ''}{completed}/{items.length} nhiệm vụ đã hoàn thành. Tập trung vào bước tiếp theo thay vì phải tự dò quy trình.</span>}
+        description={<span>{user.className ? `Lớp ${user.className} · ` : ''}{completed}/{items.length} nhiệm vụ đã hoàn thành.</span>}
         actions={<Button variant="outline" onClick={() => onNavigate('assignment-list')}>Tất cả nhiệm vụ</Button>}
       />
 
@@ -99,7 +99,7 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
         <section className="v3-panel overflow-hidden border-primary-200">
           <div className="border-b border-primary-100 bg-primary-50/65 px-4 py-3 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="v3-kicker">Việc cần làm tiếp theo</div>
+              <div className="v3-kicker">Việc tiếp theo</div>
               <Badge variant={next.state.isComplete ? 'emerald' : 'primary'}>{next.state.isComplete ? 'Đã hoàn thành' : `${next.state.progress}%`}</Badge>
             </div>
           </div>
@@ -129,7 +129,7 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-950">Nhiệm vụ của bạn</h2>
-              <p className="mt-0.5 text-xs text-slate-500">Theo dõi đúng trạng thái workflow của từng bài.</p>
+              <p className="mt-0.5 text-xs text-slate-500">Theo dõi tiến độ của từng bài.</p>
             </div>
             <Button size="sm" variant="ghost" onClick={() => onNavigate('assignment-list')}>Xem tất cả</Button>
           </div>
@@ -156,8 +156,8 @@ export const StudentDashboardView: React.FC<{ onNavigate: (view: string, params?
 
         <section className="space-y-3">
           <div>
-            <h2 className="text-base font-bold text-slate-950">Phản hồi gần đây</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Mở bài để đọc phản hồi trong đúng ngữ cảnh.</p>
+            <h2 className="text-base font-bold text-slate-950">Góp ý gần đây</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Mở bài để xem góp ý.</p>
           </div>
           <div className="v3-panel divide-y divide-slate-100 overflow-hidden">
             {recentFeedbacks.length ? recentFeedbacks.map(item => (

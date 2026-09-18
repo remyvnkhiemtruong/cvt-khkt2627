@@ -112,8 +112,8 @@ export default async function handler(req: any, res: any) {
           }
           if (role === 'student') {
             await client.query(`
-              INSERT INTO portfolios(assignment_id,student_id)
-              SELECT a.id,$1
+              INSERT INTO portfolios(assignment_id,student_id,active_version)
+              SELECT a.id,$1,'Bản nháp'
               FROM assignments a
               JOIN class_members cm ON cm.class_id=a.class_id AND cm.user_id=$1 AND cm.member_role='student'
               WHERE a.status='published'
@@ -221,8 +221,8 @@ export default async function handler(req: any, res: any) {
 
         if (memberRole === 'student') {
           await client.query(`
-            INSERT INTO portfolios(assignment_id,student_id)
-            SELECT a.id,$1 FROM assignments a WHERE a.class_id=$2 AND a.status='published'
+            INSERT INTO portfolios(assignment_id,student_id,active_version)
+            SELECT a.id,$1,'Bản nháp' FROM assignments a WHERE a.class_id=$2 AND a.status='published'
             ON CONFLICT(assignment_id,student_id) DO NOTHING
           `, [targetId, classRow.id]);
           await client.query(`

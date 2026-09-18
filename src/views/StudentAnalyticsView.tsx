@@ -42,51 +42,6 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
     };
   }), [assignments, portfolios, rubricSubmissions, studentId]);
 
-  if (!assignmentId) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-6 pb-20">
-        <div className="border-b border-slate-200 pb-4">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tiến độ học tập</h1>
-          <p className="mt-1 text-sm text-slate-500">Chọn một nhiệm vụ để xem điểm, góp ý và lịch sử các bản đã nộp.</p>
-        </div>
-        {overviewAssignments.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-            Chưa có nhiệm vụ để xem tiến độ.
-          </div>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {overviewAssignments.map(({ assignment: item, portfolio: itemPortfolio, versions, latestScore }) => (
-              <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="font-semibold text-slate-900">{item.title}</h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {versions.length} bản đã nộp
-                      {itemPortfolio?.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
-                    </p>
-                  </div>
-                  <Badge size="sm" variant="outline">
-                    {latestScore ? `${latestScore.totalScore}/${latestScore.maxScore}` : 'Chưa có điểm'}
-                  </Badge>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    disabled={!itemPortfolio}
-                    onClick={() => onNavigate('student-analytics', { assignmentId: item.id, studentId })}
-                  >
-                    Xem tiến độ
-                  </Button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   const portfolio = portfolios[`port-${studentId}-${assignmentId}`];
   const assignment = assignments.find(item => item.id === assignmentId);
   const activeRubric = assignment ? rubrics[assignment.rubricId] : undefined;
@@ -136,6 +91,51 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
   });
   const weakest = axisRows.filter(row => typeof row.last === 'number').sort((a, b) => Number(a.last) - Number(b.last))[0];
   const resolved = studentFeedback.filter(item => item.resolved).length;
+
+  if (!assignmentId) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6 pb-20">
+        <div className="border-b border-slate-200 pb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tiến độ học tập</h1>
+          <p className="mt-1 text-sm text-slate-500">Chọn một nhiệm vụ để xem điểm, góp ý và lịch sử các bản đã nộp.</p>
+        </div>
+        {overviewAssignments.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            Chưa có nhiệm vụ để xem tiến độ.
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {overviewAssignments.map(({ assignment: item, portfolio: itemPortfolio, versions, latestScore }) => (
+              <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-semibold text-slate-900">{item.title}</h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {versions.length} bản đã nộp
+                      {itemPortfolio?.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
+                    </p>
+                  </div>
+                  <Badge size="sm" variant="outline">
+                    {latestScore ? `${latestScore.totalScore}/${latestScore.maxScore}` : 'Chưa có điểm'}
+                  </Badge>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={!itemPortfolio}
+                    onClick={() => onNavigate('student-analytics', { assignmentId: item.id, studentId })}
+                  >
+                    Xem tiến độ
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (!portfolio) {
     return (

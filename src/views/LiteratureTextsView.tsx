@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useAuthStore } from '../app/store/useAuthStore';
 import type { LiteratureText } from '../types';
 import { Alert, Badge, Button, FilterBar, Input, Modal } from '../components/ui';
 import { ArrowLeftIcon, PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
@@ -22,6 +23,8 @@ async function saveCatalog(payload: unknown) {
 
 export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavigate }) => {
   const { literatureTexts, refreshAcademicData, isLoading } = usePortfolio();
+  const currentUser = useAuthStore(state => state.currentUser);
+  const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin';
   const currentTexts = useMemo(() => literatureTexts.filter(text => text.isLatest !== false), [literatureTexts]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
@@ -124,9 +127,11 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
             Mỗi lần sửa tạo một phiên bản mới. Nhiệm vụ cũ vẫn dùng bản ngữ liệu đã giao.
           </p>
         </div>
-        <Button size="sm" variant="primary" onClick={openNew} leftIcon={<PlusIcon className="h-4 w-4" />}>
-          Thêm tác phẩm mới
-        </Button>
+        {canEdit && (
+          <Button size="sm" variant="primary" onClick={openNew} leftIcon={<PlusIcon className="h-4 w-4" />}>
+            Thêm tác phẩm mới
+          </Button>
+        )}
       </div>
 
       {error && <Alert type="error" title="Lỗi">{error}</Alert>}
@@ -183,9 +188,11 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
                       <Button size="sm" variant="ghost" onClick={() => setSelected(t)} leftIcon={<EyeIcon className="h-3.5 w-3.5" />}>
                         Xem
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => openEdit(t)}>
-                        Tạo revision mới
-                      </Button>
+                      {canEdit && (
+                        <Button size="sm" variant="outline" onClick={() => openEdit(t)}>
+                          Tạo phiên bản mới
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -199,7 +206,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
       <Modal
         isOpen={open}
         onClose={() => { setOpen(false); resetForm(); }}
-        title={editing ? `Tạo revision mới — ${editing.title}` : 'Thêm tác phẩm mới'}
+        title={editing ? `Tạo phiên bản mới — ${editing.title}` : 'Thêm tác phẩm mới'}
         footer={
           <div className="flex items-center justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => { setOpen(false); resetForm(); }} disabled={saving}>
@@ -212,7 +219,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
               disabled={!title.trim() || !author.trim()}
               isLoading={saving}
             >
-              {editing ? 'Lưu revision mới' : 'Lưu tác phẩm'}
+              {editing ? 'Lưu phiên bản mới' : 'Lưu tác phẩm'}
             </Button>
           </div>
         }
@@ -273,9 +280,9 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
         title={selected?.title || 'Chi tiết tác phẩm'}
         footer={
           <div className="flex justify-end gap-2">
-            {selected && (
+            {selected && canEdit && (
               <Button variant="primary" size="sm" onClick={() => openEdit(selected)}>
-                Tạo revision mới
+                Tạo phiên bản mới
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setSelected(null)}>

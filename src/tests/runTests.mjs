@@ -153,7 +153,7 @@ test('Không còn simulated state trong ba workspace trọng yếu', () => {
 });
 test('Editor chỉ cho học sinh ghi bài', () => {
   const routes = read('src/app/router/routes.tsx');
-  assert(routes.includes("editor: { id:'editor', path:'/student/editor', title:'Không gian viết & phân tích', allowedRoles:['student'] }"));
+  assert(routes.includes("editor: { id:'editor', path:'/student/editor', title:'Bài viết', allowedRoles:['student'] }"));
 });
 test('Không hardcode assign-vo-nhat trong navigation shortcut và view chính', () => {
   for (const p of ['src/App.tsx', 'src/views/AssignmentListView.tsx', 'src/views/PortfolioListView.tsx', 'src/views/VersionDiffView.tsx']) {

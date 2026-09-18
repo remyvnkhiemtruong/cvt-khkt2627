@@ -72,27 +72,27 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
   return (
     <div className="v3-page space-y-6 pb-20">
       <PageHeader
-        eyebrow="Không gian giảng dạy"
-        title="Hàng đợi giáo viên"
-        description={`${actionCount} việc cần xử lý · ${submitted.length} hồ sơ V1/V2 đã nộp. V0 vẫn được giữ làm mốc dự đoán nhưng không tính như bài nộp chính thức.`}
+        eyebrow="Giáo viên"
+        title="Bài cần xử lý"
+        description={`${actionCount} việc cần xử lý · ${submitted.length} bài V1/V2 đã nộp. V0 chỉ là phần dự đoán trước đọc.`}
         actions={<Button variant="primary" onClick={() => onNavigate('assignment-builder')}>Tạo nhiệm vụ</Button>}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <MetricTile label="Cần giáo viên xem" value={teacherPending} note="AI/feedback đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
-        <MetricTile label="AI chờ duyệt" value={aiPending} note="Response đã hoàn tất" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
+        <MetricTile label="Cần giáo viên xem" value={teacherPending} note="Góp ý đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
+        <MetricTile label="AI chờ duyệt" value={aiPending} note="AI đã trả lời" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
         <MetricTile label="Chờ Rubric" value={rubricPending} note="Cần chấm chính thức" tone={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
         <MetricTile label="HS đang sửa" value={revising} note="Sau phản hồi" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
-        <MetricTile label="Hoàn thành" value={done} note="Workflow đã đóng" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Hoàn thành" value={done} note="Đã chấm xong" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
       </div>
 
       <section className="v3-panel overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
             <h2 className="text-base font-bold text-slate-950">Ưu tiên xử lý</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Sắp xếp theo bước workflow cần giáo viên can thiệp trước.</p>
+            <p className="mt-0.5 text-xs text-slate-500">Bài cần giáo viên xử lý được đưa lên trước.</p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => onNavigate('portfolio-list')}>Mở toàn bộ hồ sơ</Button>
+          <Button size="sm" variant="outline" onClick={() => onNavigate('portfolio-list')}>Xem tất cả bài</Button>
         </div>
 
         <div className="hidden overflow-x-auto md:block">
@@ -148,8 +148,8 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
 
       <section className="v3-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm font-bold text-slate-900">{assignments.length} nhiệm vụ đang quản lý</div>
-          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý ngữ liệu và Rubric từ nhóm “Giảng dạy” ở thanh bên.</div>
+          <div className="text-sm font-bold text-slate-900">{assignments.length} nhiệm vụ đã tạo</div>
+          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý tác phẩm và Rubric ở mục “Giảng dạy”.</div>
         </div>
         <Button variant="outline" onClick={() => onNavigate('class-analytics')}>Xem phân tích lớp</Button>
       </section>

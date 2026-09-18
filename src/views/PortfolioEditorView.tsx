@@ -206,7 +206,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         }
         return;
       }
-      // Esc: Exit Focus Mode
+      // Esc: exit focus view
       if (e.key === 'Escape' && isFocusMode) {
         e.preventDefault();
         setIsFocusMode(false);
@@ -276,7 +276,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <span className="hidden sm:inline">{saveStatus.text}</span>
             </span>
 
-            {/* Focus Mode Toggle */}
+            {/* Focus toggle */}
             <button
               type="button"
               onClick={() => setIsFocusMode(!isFocusMode)}
@@ -322,7 +322,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           </div>
         </div>
 
-        {/* Focus Mode Banner */}
+        {/* Focus banner */}
         {isFocusMode && (
           <div className="mx-auto mt-2 flex max-w-2xl items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
             <span>Đang bật <strong>chế độ tập trung</strong>.</span>

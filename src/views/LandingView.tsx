@@ -709,7 +709,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary-100 text-primary-800 font-bold">2</div>
                     <div>
                       <strong className="text-slate-900 block font-semibold text-sm">Tự động lưu</strong>
-                      <span className="text-slate-600">Bản nháp được lưu định kỳ lên máy chủ.</span>
+                      <span className="text-slate-600">Bản nháp được tự động lưu trong khi viết.</span>
                     </div>
                   </div>
 

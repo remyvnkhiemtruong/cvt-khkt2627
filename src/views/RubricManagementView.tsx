@@ -132,7 +132,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
         <div className="flex items-center gap-2">
           <BookmarkSquareIcon className="h-4 w-4 text-primary-700" />
           <span className="font-semibold text-slate-800">Mô phỏng tính điểm theo trọng số:</span>
-          <span className="text-slate-500">6 tiêu chí × thang điểm chuẩn hóa</span>
+          <span className="text-slate-500">6 tiêu chí × 4 mức điểm</span>
         </div>
         <div className="flex items-center gap-2 font-mono">
           <span className="text-slate-500">Điểm giả định:</span>

@@ -94,4 +94,15 @@ await test('PA09: health statistics use a short in-instance cache without changi
   assert(source.includes('jwtSecretConfigured'));
 });
 
-console.log(`Production audit regressions: ${passed}/9 passed`);
+await test('PA10: V0 question bank survives teacher creation and is rendered to students', () => {
+  const builder = read('src/views/AssignmentBuilderView.tsx');
+  const action = read('api/academic/action.ts');
+  const editor = read('src/views/PortfolioEditorView.tsx');
+  assert(builder.includes('questions: predictionEnabled ? predictionQuestions : []'));
+  assert(builder.includes('predictionQuestions.length === 0'));
+  assert(action.includes('PREDICTION_QUESTIONS_REQUIRED'));
+  assert(editor.includes('assignment?.predictionTemplate?.questions'));
+  assert(editor.includes('Câu hỏi V0'));
+});
+
+console.log(`Production audit regressions: ${passed}/10 passed`);

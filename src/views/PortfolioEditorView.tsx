@@ -88,6 +88,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   const portfolioKey = assignment && currentUser.id ? `port-${currentUser.id}-${assignment.id}` : '';
   const portfolio = portfolioKey ? portfolios[portfolioKey] : undefined;
   const literatureText = assignment ? literatureTexts.find(item => item.id === assignment.textId) : undefined;
+  const predictionQuestions = (assignment?.predictionTemplate?.questions || []).filter(question => Boolean(question?.trim()));
+  const predictionPrompt = assignment?.predictionTemplate?.prompt?.trim() || '';
 
   const currentAxis = portfolio?.currentDraft?.[activeAxisId];
   const axisFeedbacks = useMemo(
@@ -477,9 +479,23 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           )}
 
           {predictionAvailable && (
-            <div className="rounded-lg border border-sky-200 bg-sky-50 p-3.5 text-sm leading-6 text-sky-900">
-              <strong>Bước đầu tiên: V0 – Dự đoán trước đọc.</strong> Hoàn thành dự đoán, nêu căn cứ và mức tự tin trước khi nộp V1. V0 sẽ được khóa sau khi nộp.
-            </div>
+            <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950 sm:p-5">
+              <div className="font-bold">Bước đầu tiên: V0 – Dự đoán trước đọc</div>
+              <p className="mt-1 text-xs leading-5 text-sky-800">
+                {predictionPrompt || 'Trả lời các câu hỏi dưới đây, nêu căn cứ và mức tự tin trước khi nộp V1. V0 sẽ được khóa sau khi nộp.'}
+              </p>
+              {predictionQuestions.length > 0 ? (
+                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-800">
+                  {predictionQuestions.map((question, index) => (
+                    <li key={`${index}-${question}`} className="pl-1">{question}</li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  Nhiệm vụ đang bật V0 nhưng chưa có bộ câu hỏi. Hãy báo giáo viên để cập nhật nhiệm vụ trước khi nộp.
+                </div>
+              )}
+            </section>
           )}
 
           <section className="workspace-prose mx-auto">
@@ -694,6 +710,16 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs leading-relaxed text-slate-700">
                   {assignment.prompt || 'Chưa có yêu cầu chi tiết.'}
                 </div>
+                {predictionAvailable && predictionQuestions.length > 0 && (
+                  <div className="space-y-1.5 rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+                    <span className="text-xs font-semibold text-sky-900">Câu hỏi V0 ({predictionQuestions.length} câu):</span>
+                    <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-700">
+                      {predictionQuestions.map((question, index) => (
+                        <li key={`${index}-${question}`}>{question}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
                 {assignment.guidingSteps && assignment.guidingSteps.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="text-xs font-semibold text-slate-700">Các bước gợi ý:</span>

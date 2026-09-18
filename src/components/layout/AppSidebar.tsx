@@ -42,7 +42,7 @@ const studentSections: NavSection[] = [{
   items: [
     { id: 'dashboard', label: 'Bàn học', icon: HomeIcon },
     { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
-    { id: 'portfolio-list', label: 'Hồ sơ học tập', icon: FolderIcon }
+    { id: 'portfolio-list', label: 'Bài đã làm', icon: FolderIcon }
   ]
 }];
 
@@ -52,15 +52,15 @@ const teacherSections: NavSection[] = [
     items: [
       { id: 'teacher-dashboard', label: 'Tổng quan', icon: HomeIcon },
       { id: 'teacher-review', label: 'Chấm bài', icon: ClipboardDocumentCheckIcon },
-      { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon }
+      { id: 'ai-workspace', label: 'Góp ý AI', icon: ChatBubbleLeftRightIcon }
     ]
   },
   {
     label: 'Giảng dạy',
     items: [
-      { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
+      { id: 'portfolio-list', label: 'Bài học sinh', icon: FolderIcon },
       { id: 'assignment-builder', label: 'Tạo nhiệm vụ', icon: PlusCircleIcon },
-      { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon },
+      { id: 'literature-texts', label: 'Tác phẩm', icon: BookOpenIcon },
       { id: 'rubric-management', label: 'Rubric', icon: AcademicCapIcon }
     ]
   },
@@ -76,15 +76,15 @@ const adminSections: NavSection[] = [
     items: [
       { id: 'admin-view', label: 'Tài khoản & nhật ký', icon: ShieldCheckIcon },
       { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
-      { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon }
+      { id: 'ai-workspace', label: 'Góp ý AI', icon: ChatBubbleLeftRightIcon }
     ]
   },
   {
-    label: 'Xem tầng dưới',
+    label: 'Học sinh',
     items: [
       { id: 'assignment-list', label: 'Nhiệm vụ học sinh', icon: BookOpenIcon },
-      { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
-      { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon }
+      { id: 'portfolio-list', label: 'Bài học sinh', icon: FolderIcon },
+      { id: 'literature-texts', label: 'Tác phẩm', icon: BookOpenIcon }
     ]
   },
   {
@@ -98,14 +98,14 @@ const adminSections: NavSection[] = [
 
 const aiSections: NavSection[] = [
   {
-    label: 'AI Workspace',
-    items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }]
+    label: 'AI',
+    items: [{ id: 'ai-workspace', label: 'Nhập góp ý', icon: ChatBubbleLeftRightIcon }]
   },
   {
     label: 'Xem học sinh',
     items: [
       { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
-      { id: 'portfolio-list', label: 'Hồ sơ trong hàng đợi', icon: FolderIcon }
+      { id: 'portfolio-list', label: 'Bài trong hàng đợi', icon: FolderIcon }
     ]
   }
 ];

@@ -47,7 +47,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       { id: 'cmd-assignments', category: 'Học tập', title: 'Danh sách nhiệm vụ', icon: BookOpenIcon, action: () => onNavigate('assignment-list'), roles: ['student', 'teacher', 'peer', 'researcher', 'admin', 'ai'] },
       { id: 'cmd-portfolios', category: 'Hồ sơ', title: 'Hồ sơ học tập', icon: FolderIcon, action: () => onNavigate('portfolio-list'), roles: ['student', 'teacher', 'peer', 'researcher', 'admin', 'ai'] },
       { id: 'cmd-feedback', category: 'Phản hồi', title: currentUser.role === 'student' ? 'Phản hồi cần xử lý' : 'Chấm bài', icon: ChatBubbleLeftRightIcon, action: () => onNavigate(currentUser.role === 'student' ? 'assignment-list' : 'teacher-review'), roles: ['student', 'teacher', 'peer', 'admin'] },
-      { id: 'cmd-analytics', category: 'Phân tích', title: 'Xem tiến bộ', icon: ChartBarIcon, action: () => onNavigate(currentUser.role === 'teacher' || currentUser.role === 'researcher' || currentUser.role === 'admin' ? 'class-analytics' : 'dashboard'), roles: ['student', 'teacher', 'researcher', 'admin'] },
+      { id: 'cmd-analytics', category: 'Phân tích', title: currentUser.role === 'student' ? 'Tiến độ học tập' : 'Phân tích lớp', icon: ChartBarIcon, action: () => onNavigate(currentUser.role === 'student' ? 'student-analytics' : 'class-analytics'), roles: ['student', 'teacher', 'researcher', 'admin'] },
       { id: 'cmd-ai', category: 'Phản hồi', title: currentUser.role === 'ai' ? 'Nhập phản hồi AI' : 'Phản hồi AI cần xem', icon: ChatBubbleLeftRightIcon, action: () => onNavigate('ai-workspace'), roles: ['ai', 'teacher', 'admin'] }
     ];
 

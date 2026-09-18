@@ -160,7 +160,7 @@ async function teacherCanAccessClass(client, classId, teacherId) {
 async function portfolioForStudent(client, assignmentPublicId, studentId, lock = false) {
   const result = await client.query(`
     SELECT p.*, a.public_id assignment_public_id, a.id assignment_db_id, a.class_id,
-           a.rubric_id, a.prompt, a.target_axes, a.workflow_config
+           a.rubric_id, a.prompt, a.target_axes, a.workflow_config, a.status assignment_status
     FROM portfolios p
     JOIN assignments a ON a.id=p.assignment_id
     WHERE a.public_id=$1 AND p.student_id=$2
@@ -247,7 +247,11 @@ async function loadRoleScope(pool, user) {
   }
   if (role === 'student') {
     const portfolios = await pool.query(`
-      SELECT p.id, p.assignment_id FROM portfolios p WHERE p.student_id=$1 ORDER BY p.updated_at DESC
+      SELECT p.id, p.assignment_id
+      FROM portfolios p
+      JOIN assignments a ON a.id=p.assignment_id
+      WHERE p.student_id=$1 AND a.status='published'
+      ORDER BY p.updated_at DESC
     `, [user.id]);
     return {
       assignmentIds: [...new Set(portfolios.rows.map(r => r.assignment_id))],
@@ -290,7 +294,29 @@ async function loadRoleScope(pool, user) {
   return { assignmentIds: [], portfolioIds: [] };
 }
 
-async function loadLiterature(pool, assignmentRows, role, textVersioning) {
+async function loadLiterature(pool, assignmentRows, role, textVersioning, userId = '') {
+  const assignmentDbIds = [...new Set(assignmentRows.map(row => row.id).filter(Boolean))];
+  const lockedLogicalIds = new Set();
+  const lockedVersionIds = new Set();
+  if (role === 'student' && userId && assignmentDbIds.length) {
+    const pending = await pool.query(`
+      SELECT DISTINCT a.text_id, a.literature_text_version_id
+      FROM assignments a
+      JOIN portfolios p ON p.assignment_id=a.id AND p.student_id=$1
+      WHERE a.id=ANY($2::uuid[])
+        AND COALESCE((a.workflow_config->>'predictionEnabled')::boolean, true)=true
+        AND NOT EXISTS(
+          SELECT 1 FROM portfolio_versions v
+          WHERE v.portfolio_id=p.id AND v.stage='prediction'
+        )
+    `, [userId, assignmentDbIds]);
+    for (const row of pending.rows) {
+      if (row.text_id) lockedLogicalIds.add(row.text_id);
+      if (row.literature_text_version_id) lockedVersionIds.add(row.literature_text_version_id);
+    }
+  }
+  const lockedForStudent = (logicalId, versionId) =>
+    role === 'student' && (lockedLogicalIds.has(logicalId) || lockedVersionIds.has(versionId));
   if (!textVersioning) {
     const logicalIds = [...new Set(assignmentRows.map(r => r.text_id).filter(Boolean))];
     if (!logicalIds.length) return [];
@@ -299,21 +325,24 @@ async function loadLiterature(pool, assignmentRows, role, textVersioning) {
              historical_context, tags
       FROM literature_texts WHERE id=ANY($1::uuid[]) ORDER BY title
     `, [logicalIds]);
-    return result.rows.map(row => ({
-      id: row.public_id,
-      logicalId: row.public_id,
-      revisionNo: 1,
-      isLatest: true,
-      title: row.title,
-      author: row.author,
-      year: row.year_text,
-      genre: row.genre,
-      synopsis: row.synopsis,
-      excerpt: row.excerpt,
-      fullContent: row.full_content,
-      historicalContext: row.historical_context,
-      tags: row.tags || []
-    }));
+    return result.rows.map(row => {
+      const locked = lockedForStudent(row.id, '');
+      return {
+        id: row.public_id,
+        logicalId: row.public_id,
+        revisionNo: 1,
+        isLatest: true,
+        title: row.title,
+        author: row.author,
+        year: row.year_text,
+        genre: row.genre,
+        synopsis: locked ? '' : row.synopsis,
+        excerpt: locked ? '' : row.excerpt,
+        fullContent: locked ? '' : row.full_content,
+        historicalContext: locked ? '' : row.historical_context,
+        tags: row.tags || []
+      };
+    });
   }
 
   const exactIds = [...new Set(assignmentRows.map(r => r.literature_text_version_id).filter(Boolean))];
@@ -339,22 +368,25 @@ async function loadLiterature(pool, assignmentRows, role, textVersioning) {
   }
   const byId = new Map();
   for (const row of rows) byId.set(row.id, row);
-  return [...byId.values()].sort((a, b) => String(a.title).localeCompare(String(b.title), 'vi')).map(row => ({
-    id: row.id,
-    logicalId: row.logical_public_id,
-    revisionNo: Number(row.version_no),
-    isLatest: Boolean(row.is_latest),
-    contentChecksum: row.content_checksum,
-    title: row.title,
-    author: row.author,
-    year: row.year_text,
-    genre: row.genre,
-    synopsis: row.synopsis,
-    excerpt: row.excerpt,
-    fullContent: row.full_content,
-    historicalContext: row.historical_context,
-    tags: row.tags || []
-  }));
+  return [...byId.values()].sort((a, b) => String(a.title).localeCompare(String(b.title), 'vi')).map(row => {
+    const locked = lockedForStudent(row.literature_text_id, row.id);
+    return {
+      id: row.id,
+      logicalId: row.logical_public_id,
+      revisionNo: Number(row.version_no),
+      isLatest: Boolean(row.is_latest),
+      contentChecksum: row.content_checksum,
+      title: row.title,
+      author: row.author,
+      year: row.year_text,
+      genre: row.genre,
+      synopsis: locked ? '' : row.synopsis,
+      excerpt: locked ? '' : row.excerpt,
+      fullContent: locked ? '' : row.full_content,
+      historicalContext: locked ? '' : row.historical_context,
+      tags: row.tags || []
+    };
+  });
 }
 
 export async function getAcademicSnapshot(user) {
@@ -378,7 +410,7 @@ export async function getAcademicSnapshot(user) {
 
   const rubrics = await getRubricMap(pool, assignmentIds, role === 'teacher' || role === 'admin');
   const primaryRubric = Object.values(rubrics)[0] || { id: '', title: 'Rubric', criteria: [] };
-  const literatureTexts = await loadLiterature(pool, assignmentRows, role, caps.textVersioning);
+  const literatureTexts = await loadLiterature(pool, assignmentRows, role, caps.textVersioning, user.id);
 
   let portfolioRows = [];
   if (portfolioIds.length) {
@@ -692,6 +724,7 @@ async function saveDraft(user, input, _req) {
     await client.query('BEGIN');
     const portfolio = await portfolioForStudent(client, assignmentId, user.id, true);
     if (!portfolio) throw new Error('PORTFOLIO_NOT_FOUND');
+    if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
     await client.query(`
       INSERT INTO portfolio_drafts(portfolio_id,content_json,updated_by,updated_at)
       VALUES($1,$2,$3,now())
@@ -719,6 +752,7 @@ async function createVersion(user, input, req) {
     await client.query('BEGIN');
     const portfolio = await portfolioForStudent(client, assignmentId, user.id, true);
     if (!portfolio) throw new Error('PORTFOLIO_NOT_FOUND');
+    if (portfolio.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
 
     const existing = await client.query(`SELECT * FROM portfolio_versions WHERE portfolio_id=$1 AND submission_key=$2 LIMIT 1`, [portfolio.id, submissionKey]);
     if (existing.rows[0]) {

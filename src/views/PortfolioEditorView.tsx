@@ -75,7 +75,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
   // V4 Layout states
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
-  const [inspectorTab, setInspectorTab] = useState<'prompt' | 'evidence' | 'feedback' | 'history' | 'ref1'>('prompt');
+  const [inspectorTab, setInspectorTab] = useState<'prompt' | 'text' | 'evidence' | 'feedback' | 'history' | 'ref1'>('prompt');
   const [mobileTab, setMobileTab] = useState<'write' | 'evidence' | 'feedback' | 'prompt'>('write');
 
   const editorFontSizeClass = {
@@ -668,6 +668,17 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <button
                 type="button"
                 role="tab"
+                aria-selected={inspectorTab === 'text'}
+                onClick={() => setInspectorTab('text')}
+                className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                  inspectorTab === 'text' ? 'bg-white font-semibold text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Ngữ liệu
+              </button>
+              <button
+                type="button"
+                role="tab"
                 aria-selected={inspectorTab === 'evidence'}
                 onClick={() => setInspectorTab('evidence')}
                 className={`rounded-md px-2.5 py-1.5 transition-colors ${
@@ -728,6 +739,26 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                         <li key={`${idx}-${step}`}>{step}</li>
                       ))}
                     </ol>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {inspectorTab === 'text' && (
+              <div className="mt-4 space-y-3">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Ngữ liệu</h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {literatureText ? `${literatureText.title} — ${literatureText.author}` : 'Chưa có ngữ liệu.'}
+                  </p>
+                </div>
+                {predictionAvailable ? (
+                  <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
+                    Ngữ liệu sẽ mở sau khi em nộp V0.
+                  </div>
+                ) : (
+                  <div className="max-h-[65vh] overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-sm leading-7 text-slate-800">
+                    {literatureText?.fullContent || literatureText?.excerpt || 'Chưa có nội dung ngữ liệu.'}
                   </div>
                 )}
               </div>

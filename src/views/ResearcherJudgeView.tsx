@@ -75,12 +75,12 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
         <div>
           <div className="mb-1"><Button size="sm" variant="ghost" onClick={() => onNavigate('dashboard')} leftIcon={<ArrowLeftIcon className="h-4 w-4" />}>Tổng quan</Button></div>
           <h1 className="text-2xl font-semibold text-slate-900">Phân tích nghiên cứu</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Chỉ dùng pseudonym server-side và rubric chính thức đúng theo từng nhiệm vụ</p>
+          <p className="text-sm text-slate-500 mt-0.5">Dữ liệu được ẩn danh trước khi hiển thị và chỉ dùng kết quả Rubric của đúng nhiệm vụ.</p>
         </div>
         <div className="text-xs text-slate-500">{samples.length} hồ sơ mẫu</div>
       </div>
 
-      {missingRubric > 0 && <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{missingRubric} hồ sơ thiếu rubric đúng của nhiệm vụ và được loại khỏi các trục điểm tương ứng.</div>}
+      {missingRubric > 0 && <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{missingRubric} hồ sơ thiếu Rubric của nhiệm vụ nên chưa được tính ở các tiêu chí tương ứng.</div>}
 
       <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-md p-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
         <span><strong>{samples.length}</strong> hồ sơ nghiên cứu</span><span className="text-slate-300">·</span>
@@ -91,7 +91,7 @@ export const ResearcherJudgeView: React.FC<ResearcherJudgeViewProps> = ({ onNavi
       </div>
 
       <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
-        <div className="p-4 border-b border-slate-200"><h2 className="text-base font-semibold text-slate-900">Dữ liệu mẫu đối chứng</h2><p className="text-xs text-slate-500 mt-0.5">Không trả tên, email, điện thoại, mã lớp thật, nội dung bài viết hay UUID định danh thật cho giao diện nghiên cứu.</p></div>
+        <div className="p-4 border-b border-slate-200"><h2 className="text-base font-semibold text-slate-900">Dữ liệu mẫu đối chứng</h2><p className="text-xs text-slate-500 mt-0.5">Không hiển thị tên, email, số điện thoại, mã lớp thật hoặc nội dung bài viết.</p></div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-medium text-slate-600"><tr><th className="py-3 px-4">Mã ẩn danh</th><th className="py-3 px-3 text-center">Nhóm ẩn danh</th><th className="py-3 px-3 text-center">Số bản</th><th className="py-3 px-3 text-center">Bản trước</th><th className="py-3 px-3 text-center">Bản sau</th><th className="py-3 px-3 text-center">Mức tăng</th></tr></thead>

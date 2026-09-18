@@ -47,18 +47,19 @@ async function createVersionWithWorkflow(user, input, req) {
   const requestedStage = cleanTrimmed(input.stage, 20);
   const pool = await getPool();
   const state = await pool.query(`
-    SELECT p.id portfolio_id, a.workflow_config,
+    SELECT p.id portfolio_id, a.workflow_config, a.status assignment_status,
            count(v.id) FILTER (WHERE v.stage='prediction')::int prediction_count,
            count(v.id) FILTER (WHERE v.stage<>'prediction')::int submission_count
     FROM portfolios p
     JOIN assignments a ON a.id=p.assignment_id
     LEFT JOIN portfolio_versions v ON v.portfolio_id=p.id
     WHERE p.student_id=$1 AND a.public_id=$2
-    GROUP BY p.id,a.workflow_config
+    GROUP BY p.id,a.workflow_config,a.status
     LIMIT 1
   `, [user.id, assignmentId]);
   const row = state.rows[0];
   if (!row) throw new Error('PORTFOLIO_NOT_FOUND');
+  if (row.assignment_status !== 'published') throw new Error('ASSIGNMENT_CLOSED');
   const predictionEnabled = Boolean(row.workflow_config?.predictionEnabled);
   const predictionCount = Number(row.prediction_count || 0);
   const submissionCount = Number(row.submission_count || 0);

@@ -73,7 +73,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         subtitle: `${text.year || ''} ${text.genre ? `· ${text.genre}` : ''}`.trim(),
         icon: BookOpenIcon,
         action: () => onNavigate('literature-texts'),
-        roles: ['student', 'teacher', 'researcher', 'admin']
+        roles: ['teacher', 'researcher', 'admin']
       })
     );
 

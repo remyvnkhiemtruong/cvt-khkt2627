@@ -55,6 +55,7 @@ const clientMessage = (code: string) => {
     TEACHER_CLASS_FORBIDDEN: "Bạn không được phân công lớp này.",
     PEER_ASSIGNMENT_FORBIDDEN: "Bài hoặc phiên bản này không được phân công cho bạn.",
     PORTFOLIO_NOT_FOUND: "Không tìm thấy hồ sơ phù hợp.",
+    ASSIGNMENT_CLOSED: "Nhiệm vụ này đã đóng. Bạn không thể lưu hoặc nộp thêm.",
     VERSION_NOT_FOUND: "Không tìm thấy phiên bản bất biến phù hợp.",
     VERSION_REQUIRED: "Cần chọn đúng phiên bản đã nộp.",
     SUBMISSION_KEY_REQUIRED: "Khóa nộp bài không hợp lệ. Vui lòng thử lại.",
@@ -103,6 +104,7 @@ export default async function handler(req: any, res: any) {
     let status = 500;
     if (code === "CSRF_ORIGIN_MISMATCH" || code === "FORBIDDEN" || code.endsWith("_FORBIDDEN") || code === "FORBIDDEN_STUDENT_RUBRIC") status = 403;
     else if (code.includes("NOT_FOUND")) status = 404;
+    else if (code === "ASSIGNMENT_CLOSED") status = 409;
     else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
     console.error("[academic/action]", {

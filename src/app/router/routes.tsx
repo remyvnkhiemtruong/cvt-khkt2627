@@ -25,9 +25,9 @@ export const APP_ROUTES: Record<string, RouteDefinition> = {
   'teacher-review': { id:'teacher-review', path:'/teacher/review', title:'Chấm bài & Phản hồi', allowedRoles:['teacher','peer','admin'] },
   'assignment-builder': { id:'assignment-builder', path:'/teacher/assignment-builder', title:'Tạo nhiệm vụ & Rubric', allowedRoles:['teacher','admin'] },
   'rubric-management': { id:'rubric-management', path:'/teacher/rubrics', title:'Quản lý ma trận Rubric', allowedRoles:['teacher','admin','researcher'] },
-  'literature-texts': { id:'literature-texts', path:'/teacher/literature-texts', title:'Kho tác phẩm văn học', allowedRoles:['teacher','admin','student','researcher'] },
+  'literature-texts': { id:'literature-texts', path:'/teacher/literature-texts', title:'Ngữ liệu', allowedRoles:['teacher','admin','researcher'] },
   'class-analytics': { id:'class-analytics', path:'/teacher/class-analytics', title:'Thống kê toàn lớp', allowedRoles:['teacher','admin','researcher'] },
   'researcher-view': { id:'researcher-view', path:'/research/blind-eval', title:'Dữ liệu Ẩn danh & Nghiên cứu', allowedRoles:['researcher','admin'] },
-  'admin-view': { id:'admin-view', path:'/admin/audit', title:'Quản trị hệ thống & Audit', allowedRoles:['admin'] },
+  'admin-view': { id:'admin-view', path:'/admin/audit', title:'Quản trị hệ thống & Nhật ký', allowedRoles:['admin'] },
   'ai-workspace': { id:'ai-workspace', path:'/ai/workspace', title:'Hàng đợi phản hồi AI', allowedRoles:['ai','teacher','admin'] }
 };

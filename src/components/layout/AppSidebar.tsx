@@ -80,7 +80,7 @@ const adminSections: NavSection[] = [
     ]
   },
   {
-    label: 'Xem tầng dưới',
+    label: 'Xem dữ liệu',
     items: [
       { id: 'assignment-list', label: 'Nhiệm vụ học sinh', icon: BookOpenIcon },
       { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
@@ -98,7 +98,7 @@ const adminSections: NavSection[] = [
 
 const aiSections: NavSection[] = [
   {
-    label: 'AI Workspace',
+    label: 'Phản hồi AI',
     items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }]
   },
   {

@@ -64,7 +64,7 @@ const sectionsForRole = (role: string): Section[] => {
       { id: 'teacher-dashboard', label: 'Giảng dạy', icon: HomeIcon },
       { id: 'ai-workspace', label: 'Phản hồi AI', icon: ChatBubbleLeftRightIcon }
     ] },
-    { label: 'Xem tầng dưới', items: [
+    { label: 'Xem dữ liệu', items: [
       { id: 'assignment-list', label: 'Nhiệm vụ học sinh', icon: BookOpenIcon },
       { id: 'portfolio-list', label: 'Hồ sơ học sinh', icon: FolderIcon },
       { id: 'literature-texts', label: 'Ngữ liệu', icon: BookOpenIcon }
@@ -75,7 +75,7 @@ const sectionsForRole = (role: string): Section[] => {
     ] }
   ];
   if (role === 'ai') return [
-    { label: 'AI Workspace', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] },
+    { label: 'Phản hồi AI', items: [{ id: 'ai-workspace', label: 'Nhập phản hồi', icon: ChatBubbleLeftRightIcon }] },
     { label: 'Xem học sinh', items: [
       { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
       { id: 'portfolio-list', label: 'Hồ sơ trong hàng đợi', icon: FolderIcon }

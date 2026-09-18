@@ -717,7 +717,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary-100 text-primary-800 font-bold">3</div>
                     <div>
                       <strong className="text-slate-900 block font-semibold text-sm">Nhìn lại sự tiến bộ của bản thân</strong>
-                      <span className="text-slate-600">V1, V2 và các lần sửa đổi được lưu riêng biệt để học sinh tự hào thấy bài viết của mình ngày càng sâu sắc hơn.</span>
+                      <span className="text-slate-600">V1, V2 và các lần sửa được lưu riêng để học sinh xem lại quá trình làm bài.</span>
                     </div>
                   </div>
                 </div>

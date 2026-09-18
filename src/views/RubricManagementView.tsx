@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useAuthStore } from '../app/store/useAuthStore';
 import type { RubricCriterion } from '../types';
 import { Alert, Badge, Button, Input } from '../components/ui';
 import { ArrowLeftIcon, BookmarkSquareIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -22,6 +23,8 @@ async function saveCatalog(payload: unknown) {
 
 export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNavigate }) => {
   const { rubric, refreshAcademicData } = usePortfolio();
+  const currentUser = useAuthStore(state => state.currentUser);
+  const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin';
   const [title, setTitle] = useState(rubric.title);
   const [description, setDescription] = useState('Rubric 4 mức đánh giá năng lực đọc hiểu theo 6 trục thi pháp.');
   const [criteria, setCriteria] = useState<RubricCriterion[]>(rubric.criteria);
@@ -114,6 +117,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
             label="Tên ma trận Rubric"
             value={title}
             onChange={e => setTitle(e.target.value)}
+            disabled={!canEdit}
           />
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả mục đích ma trận</label>
@@ -122,6 +126,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
               rows={2}
               value={description}
               onChange={e => setDescription(e.target.value)}
+              disabled={!canEdit}
             />
           </div>
         </div>
@@ -131,7 +136,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs">
         <div className="flex items-center gap-2">
           <BookmarkSquareIcon className="h-4 w-4 text-primary-700" />
-          <span className="font-semibold text-slate-800">Mô phỏng tính điểm theo trọng số:</span>
+          <span className="font-semibold text-slate-800">Xem thử cách tính điểm:</span>
           <span className="text-slate-500">6 tiêu chí × 4 mức điểm</span>
         </div>
         <div className="flex items-center gap-2 font-mono">
@@ -146,8 +151,8 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs divide-y divide-slate-200">
         <div className="flex items-center justify-between bg-slate-50/80 px-5 py-3.5">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Bảng chi tiết các mức độ đạt chuẩn</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Mỗi trục gồm 4 mức phân hóa từ cơ bản đến sáng tạo chuyên sâu</p>
+            <h2 className="text-sm font-bold text-slate-900">Các mức đánh giá</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Mỗi tiêu chí có 4 mức đánh giá.</p>
           </div>
           <span className="text-xs font-medium text-slate-500">6 trục thi pháp</span>
         </div>
@@ -203,6 +208,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
                     <textarea
                       value={level.description}
                       onChange={e => updateDescription(ci, li, e.target.value)}
+                      disabled={!canEdit}
                       rows={4}
                       className="w-full rounded-md border border-slate-200 bg-white p-2 text-xs leading-relaxed text-slate-800 outline-none transition focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                     />
@@ -219,16 +225,18 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
         <p className="text-xs text-slate-500">
           * Bài đã chấm bằng Rubric cũ vẫn giữ nguyên kết quả.
         </p>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={saveVersion}
-          isLoading={saving}
-          disabled={!criteria.length || !title.trim()}
-          leftIcon={<CheckIcon className="h-4 w-4" />}
-        >
-          Lưu phiên bản Rubric mới
-        </Button>
+        {canEdit && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={saveVersion}
+            isLoading={saving}
+            disabled={!criteria.length || !title.trim()}
+            leftIcon={<CheckIcon className="h-4 w-4" />}
+          >
+            Lưu phiên bản Rubric mới
+          </Button>
+        )}
       </div>
     </div>
   );

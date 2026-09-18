@@ -303,4 +303,20 @@ await test('PA25: admin cannot mutate student assessment state through academic 
   assert(review.includes("const isAdminReadOnly = currentUser.role === 'admin'"));
 });
 
-console.log(`Production audit regressions: ${passed}/25 passed`);
+await test('PA26: empty portfolios never surface a fake active submission version', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const admin = read('api/admin/manage.ts');
+  assert(academic.includes("currentActiveVersion: versions.length ? row.active_version : 'Bản nháp'"));
+  assert(academic.includes("INSERT INTO portfolios(assignment_id,student_id,active_version)"));
+  assert(academic.includes("SELECT $1,cm.user_id,'Bản nháp'"));
+  assert(admin.match(/INSERT INTO portfolios\(assignment_id,student_id,active_version\)/g)?.length >= 2);
+});
+
+await test('PA27: peer and AI queues use stable anonymous labels instead of identical placeholders', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  assert(academic.includes("studentName: researcher || peerOrAi ? studentId : row.student_name"));
+  assert(academic.includes("student_name: role === 'ai' ? pseudonym('SUB', row.student_id) : row.student_name"));
+  assert(!academic.includes("peerOrAi ? 'Bài được phân công'"));
+});
+
+console.log(`Production audit regressions: ${passed}/27 passed`);

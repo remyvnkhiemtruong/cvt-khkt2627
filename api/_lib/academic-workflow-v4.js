@@ -85,6 +85,43 @@ async function createVersionWithWorkflow(user, input, req) {
   return updateAiPromptAfterVersion(result);
 }
 
+async function aiClaimReview(user, input, req) {
+  if (user.role !== 'ai') throw new Error('FORBIDDEN');
+  const reviewId = cleanTrimmed(input.reviewId, 80);
+  if (!isUuid(reviewId)) throw new Error('AI_REVIEW_NOT_FOUND');
+
+  const pool = await getPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await client.query(`
+      SELECT id,status,teacher_review_status,reviewer_id
+      FROM ai_review_requests
+      WHERE id=$1
+      FOR UPDATE
+    `, [reviewId]);
+    const row = result.rows[0];
+    if (!row) throw new Error('AI_REVIEW_NOT_FOUND');
+    if (row.teacher_review_status !== 'pending' || row.status === 'completed') throw new Error('AI_REVIEW_CLOSED');
+    if (!['pending','in_progress'].includes(row.status)) throw new Error('AI_REVIEW_CLOSED');
+    if (row.reviewer_id && row.reviewer_id !== user.id) throw new Error('AI_REVIEW_CLAIMED');
+
+    await client.query(`
+      UPDATE ai_review_requests
+      SET reviewer_id=$2, status='in_progress'
+      WHERE id=$1
+    `, [reviewId, user.id]);
+    await audit(client, user, 'AI_CLAIM_REVIEW', 'ai_review', reviewId, { status: 'in_progress' }, req);
+    await client.query('COMMIT');
+    return { ok: true, reviewId, status: 'in_progress' };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function aiCompleteReview(user, input, req) {
   if (user.role !== 'ai') throw new Error('FORBIDDEN');
   const reviewId = cleanTrimmed(input.reviewId, 80);
@@ -107,6 +144,7 @@ async function aiCompleteReview(user, input, req) {
     `, [reviewId]);
     const row = result.rows[0];
     if (!row) throw new Error('AI_REVIEW_NOT_FOUND');
+    if (row.reviewer_id && row.reviewer_id !== user.id) throw new Error('AI_REVIEW_CLAIMED');
     if (row.status === 'completed') {
       const existing = await client.query("SELECT id FROM feedbacks WHERE source_ai_review_id=$1 AND author_role='ai' LIMIT 1", [reviewId]);
       await client.query('COMMIT');
@@ -344,6 +382,7 @@ export async function academicAction(user, input, req) {
   assertSameOrigin(req);
   const action = cleanTrimmed(input?.action, 80);
   if (action === 'create_version') return createVersionWithWorkflow(user, input, req);
+  if (action === 'ai_claim_review') return aiClaimReview(user, input, req);
   if (action === 'ai_complete_review') return aiCompleteReview(user, input, req);
   if (action === 'teacher_review_ai') return teacherReviewAi(user, input, req);
   if (action === 'save_reflection') return saveReflection(user, input, req);

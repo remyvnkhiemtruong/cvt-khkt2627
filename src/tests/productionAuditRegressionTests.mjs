@@ -198,4 +198,50 @@ await test('PA16: remaining user-facing copy avoids internal product jargon', ()
   ]) assert(!source.includes(phrase), phrase);
 });
 
-console.log(`Production audit regressions: ${passed}/16 passed`);
+await test('PA17: assignment and portfolio lists are role-aware outside the student role', () => {
+  const assignments = read('src/views/AssignmentListView.tsx');
+  const portfolios = read('src/views/PortfolioListV2.tsx');
+  assert(assignments.includes("if (user.role !== 'student')"));
+  assert(assignments.includes("onNavigate('teacher-review'"));
+  assert(assignments.includes("user.role === 'peer'"));
+  assert(portfolios.includes("if (user.role !== 'student')"));
+  assert(portfolios.includes("user.role === 'researcher' ? 'Hồ sơ nghiên cứu'"));
+  assert(portfolios.includes("studentId: portfolio.studentId"));
+});
+
+await test('PA18: peer navigation always returns to the peer portfolio home', () => {
+  const header = read('src/components/layout/AppHeader.tsx');
+  const palette = read('src/components/layout/CommandPalette.tsx');
+  const review = read('src/views/TeacherReviewView.tsx');
+  assert(header.includes("role === 'peer' ? 'portfolio-list'"));
+  assert(palette.includes("currentUser.role === 'peer' ? 'portfolio-list'"));
+  assert(review.includes("currentUser.role === 'peer' ? 'portfolio-list'"));
+  assert(review.includes("onClick={() => onNavigate(reviewHome)}"));
+});
+
+await test('PA19: admin review is explicitly read-only in the teacher review UI', () => {
+  const review = read('src/views/TeacherReviewView.tsx');
+  assert(review.includes("const isAdminReadOnly = currentUser.role === 'admin'"));
+  assert(review.includes('disabled={isAdminReadOnly}'));
+  assert(review.includes('{!isAdminReadOnly && <Button'));
+  assert(review.includes("if (isAdminReadOnly) return;"));
+});
+
+await test('PA20: remaining visible copy avoids technical implementation wording', () => {
+  const files = [
+    'src/views/TeacherReviewView.tsx',
+    'src/views/AdminAuditView.tsx',
+    'src/app/router/routes.tsx',
+    'api/academic/action.ts'
+  ];
+  const source = files.map(read).join('\n');
+  for (const phrase of [
+    'phiên bản bất biến phù hợp',
+    'máy chủ xác nhận',
+    'Không gian viết & phân tích',
+    'Tiến bộ & Đề xuất',
+    'Cần đổi MK'
+  ]) assert(!source.includes(phrase), phrase);
+});
+
+console.log(`Production audit regressions: ${passed}/20 passed`);

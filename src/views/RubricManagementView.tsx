@@ -23,7 +23,7 @@ async function saveCatalog(payload: unknown) {
 export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNavigate }) => {
   const { rubric, refreshAcademicData } = usePortfolio();
   const [title, setTitle] = useState(rubric.title);
-  const [description, setDescription] = useState('Rubric 4 mức đánh giá năng lực đọc hiểu theo 6 trục thi pháp.');
+  const [description, setDescription] = useState('Rubric 4 mức theo 6 trục thi pháp.');
   const [criteria, setCriteria] = useState<RubricCriterion[]>(rubric.criteria);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -90,9 +90,9 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
               Quay lại bàn giáo viên
             </Button>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Ma trận Rubric học thuật</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Rubric</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Tiêu chí chuẩn hóa đánh giá năng lực đọc hiểu theo 6 trục thi pháp (thang 4 mức độ: 1 đến 4).
+            6 trục thi pháp, mỗi trục có 4 mức chấm.
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
             onChange={e => setTitle(e.target.value)}
           />
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả mục đích ma trận</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả</label>
             <textarea
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               rows={2}
@@ -131,8 +131,8 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs">
         <div className="flex items-center gap-2">
           <BookmarkSquareIcon className="h-4 w-4 text-primary-700" />
-          <span className="font-semibold text-slate-800">Mô phỏng tính điểm theo trọng số:</span>
-          <span className="text-slate-500">6 tiêu chí × thang điểm chuẩn hóa</span>
+          <span className="font-semibold text-slate-800">Thử tính điểm:</span>
+          <span className="text-slate-500">6 tiêu chí, có trọng số</span>
         </div>
         <div className="flex items-center gap-2 font-mono">
           <span className="text-slate-500">Điểm giả định:</span>
@@ -146,8 +146,8 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs divide-y divide-slate-200">
         <div className="flex items-center justify-between bg-slate-50/80 px-5 py-3.5">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Bảng chi tiết các mức độ đạt chuẩn</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Mỗi trục gồm 4 mức phân hóa từ cơ bản đến sáng tạo chuyên sâu</p>
+            <h2 className="text-sm font-bold text-slate-900">Các mức chấm</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Mỗi trục có 4 mức.</p>
           </div>
           <span className="text-xs font-medium text-slate-500">6 trục thi pháp</span>
         </div>
@@ -217,7 +217,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       {/* Action Footer */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
         <p className="text-xs text-slate-500">
-          * Các bài nộp đã được chấm bằng phiên bản trước sẽ giữ nguyên kết quả đánh giá cũ (bảo toàn tính bất biến học thuật).
+          * Bài đã chấm vẫn giữ nguyên kết quả và Rubric cũ.
         </p>
         <Button
           variant="primary"
@@ -227,7 +227,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
           disabled={!criteria.length || !title.trim()}
           leftIcon={<CheckIcon className="h-4 w-4" />}
         >
-          Lưu phiên bản Rubric mới
+          Lưu Rubric mới
         </Button>
       </div>
     </div>

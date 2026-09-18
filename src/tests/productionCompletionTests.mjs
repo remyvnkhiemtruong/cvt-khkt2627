@@ -91,7 +91,7 @@ await test('P31: SPA rewrite excludes API and remains in Singapore', () => { con
 await test('P32: no global browser MutationObserver disables editor input behavior', () => { const s=read('index.html'); assert(!s.includes('MutationObserver')); assert(!s.includes("spellcheck', 'false")); });
 await test('P33: AI workspace is a manual ChatGPT-response paste flow visible to students', () => {
   const s=read('src/views/AiWorkspaceView.tsx');
-  for (const token of ['Dán response ChatGPT', 'Không gọi API trả phí', "action: 'ai_complete_review'", 'Gửi góp ý AI cho học sinh', 'Học sinh thấy ngay']) assert(s.includes(token), token);
+  for (const token of ['Dán phản hồi ChatGPT', 'Sao chép bài sang ChatGPT', "action: 'ai_complete_review'", 'Gửi góp ý AI cho học sinh', 'Học sinh nhận góp ý ngay sau khi gửi']) assert(s.includes(token), token);
 });
 await test('P34: teacher workspace preserves the AI feedback and can add a distinct teacher revision', () => {
   const s=read('src/views/TeacherReviewView.tsx');

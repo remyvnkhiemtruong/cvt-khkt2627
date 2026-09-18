@@ -91,7 +91,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
     return (
       <div className="mx-auto mt-16 max-w-md space-y-3 p-6 text-center">
         <h2 className="text-base font-semibold text-slate-900">Không tìm thấy nhiệm vụ</h2>
-        <p className="text-sm text-slate-500">Không thể tính analytics nếu thiếu nhiệm vụ gốc.</p>
+        <p className="text-sm text-slate-500">Không thể hiển thị tiến độ vì thiếu nhiệm vụ.</p>
       </div>
     );
   }
@@ -122,9 +122,9 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
             <span>·</span>
             <span className="font-medium text-slate-700">{assignment.title}</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Hồ sơ tiến bộ học tập</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Tiến độ học tập</h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Quỹ đạo chỉ dùng các lần chấm rubric chính thức của giáo viên để bảo toàn tính sư phạm chuẩn hóa.
+            Chỉ dùng kết quả Rubric do giáo viên chấm.
           </p>
         </div>
 
@@ -148,12 +148,12 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
             <DocumentDuplicateIcon className="h-4 w-4 text-slate-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{portfolio.versions.length}</div>
-          <div className="mt-1 text-xs text-slate-500">phiên bản bất biến trong lịch sử</div>
+          <div className="mt-1 text-xs text-slate-500">phiên bản đã lưu</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>Phản hồi & Góp ý</span>
+            <span>Góp ý</span>
             <ChatBubbleBottomCenterTextIcon className="h-4 w-4 text-primary-600" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{studentFeedback.length}</div>
@@ -179,16 +179,16 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">Tiến bộ theo từng trục thi pháp</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Mức độ đạt chuẩn qua các đợt đánh giá chính thức</p>
+            <p className="mt-0.5 text-xs text-slate-500">So sánh kết quả Rubric giữa các lần chấm.</p>
           </div>
           <span className="text-xs font-semibold text-slate-500">
-            {officialSubmissions.length ? `${officialSubmissions.length} lần chấm chính thức` : 'Chưa có điểm'}
+            {officialSubmissions.length ? `${officialSubmissions.length} lần chấm` : 'Chưa có điểm'}
           </span>
         </div>
 
         {!officialSubmissions.length ? (
           <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500">
-            Chưa có đánh giá chính thức từ giáo viên cho nhiệm vụ này.
+            Chưa có kết quả chấm từ giáo viên.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -198,7 +198,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
                   <th className="px-4 py-3">Tiêu chí thi pháp</th>
                   <th className="px-4 py-3 text-center">Lần đầu</th>
                   <th className="px-4 py-3 text-center">Gần nhất</th>
-                  <th className="px-4 py-3 text-right">Mức tăng trưởng</th>
+                  <th className="px-4 py-3 text-right">Thay đổi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -244,7 +244,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
 
         {peerSubmissions.length > 0 && (
           <div className="text-xs text-slate-500 pt-1">
-            Có {peerSubmissions.length} đánh giá đồng đẳng tham khảo; không tính vào quỹ đạo điểm chính thức.
+            Có {peerSubmissions.length} đánh giá từ bạn học; không tính vào điểm giáo viên.
           </div>
         )}
       </section>
@@ -253,7 +253,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       <section className="space-y-4 rounded-xl border border-slate-200 bg-white shadow-xs p-5">
         <div className="border-b border-slate-100 pb-3">
           <h2 className="text-base font-bold text-slate-900">Lịch sử các phiên bản</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Các bước phát triển bài làm từ dự đoán ban đầu đến bản hoàn thiện</p>
+          <p className="mt-0.5 text-xs text-slate-500">Xem các phiên bản đã nộp theo thời gian.</p>
         </div>
 
         {!portfolio.versions.length ? (
@@ -280,7 +280,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
 
                   {version.changeSummary && (
                     <p className="text-slate-700 leading-relaxed">
-                      <strong className="text-slate-900">Nội dung chỉnh sửa:</strong> {version.changeSummary}
+                      <strong className="text-slate-900">Thay đổi:</strong> {version.changeSummary}
                     </p>
                   )}
 

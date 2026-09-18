@@ -43,7 +43,7 @@ const MetricTile: React.FC<MetricTileProps> = ({ label, value, note, icon, tone 
 };
 
 const statusMeta = (status: string): { label: string; tone: QueueTone; priority: number } => {
-  if (status === 'ai_proposed_waiting_teacher' || status === 'teacher_feedback_needed') return { label: 'Cần giáo viên xem', tone: 'amber', priority: 1 };
+  if (status === 'ai_proposed_waiting_teacher' || status === 'teacher_feedback_needed') return { label: 'Cần xem', tone: 'amber', priority: 1 };
   if (status === 'waiting_official_rubric') return { label: 'Chờ Rubric', tone: 'purple', priority: 2 };
   if (status === 'submitted_waiting_ai' || status === 'v1_submitted') return { label: 'Chờ AI', tone: 'blue', priority: 3 };
   if (status === 'feedback_received' || status === 'revising' || status === 'v2_in_revision') return { label: 'Học sinh đang sửa', tone: 'primary', priority: 4 };
@@ -72,27 +72,27 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
   return (
     <div className="v3-page space-y-6 pb-20">
       <PageHeader
-        eyebrow="Không gian giảng dạy"
-        title="Hàng đợi giáo viên"
-        description={`${actionCount} việc cần xử lý · ${submitted.length} hồ sơ V1/V2 đã nộp. V0 vẫn được giữ làm mốc dự đoán nhưng không tính như bài nộp chính thức.`}
+        eyebrow="Giảng dạy"
+        title="Bài cần xử lý"
+        description={`${actionCount} việc cần xử lý · ${submitted.length} bài V1/V2 đã nộp.`}
         actions={<Button variant="primary" onClick={() => onNavigate('assignment-builder')}>Tạo nhiệm vụ</Button>}
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <MetricTile label="Cần giáo viên xem" value={teacherPending} note="AI/feedback đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
-        <MetricTile label="AI chờ duyệt" value={aiPending} note="Response đã hoàn tất" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
-        <MetricTile label="Chờ Rubric" value={rubricPending} note="Cần chấm chính thức" tone={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
-        <MetricTile label="HS đang sửa" value={revising} note="Sau phản hồi" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
-        <MetricTile label="Hoàn thành" value={done} note="Workflow đã đóng" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Cần xem" value={teacherPending} note="Góp ý đang chờ" tone={teacherPending ? 'warning' : 'success'} icon={<ClipboardDocumentCheckIcon className="h-5 w-5" />} onClick={() => onNavigate('teacher-review')} />
+        <MetricTile label="Phản hồi AI" value={aiPending} note="Phản hồi đã có" tone={aiPending ? 'info' : 'default'} icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />} onClick={() => onNavigate('ai-workspace')} />
+        <MetricTile label="Chờ Rubric" value={rubricPending} note="Cần chấm" tone={rubricPending ? 'warning' : 'default'} icon={<AcademicCapIcon className="h-5 w-5" />} onClick={() => onNavigate('rubric-management')} />
+        <MetricTile label="Đang sửa bài" value={revising} note="Sau góp ý" icon={<PencilSquareIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
+        <MetricTile label="Hoàn thành" value={done} note="Đã hoàn thành" tone="success" icon={<CheckCircleIcon className="h-5 w-5" />} onClick={() => onNavigate('portfolio-list')} />
       </div>
 
       <section className="v3-panel overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <h2 className="text-base font-bold text-slate-950">Ưu tiên xử lý</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Sắp xếp theo bước workflow cần giáo viên can thiệp trước.</p>
+            <h2 className="text-base font-bold text-slate-950">Bài cần xử lý</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Bài cần giáo viên xử lý trước được xếp lên trên.</p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => onNavigate('portfolio-list')}>Mở toàn bộ hồ sơ</Button>
+          <Button size="sm" variant="outline" onClick={() => onNavigate('portfolio-list')}>Xem tất cả</Button>
         </div>
 
         <div className="hidden overflow-x-auto md:block">
@@ -148,8 +148,8 @@ export const TeacherDashboardView: React.FC<Props> = ({ onNavigate }) => {
 
       <section className="v3-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm font-bold text-slate-900">{assignments.length} nhiệm vụ đang quản lý</div>
-          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý ngữ liệu và Rubric từ nhóm “Giảng dạy” ở thanh bên.</div>
+          <div className="text-sm font-bold text-slate-900">{assignments.length} nhiệm vụ</div>
+          <div className="mt-1 text-xs leading-5 text-slate-500">Tạo nhiệm vụ, quản lý ngữ liệu và Rubric ở mục “Giảng dạy”.</div>
         </div>
         <Button variant="outline" onClick={() => onNavigate('class-analytics')}>Xem phân tích lớp</Button>
       </section>

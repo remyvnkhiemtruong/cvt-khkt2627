@@ -105,4 +105,33 @@ await test('PA10: V0 question bank survives teacher creation and is rendered to 
   assert(editor.includes('Câu hỏi V0'));
 });
 
-console.log(`Production audit regressions: ${passed}/10 passed`);
+await test('PA11: core UI copy avoids obvious AI-generated jargon', () => {
+  const files = [
+    'src/views/LandingView.tsx',
+    'src/views/LoginView.tsx',
+    'src/views/v2/StudentDashboardV2.tsx',
+    'src/views/AssignmentListView.tsx',
+    'src/views/AssignmentBuilderView.tsx',
+    'src/views/PortfolioEditorView.tsx',
+    'src/views/TeacherDashboardView.tsx',
+    'src/views/TeacherReviewView.tsx',
+    'src/views/AiWorkspaceView.tsx',
+    'src/views/StudentAnalyticsView.tsx',
+    'src/views/ClassAnalyticsView.tsx',
+    'src/views/LiteratureTextsView.tsx',
+    'src/views/RubricManagementView.tsx',
+    'src/components/layout/AppHeader.tsx'
+  ];
+  const source = files.map(read).join('\n');
+  for (const phrase of [
+    'provenance',
+    'Luồng học thuật khép kín',
+    'quy chuẩn học thuật khép kín',
+    'Focus Mode',
+    'response từ ChatGPT',
+    'Response từ ChatGPT',
+    'Hồ sơ tiến bộ học tập'
+  ]) assert(!source.includes(phrase), phrase);
+});
+
+console.log(`Production audit regressions: ${passed}/11 passed`);

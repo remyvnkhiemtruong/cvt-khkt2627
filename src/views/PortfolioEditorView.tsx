@@ -173,7 +173,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     try {
       await saveReflection(assignment.id, latestRevision.id, reflectionForm);
       setReflectionForm(emptyReflection);
-      addToast({ type: 'success', title: 'Đã lưu REF1', message: 'Tự phản tư đã gắn với đúng phiên bản chỉnh sửa và sẵn sàng cho giáo viên chấm Rubric.' });
+      addToast({ type: 'success', title: 'Đã lưu REF1', message: 'Đã lưu tự phản tư cho phiên bản này.' });
     } catch (error: unknown) {
       addToast({ type: 'error', title: 'Không thể lưu tự phản tư', message: error instanceof Error ? error.message : 'Vui lòng thử lại.' });
     } finally {
@@ -206,7 +206,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         }
         return;
       }
-      // Esc: Exit Focus Mode
+      // Esc: exit focus view
       if (e.key === 'Escape' && isFocusMode) {
         e.preventDefault();
         setIsFocusMode(false);
@@ -276,11 +276,11 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <span className="hidden sm:inline">{saveStatus.text}</span>
             </span>
 
-            {/* Focus Mode Toggle */}
+            {/* Focus toggle */}
             <button
               type="button"
               onClick={() => setIsFocusMode(!isFocusMode)}
-              title={isFocusMode ? "Thoát Focus Mode (Esc)" : "Chế độ tập trung viết (Focus Mode)"}
+              title={isFocusMode ? "Thoát chế độ tập trung (Esc)" : "Chế độ tập trung"}
               className={`hidden md:inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                 isFocusMode
                   ? 'bg-slate-900 text-white'
@@ -288,7 +288,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               }`}
             >
               {isFocusMode ? <ArrowsPointingInIcon className="h-4 w-4" /> : <ArrowsPointingOutIcon className="h-4 w-4" />}
-              <span>{isFocusMode ? 'Thoát Focus' : 'Tập trung'}</span>
+              <span>{isFocusMode ? 'Thoát' : 'Tập trung'}</span>
             </button>
 
             <Button size="sm" variant="outline" onClick={saveNow} title="Phím tắt: Ctrl/Cmd + S">
@@ -322,10 +322,10 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           </div>
         </div>
 
-        {/* Focus Mode Banner */}
+        {/* Focus banner */}
         {isFocusMode && (
           <div className="mx-auto mt-2 flex max-w-2xl items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
-            <span>✨ Đang trong <strong>Chế độ tập trung</strong> (Focus Mode).</span>
+            <span>Đang bật <strong>chế độ tập trung</strong>.</span>
             <button
               type="button"
               onClick={() => setIsFocusMode(false)}
@@ -546,7 +546,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               {/* Inline Evidence (Visible directly under textarea on desktop, or inside right tab) */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                  Dẫn chứng trích dẫn <span className="font-normal text-slate-400">· mỗi dòng một dẫn chứng</span>
+                  Dẫn chứng <span className="font-normal text-slate-400">· mỗi dòng một dẫn chứng</span>
                 </label>
                 <textarea
                   value={evidenceText}
@@ -564,7 +564,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             <section className="workspace-prose mx-auto space-y-3 border-t border-slate-200 pt-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">Lịch sử phiên bản bất biến</h2>
+                  <h2 className="text-sm font-bold text-slate-800">Lịch sử phiên bản</h2>
                   <p className="mt-0.5 text-xs text-slate-500">Mỗi lần nộp tạo một mốc mới, không ghi đè bản cũ.</p>
                 </div>
                 {versions.length >= 2 && (
@@ -607,12 +607,12 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-primary-700">Tự phản tư</span>
                 <h2 className="mt-1 text-base font-bold text-slate-900">REF1 – Sau {latestRevision.versionNumber}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Lưu dấu vết em đã thay đổi cách đọc như thế nào trước khi giáo viên chấm Rubric chính thức.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Ghi lại điều em đã thay đổi sau khi sửa bài.</p>
               </div>
 
               {latestReflection ? (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
-                  <strong>Đã nộp REF1.</strong> Giáo viên có thể xem tự phản tư này và chấm Rubric chính thức cho {latestRevision.versionNumber}.
+                  <strong>Đã nộp REF1.</strong> Giáo viên có thể xem và chấm Rubric cho {latestRevision.versionNumber}.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -704,7 +704,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             {inspectorTab === 'prompt' && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Đề bài & Yêu cầu</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Đề bài</h3>
                   <Badge size="sm" variant="outline">{assignment.difficulty}</Badge>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-xs leading-relaxed text-slate-700">
@@ -722,7 +722,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                 )}
                 {assignment.guidingSteps && assignment.guidingSteps.length > 0 && (
                   <div className="space-y-1.5">
-                    <span className="text-xs font-semibold text-slate-700">Các bước gợi ý:</span>
+                    <span className="text-xs font-semibold text-slate-700">Các bước:</span>
                     <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-500">
                       {assignment.guidingSteps.map((step, idx) => (
                         <li key={`${idx}-${step}`}>{step}</li>
@@ -748,7 +748,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   className="w-full rounded-lg border border-slate-300 bg-white p-3 text-xs leading-5 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
                 />
                 <p className="text-xs text-slate-400">
-                  Dẫn chứng này sẽ được lưu kèm với phân tích của trục <strong>{currentAxisMeta.shortName}</strong>.
+                  Dẫn chứng được lưu cùng phần phân tích của trục <strong>{currentAxisMeta.shortName}</strong>.
                 </p>
               </div>
             )}

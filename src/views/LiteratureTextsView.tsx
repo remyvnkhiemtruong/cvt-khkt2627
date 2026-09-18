@@ -119,9 +119,9 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
               Quay lại bàn giáo viên
             </Button>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Kho ngữ liệu tác phẩm</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Ngữ liệu</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Mỗi lần chỉnh sửa tạo một revision bất biến; nhiệm vụ cũ luôn giữ nguyên ngữ liệu đã giao.
+            Mỗi lần sửa tạo một phiên bản mới. Nhiệm vụ cũ vẫn dùng bản ngữ liệu đã giao.
           </p>
         </div>
         <Button size="sm" variant="primary" onClick={openNew} leftIcon={<PlusIcon className="h-4 w-4" />}>
@@ -220,7 +220,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
         <div className="grid gap-3 sm:grid-cols-2 text-xs">
           {editing && (
             <div className="sm:col-span-2 rounded-lg border border-primary-200 bg-primary-50/60 p-3 text-xs text-primary-950">
-              Revision hiện tại: <strong>R{editing.revisionNo || 1}</strong>. Thao tác này sẽ tạo một phiên bản bất biến mới. Các nhiệm vụ đã giao trước đó vẫn tham chiếu đúng bản gốc.
+              Phiên bản hiện tại: <strong>R{editing.revisionNo || 1}</strong>. Khi lưu, hệ thống tạo bản mới; các nhiệm vụ cũ vẫn giữ bản đã giao.
             </div>
           )}
           <Input label="Tên tác phẩm" value={title} onChange={e => setTitle(e.target.value)} />

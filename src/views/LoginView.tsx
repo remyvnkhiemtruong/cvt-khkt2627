@@ -115,13 +115,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </div>
             </div>
             <p className="max-w-lg text-base leading-8 text-slate-300">
-              Hồ sơ đọc số lưu phiên bản theo trục thi pháp, giúp học sinh nhìn thấy quá trình thay đổi cách đọc và giúp giáo viên theo dõi tiến bộ bằng minh chứng.
+              Lưu từng phiên bản bài làm, nhận góp ý và theo dõi quá trình sửa bài theo 6 trục thi pháp.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {[
                 ['01', 'Lưu phiên bản', 'Không ghi đè bài cũ'],
-                ['02', 'Phản hồi rõ ràng', 'AI thủ công và giáo viên'],
+                ['02', 'Góp ý theo bài', 'AI và giáo viên'],
                 ['03', 'Đa thiết bị', 'Điện thoại · iPad · máy tính']
               ].map(([index, title, note]) => (
                 <div key={index} className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
@@ -149,7 +149,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <p className="v3-kicker">Học tốt Ngữ Văn</p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{mustChange ? 'Thiết lập mật khẩu mới' : 'Đăng nhập hệ thống'}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                {mustChange ? 'Tài khoản cấp sẵn cần đổi mật khẩu trước khi tiếp tục.' : 'Sử dụng tài khoản đã được nhà trường hoặc quản trị viên cấp.'}
+                {mustChange ? 'Đổi mật khẩu trước khi tiếp tục.' : 'Dùng tài khoản do nhà trường hoặc quản trị viên cấp.'}
               </p>
             </div>
 
@@ -159,7 +159,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <form onSubmit={rotatePassword} className="space-y-5" autoComplete="off">
                 <input type="text" name="b_trap_username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
                 <input type="password" name="b_trap_password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
-                <Alert type="info" title="Bảo mật tài khoản">Hãy dùng mật khẩu riêng có ít nhất 10 ký tự và không chia sẻ cho người khác.</Alert>
+                <Alert type="info" title="Bảo mật tài khoản">Dùng mật khẩu ít nhất 10 ký tự và không chia sẻ cho người khác.</Alert>
                 <Input
                   label="Mật khẩu mới"
                   type={showNewPassword ? 'text' : 'password'}
@@ -220,7 +220,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </form>
             )}
 
-            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường hoặc quản trị viên cấp. Không hỗ trợ đăng ký công khai.</div>
+            <div className="mt-7 border-t border-slate-200 pt-5 text-center text-xs leading-5 text-slate-500">Tài khoản do nhà trường hoặc quản trị viên cấp.</div>
           </div>
         </section>
       </div>

@@ -123,7 +123,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           </div>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Phân tích kết quả lớp</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Chỉ dùng điểm rubric chính thức của giáo viên; mỗi học sinh chỉ đóng góp một lần vào thống kê lớp.
+            Chỉ dùng điểm Rubric do giáo viên chấm. Mỗi học sinh được tính một lần.
           </p>
         </div>
 
@@ -151,7 +151,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
 
       {missingRubricCount > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
-          Có {missingRubricCount} hồ sơ thiếu rubric đúng của nhiệm vụ nên không được dùng rubric khác để tính thay.
+          Có {missingRubricCount} hồ sơ thiếu Rubric của nhiệm vụ nên chưa được tính.
         </div>
       )}
 
@@ -159,11 +159,11 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>Quy mô lớp</span>
+            <span>Học sinh</span>
             <UserGroupIcon className="h-4 w-4 text-slate-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{uniqueStudents}</div>
-          <div className="mt-1 text-xs text-slate-500">học sinh được phân công</div>
+          <div className="mt-1 text-xs text-slate-500">học sinh trong bộ lọc</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -183,7 +183,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
           <div className="mt-2 text-2xl font-bold text-slate-900">
             {typeof overall === 'number' ? `${overall.toFixed(1)}%` : '—'}
           </div>
-          <div className="mt-1 text-xs text-slate-500">{perStudentOverall.length} học sinh đã có điểm chính thức</div>
+          <div className="mt-1 text-xs text-slate-500">{perStudentOverall.length} học sinh đã có điểm</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -206,7 +206,7 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Mức độ đạt chuẩn theo 6 trục thi pháp</h2>
+            <h2 className="text-sm font-bold text-slate-900">Kết quả theo 6 trục</h2>
             <p className="mt-0.5 text-xs text-slate-500">
               Nhấp vào một trục để sắp xếp học sinh cần hỗ trợ lên đầu bảng
             </p>
@@ -271,8 +271,8 @@ export const ClassAnalyticsView: React.FC<ClassAnalyticsViewProps> = ({ onNaviga
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50/70 p-4">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Bảng điểm chi tiết từng học sinh</h2>
-            <p className="mt-0.5 text-xs text-slate-500">“—” là chưa chấm hoặc thiếu rubric chính thức</p>
+            <h2 className="text-sm font-bold text-slate-900">Điểm từng học sinh</h2>
+            <p className="mt-0.5 text-xs text-slate-500">“—” là chưa chấm hoặc thiếu Rubric</p>
           </div>
           {selectedAxisFilter && (
             <span className="text-xs font-semibold text-primary-900 bg-primary-50 px-2.5 py-1 rounded border border-primary-200">

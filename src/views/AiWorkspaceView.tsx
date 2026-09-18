@@ -121,7 +121,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         ? { rubricId: rubric.id, criteria: rubric.criteria.map(c => ({ id: c.id, title: c.title })) }
         : null;
       await postAction({ action: 'ai_complete_review', reviewId: selected.id, response: response.trim(), axisId, rubricProposal });
-      setMessage({ type: 'success', text: 'Đã gửi góp ý AI. Học sinh thấy ngay phản hồi này để chỉnh sửa; giáo viên vẫn xem được lịch sử và có thể bổ sung nhận xét riêng.' });
+      setMessage({ type: 'success', text: 'Đã gửi góp ý AI. Học sinh có thể xem ngay; giáo viên vẫn có thể thêm nhận xét riêng.' });
       await refresh();
     } catch (e: unknown) {
       setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Không thể gửi góp ý AI' });
@@ -133,7 +133,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
   return (
     <div className="v3-page space-y-5 pb-20">
       <PageHeader
-        eyebrow="AI Workspace"
+        eyebrow="AI"
         title="Nhập góp ý AI"
         description="Sao chép góp ý từ ChatGPT, dán vào đúng bản học sinh đã nộp rồi gửi."
         actions={
@@ -169,7 +169,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
       {message && <Alert type={message.type} title={message.type === 'success' ? 'Thành công' : 'Có lỗi'}>{message.text}</Alert>}
       {integrityError && (
         <Alert type="error" title="Không thể mở bản đã nộp">
-          Không tìm thấy đúng phiên bản bất biến gắn với yêu cầu AI. Hệ thống đã khóa thao tác gửi để tránh phản hồi nhầm vào bản nháp mới hơn.
+          Không tìm thấy đúng bản nộp gắn với yêu cầu AI. Chức năng gửi đã được khóa để tránh góp ý nhầm bài.
         </Alert>
       )}
 
@@ -178,7 +178,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         <aside className="flex min-h-[620px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs lg:h-[78vh]">
           <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-4 py-3">
             <div>
-              <span className="text-sm font-bold text-slate-800">Hàng đợi AI</span>
+              <span className="text-sm font-bold text-slate-800">Bài chờ góp ý</span>
               <div className="mt-0.5 text-xs text-slate-500">{displayedReviews.length} bài trong bộ lọc</div>
             </div>
             <button
@@ -235,7 +235,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                       {completed ? (
                         <CheckCircleIcon className="h-4 w-4 shrink-0 text-emerald-600" title="Đã gửi học sinh" />
                       ) : (
-                        <ClockIcon className="h-4 w-4 shrink-0 text-amber-500" title="Chờ nhập response" />
+                        <ClockIcon className="h-4 w-4 shrink-0 text-amber-500" title="Chờ nhập góp ý" />
                       )}
                     </div>
                     <div className={`mt-1 text-xs ${isSelected ? 'text-primary-700' : 'text-slate-500'}`}>
@@ -286,20 +286,20 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                     onClick={copyFullStudentContextForChatGPT}
                     leftIcon={copiedPrompt ? <CheckIcon className="h-4 w-4 text-emerald-600" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
                   >
-                    {copiedPrompt ? 'Đã sao chép prompt bài nộp' : 'Sao chép prompt đầy đủ để dán vào ChatGPT'}
+                    {copiedPrompt ? 'Đã sao chép' : 'Sao chép bài để dán vào ChatGPT'}
                   </Button>
                 </div>
               </div>
 
               {selected.prompt && (
                 <div className="mt-4 rounded-lg border-l-3 border-sky-400 bg-sky-50/70 p-3.5 text-xs leading-relaxed text-slate-700">
-                  <strong className="text-sky-950 font-semibold">Yêu cầu hệ thống:</strong> {selected.prompt}
+                  <strong className="text-sky-950 font-semibold">Yêu cầu:</strong> {selected.prompt}
                 </div>
               )}
 
               <div className="mt-5 space-y-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Nội dung bài viết theo 6 trục</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Bài viết theo 6 trục</h3>
                 </div>
                 {axes.map(axis => {
                   const resp = currentVersion?.responses?.[axis.id];
@@ -320,7 +320,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                       )}
                       {quotes.length > 0 && (
                         <div className="space-y-1.5 pt-1">
-                          <span className="text-xs font-semibold text-slate-500 block">Dẫn chứng trích xuất:</span>
+                          <span className="text-xs font-semibold text-slate-500 block">Dẫn chứng:</span>
                           {quotes.map(q => (
                             <blockquote key={q.id} className="rounded border-l-2 border-primary-300 bg-white p-2 text-xs italic leading-relaxed text-slate-600">
                               &ldquo;{q.text}&rdquo;
@@ -340,16 +340,16 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
         <aside className="flex min-h-[620px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:h-[78vh]">
           <div className="space-y-4">
             <div className="border-b border-slate-200 pb-3">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Phản hồi</div>
-              <h2 className="mt-1 text-base font-bold text-slate-950">Dán response ChatGPT</h2>
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Góp ý AI</div>
+              <h2 className="mt-1 text-base font-bold text-slate-950">Dán góp ý từ ChatGPT</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Đối chiếu đúng học sinh, nhiệm vụ và phiên bản trước khi gửi.
+                Kiểm tra đúng học sinh, nhiệm vụ và bản nộp trước khi gửi.
               </p>
             </div>
 
             {assignment?.aiGuidance && (
               <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-xs leading-5 text-slate-700">
-                <strong className="text-sky-950">Định hướng phản hồi:</strong>
+                <strong className="text-sky-950">Gợi ý khi nhận xét:</strong>
                 <div className="mt-1 whitespace-pre-wrap">{assignment.aiGuidance}</div>
               </div>
             )}
@@ -363,7 +363,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
 
             {assignment?.referenceGuide && (
               <details className="rounded-lg border border-slate-200 p-2.5 text-xs leading-5 text-slate-700">
-                <summary className="cursor-pointer font-semibold select-none">Gợi ý chuyên môn tham chiếu</summary>
+                <summary className="cursor-pointer font-semibold select-none">Gợi ý chuyên môn</summary>
                 <div className="mt-2 max-h-44 overflow-y-auto whitespace-pre-wrap text-slate-600 border-t border-slate-100 pt-2">
                   {assignment.referenceGuide}
                 </div>
@@ -384,7 +384,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
             ) : null}
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-700">Trọng tâm phản hồi</label>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700">Trục cần góp ý</label>
               <select
                 value={axisId}
                 onChange={e => setAxisId(e.target.value as PoeticAxisId)}
@@ -409,7 +409,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 rows={12}
                 value={response}
                 onChange={e => setResponse(e.target.value)}
-                placeholder="Dán response ChatGPT tại đây. Khi bấm gửi, học sinh sẽ thấy nội dung này."
+                placeholder="Dán góp ý từ ChatGPT tại đây. Khi bấm gửi, học sinh sẽ thấy nội dung này."
                 className="w-full resize-y rounded-xl border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               />
             </div>
@@ -426,7 +426,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
               Gửi góp ý AI cho học sinh
             </Button>
             <p className="mt-2 text-center text-xs leading-5 text-slate-400">
-              Học sinh thấy ngay; giáo viên vẫn chấm Rubric chính thức.
+              Học sinh thấy ngay sau khi gửi; giáo viên vẫn là người chấm Rubric.
             </p>
           </div>
         </aside>

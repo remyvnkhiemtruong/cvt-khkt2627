@@ -65,7 +65,9 @@ const clientMessage = (code: string) => {
     REFLECTION_REQUIRED: "Em cần hoàn thành đủ phần tự phản tư trước khi gửi.",
     REFLECTION_REQUIRES_REVISION: "Tự phản tư chỉ được thực hiện sau phiên bản chỉnh sửa V2 trở đi.",
     REFLECTION_REQUIRED_BEFORE_OFFICIAL_RUBRIC: "Học sinh cần hoàn thành tự phản tư sau V2 trước khi giáo viên chấm rubric chính thức.",
-    PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc."
+    PREDICTION_QUESTIONS_REQUIRED: "Đã bật V0 nhưng nhiệm vụ chưa có câu hỏi dự đoán trước đọc.",
+    AI_REVIEW_CLAIMED: "Bài này đang được một tài khoản AI khác xử lý.",
+    AI_REVIEW_CLOSED: "Phản hồi AI này đã được xử lý hoặc không còn mở."
   };
   if (code.startsWith("INVALID_RUBRIC_LEVEL")) return "Mức rubric không hợp lệ.";
   return messages[code] || "Không thể thực hiện thao tác. Vui lòng thử lại.";
@@ -104,7 +106,7 @@ export default async function handler(req: any, res: any) {
     let status = 500;
     if (code === "CSRF_ORIGIN_MISMATCH" || code === "FORBIDDEN" || code.endsWith("_FORBIDDEN") || code === "FORBIDDEN_STUDENT_RUBRIC") status = 403;
     else if (code.includes("NOT_FOUND")) status = 404;
-    else if (code === "ASSIGNMENT_CLOSED") status = 409;
+    else if (code === "ASSIGNMENT_CLOSED" || code === "AI_REVIEW_CLAIMED" || code === "AI_REVIEW_CLOSED") status = 409;
     else if (code.startsWith("INVALID") || code.includes("REQUIRED") || code === "EMPTY_RESPONSE" || code === "CANNOT_PEER_REVIEW_SELF" || code === "VALIDATION_ERROR" || code === "PREDICTION_ALREADY_SUBMITTED" || code === "PEER_REVIEWER_INVALID" || code === "PEER_STUDENT_INVALID" || code === "CONTENT_TOO_LARGE" || code === "SCHEMA_MIGRATION_REQUIRED") status = 400;
 
     console.error("[academic/action]", {

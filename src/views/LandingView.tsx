@@ -65,38 +65,38 @@ const WORKFLOW_STEPS = [
   {
     code: 'V0',
     title: 'Dự đoán trước khi đọc',
-    desc: 'Học sinh ghi nhận cách hiểu ban đầu, căn cứ dự đoán và mức độ tự tin trước khi tiếp cận toàn văn.',
-    artifact: 'Phiên bản V0 độc lập · Không tính điểm đúng – sai'
+    desc: 'Học sinh trả lời câu hỏi dự đoán, nêu căn cứ và mức tự tin trước khi đọc.',
+    artifact: 'Lưu V0 riêng · Không chấm đúng/sai'
   },
   {
     code: 'V1',
     title: 'Bản phân tích đầu tiên',
-    desc: 'Học sinh phân tích sâu theo từng trục thi pháp, trích xuất dẫn chứng cụ thể từ ngữ liệu văn học.',
-    artifact: 'Tạo phiên bản bất biến V1 được khóa an toàn'
+    desc: 'Học sinh đọc và viết theo từng trục, kèm dẫn chứng từ tác phẩm.',
+    artifact: 'Lưu V1 và không ghi đè'
   },
   {
     code: 'PHẢN HỒI',
-    title: 'Góp ý sư phạm & AI',
-    desc: 'Góp ý gợi mở từ AI và giáo viên được gắn trực tiếp vào từng trục đọc và từng đoạn dẫn chứng.',
-    artifact: 'Lịch sử phản hồi gắn liền phiên bản · Không ghi đè bài làm cũ'
+    title: 'Góp ý AI & giáo viên',
+    desc: 'AI và giáo viên góp ý theo từng trục và dẫn chứng.',
+    artifact: 'Góp ý gắn với đúng bản nộp · Bài cũ vẫn được giữ'
   },
   {
     code: 'V2',
-    title: 'Bản chỉnh sửa hoàn thiện',
-    desc: 'Học sinh đọc lại góp ý, hoàn thiện lập luận, giải trình lí do sửa đổi và đối chiếu trực quan với V1.',
-    artifact: 'Phiên bản V2 bất biến · Bản so sánh Diff hai phiên bản'
+    title: 'Bản chỉnh sửa',
+    desc: 'Học sinh sửa bài từ góp ý, nêu lí do thay đổi và so sánh với V1.',
+    artifact: 'Lưu V2 · Có thể so sánh với V1'
   },
   {
     code: 'REF1',
     title: 'Phiếu tự phản tư',
-    desc: 'Học sinh tự đánh giá sự chuyển biến trong nhận thức, chỉ ra điều mình hiểu sâu hơn sau lần sửa.',
-    artifact: 'Hồ sơ tự phản tư học thuật bắt buộc trước khi chấm điểm'
+    desc: 'Học sinh trả lời 5 câu để nhìn lại mình đã hiểu và sửa bài như thế nào.',
+    artifact: 'Nộp REF1 trước khi giáo viên chấm'
   },
   {
     code: 'RUBRIC',
-    title: 'Đánh giá Rubric chính thức',
-    desc: 'Giáo viên đánh giá toàn diện bài viết theo ma trận Rubric 4 mức chuẩn hóa được gắn với nhiệm vụ.',
-    artifact: 'Điểm số chính thức do máy chủ tính toán bảo mật'
+    title: 'Giáo viên chấm Rubric',
+    desc: 'Giáo viên chấm bài theo Rubric 4 mức gắn với nhiệm vụ.',
+    artifact: 'Hệ thống tự tính tổng điểm'
   }
 ];
 
@@ -212,10 +212,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           <div className="border-b border-slate-200 bg-white px-4 py-4 shadow-lg lg:hidden">
             <nav className="flex flex-col space-y-2 text-sm font-medium" aria-label="Điều hướng di động">
               {[
-                { id: 'trai-nghiem', label: 'Trải nghiệm học tập' },
-                { id: 'quy-trinh', label: 'Quy trình sư phạm' },
+                { id: 'trai-nghiem', label: 'Cách học sinh làm bài' },
+                { id: 'quy-trinh', label: 'Quy trình' },
                 { id: 'truc-doc', label: '6 trục đọc thi pháp' },
-                { id: 'giao-vien', label: 'Không gian giáo viên' },
+                { id: 'giao-vien', label: 'Dành cho giáo viên' },
                 { id: 've-he-thong', label: 'Về hệ thống' }
               ].map(item => (
                 <a
@@ -288,7 +288,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 {/* Mini Workflow Nodes */}
                 <div className="pt-4 border-t border-slate-100">
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-                    Luồng học thuật khép kín
+                    Các bước làm bài
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
                     <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">V0 Dự đoán</span>
@@ -473,7 +473,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                   Cách hiểu có thể thay đổi sau khi học sinh đọc lại tác phẩm, nhận góp ý sư phạm, chỉnh sửa lập luận và tự phản tư về quá trình tư duy của chính mình.
                 </p>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2 text-slate-600">
-                  <span className="font-bold text-slate-900 block">Quy chuẩn học thuật:</span>
+                  <span className="font-bold text-slate-900 block">Cách hệ thống lưu bài:</span>
                   <p>
                     Hệ thống không đánh giá học sinh bằng một bản nộp duy nhất, mà ghi nhận toàn bộ bước tiến qua từng cột mốc rõ ràng.
                   </p>
@@ -798,7 +798,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               {/* Teacher Copy */}
               <div className="order-1 lg:order-2 space-y-6">
                 <div className="text-xs font-bold uppercase tracking-wider text-primary-700">
-                  Không gian giáo viên
+                  Dành cho giáo viên
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950 leading-tight">
                   Giáo viên nhìn thấy cả quá trình, không chỉ kết quả cuối.
@@ -850,10 +850,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                   Dữ liệu phục vụ giảng dạy
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
-                  Phân tích học tập thực chất.
+                  Xem lớp đang vướng ở đâu.
                 </h2>
                 <p className="text-base text-slate-600 leading-relaxed">
-                  Dữ liệu không chỉ dùng để làm báo cáo. Giáo viên có thể nhận diện ngay trục thi pháp mà cả lớp đang gặp khó để điều chỉnh hoạt động dạy học tiếp theo.
+                  Giáo viên xem trục nào cả lớp còn yếu để điều chỉnh bài dạy tiếp theo.
                 </p>
               </div>
               <Badge size="sm" variant="outline">Ví dụ minh họa lớp học</Badge>
@@ -905,13 +905,13 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20 space-y-10">
             <div className="max-w-3xl space-y-3">
               <div className="text-xs font-bold uppercase tracking-wider text-primary-700">
-                Nguyên tắc ứng dụng công nghệ
+                AI được dùng thế nào
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
                 AI hỗ trợ phản hồi. Giáo viên giữ quyền đánh giá.
               </h2>
               <p className="text-base text-slate-600 leading-relaxed">
-                Hệ thống xác định rõ ranh giới: AI chỉ đóng vai trò trợ lý gợi mở để học sinh tự suy nghĩ và viết lại; giáo viên là người thẩm định chuyên môn và quyết định điểm số chính thức.
+                AI chỉ góp ý; học sinh tự sửa bài. Giáo viên là người chấm và quyết định điểm.
               </p>
             </div>
 
@@ -920,9 +920,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-800">
                   <SparklesIcon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-950">1. AI hỗ trợ gợi mở</h3>
+                <h3 className="text-base font-bold text-slate-950">1. AI góp ý</h3>
                 <p className="text-xs leading-relaxed text-slate-600">
-                  Gợi ý cho học sinh những chi tiết cần đào sâu hơn, đối chiếu dẫn chứng và cách dùng từ ngữ gợi cảm theo đúng 6 trục thi pháp.
+                  AI chỉ ra chỗ cần xem lại, dẫn chứng cần kiểm tra và câu hỏi cần nghĩ thêm.
                 </p>
               </div>
 
@@ -930,9 +930,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800">
                   <PencilSquareIcon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-950">2. Học sinh chủ động chỉnh sửa</h3>
+                <h3 className="text-base font-bold text-slate-950">2. Học sinh tự sửa</h3>
                 <p className="text-xs leading-relaxed text-slate-600">
-                  Học sinh không sao chép máy móc, mà tự mình quyết định cách chỉnh sửa câu văn, viết bản V2 và giải trình lí do trong phiếu REF1.
+                  Học sinh tự quyết định sửa gì, nộp V2 và giải thích lí do ở REF1.
                 </p>
               </div>
 
@@ -940,9 +940,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white">
                   <AcademicCapIcon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-slate-950">3. Giáo viên đánh giá chính thức</h3>
+                <h3 className="text-base font-bold text-slate-950">3. Giáo viên chấm</h3>
                 <p className="text-xs leading-relaxed text-slate-600">
-                  Giáo viên xem lại lịch sử phản hồi, đọc bài sửa của học sinh và thực hiện chấm Rubric với trách nhiệm sư phạm cao nhất.
+                  Giáo viên xem góp ý, đọc bài sửa và chấm Rubric.
                 </p>
               </div>
             </div>
@@ -954,20 +954,20 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20 space-y-10">
             <div className="max-w-3xl space-y-3">
               <div className="text-xs font-bold uppercase tracking-wider text-primary-700">
-                Tính trung thực học thuật & Dữ liệu nghiên cứu
+                Lưu lịch sử học tập
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">
-                Dấu vết học tập được lưu giữ trọn vẹn.
+                Bài cũ không bị ghi đè.
               </h2>
               <p className="text-base text-slate-600 leading-relaxed">
-                Nền tảng được thiết kế với các ràng buộc kĩ thuật chặt chẽ, bảo vệ sự trung thực và tính nguyên bản trong quá trình học tập của mỗi học sinh.
+                Mỗi lần nộp được lưu riêng để giáo viên và học sinh có thể xem lại quá trình học.
               </p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
                 <DocumentDuplicateIcon className="h-5 w-5 text-primary-700" />
-                <h3 className="text-sm font-bold text-slate-950">Phiên bản bất biến</h3>
+                <h3 className="text-sm font-bold text-slate-950">Lưu từng bản nộp</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Mỗi lần nộp bài tạo một bản ghi độc lập ở cơ sở dữ liệu PostgreSQL; bản V2 không bao giờ ghi đè làm mất V1.
                 </p>
@@ -975,9 +975,9 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
 
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
                 <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-sky-700" />
-                <h3 className="text-sm font-bold text-slate-950">Góp ý có xuất xứ rõ ràng</h3>
+                <h3 className="text-sm font-bold text-slate-950">Góp ý có người gửi và thời điểm</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Mọi phản hồi đều gắn chặt với đúng người nhận xét, thời điểm gửi và đúng tọa độ câu văn trong tác phẩm.
+                  Mỗi góp ý ghi rõ người gửi, thời điểm và đoạn văn liên quan.
                 </p>
               </div>
 
@@ -985,15 +985,15 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 <BookOpenIcon className="h-5 w-5 text-amber-700" />
                 <h3 className="text-sm font-bold text-slate-950">Phiếu tự phản tư REF1</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Học sinh tự giải trình sự thay đổi trong cách hiểu của mình trước khi nhận điểm chính thức từ giáo viên.
+                  Học sinh ghi lại mình đã thay đổi cách hiểu ra sao trước khi giáo viên chấm.
                 </p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2 shadow-xs">
                 <ShieldCheckIcon className="h-5 w-5 text-emerald-700" />
-                <h3 className="text-sm font-bold text-slate-950">Rubric chuẩn hóa</h3>
+                <h3 className="text-sm font-bold text-slate-950">Rubric 4 mức</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Đánh giá công bằng dựa trên ma trận tiêu chí phân hóa 4 mức độ gắn liền với nhiệm vụ của từng lớp.
+                  Giáo viên chấm theo Rubric 4 mức gắn với từng nhiệm vụ.
                 </p>
               </div>
             </div>
@@ -1007,7 +1007,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               Bắt đầu từ bài đọc tiếp theo.
             </h2>
             <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-300 leading-relaxed">
-              Tài khoản Học tốt Ngữ Văn được nhà trường cấp cho học sinh, giáo viên và các vai trò được phân quyền. Đăng nhập ngay để bắt đầu hành trình đọc sâu.
+              Tài khoản Học tốt Ngữ Văn được nhà trường cấp cho học sinh, giáo viên và các vai trò được phân quyền. Đăng nhập để bắt đầu làm bài.
             </p>
             <div className="pt-2">
               <Button
@@ -1033,7 +1033,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-950">Thông tin liên hệ</h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Trường THPT Vị Thanh · Đơn vị chủ quản và triển khai hệ thống hồ sơ đọc số môn Ngữ văn.
+                  Trường THPT Vị Thanh · Đơn vị sử dụng hệ thống hồ sơ đọc số môn Ngữ văn.
                 </p>
               </div>
 
@@ -1091,10 +1091,10 @@ export const LandingView: React.FC<LandingViewProps> = ({ onNavigate }) => {
                 Điều hướng nhanh
               </span>
               <ul className="space-y-1.5 text-slate-600">
-                <li><a href="#trai-nghiem" className="hover:text-slate-950">Trải nghiệm học tập</a></li>
-                <li><a href="#quy-trinh" className="hover:text-slate-950">Quy trình sư phạm</a></li>
+                <li><a href="#trai-nghiem" className="hover:text-slate-950">Cách học sinh làm bài</a></li>
+                <li><a href="#quy-trinh" className="hover:text-slate-950">Quy trình</a></li>
                 <li><a href="#truc-doc" className="hover:text-slate-950">6 trục đọc thi pháp</a></li>
-                <li><a href="#giao-vien" className="hover:text-slate-950">Không gian giáo viên</a></li>
+                <li><a href="#giao-vien" className="hover:text-slate-950">Dành cho giáo viên</a></li>
                 <li><button type="button" onClick={() => onNavigate('login')} className="hover:text-slate-950 text-left">Đăng nhập tài khoản</button></li>
               </ul>
             </div>

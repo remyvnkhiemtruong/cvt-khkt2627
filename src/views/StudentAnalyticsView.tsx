@@ -148,7 +148,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
             <DocumentDuplicateIcon className="h-4 w-4 text-slate-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{portfolio.versions.length}</div>
-          <div className="mt-1 text-xs text-slate-500">phiên bản bất biến trong lịch sử</div>
+          <div className="mt-1 text-xs text-slate-500">bản đã nộp</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -179,7 +179,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">Tiến bộ theo từng trục thi pháp</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Mức độ đạt chuẩn qua các đợt đánh giá chính thức</p>
+            <p className="mt-0.5 text-xs text-slate-500">So sánh các lần giáo viên chấm</p>
           </div>
           <span className="text-xs font-semibold text-slate-500">
             {officialSubmissions.length ? `${officialSubmissions.length} lần chấm chính thức` : 'Chưa có điểm'}
@@ -198,7 +198,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
                   <th className="px-4 py-3">Tiêu chí thi pháp</th>
                   <th className="px-4 py-3 text-center">Lần đầu</th>
                   <th className="px-4 py-3 text-center">Gần nhất</th>
-                  <th className="px-4 py-3 text-right">Mức tăng trưởng</th>
+                  <th className="px-4 py-3 text-right">Thay đổi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -237,14 +237,14 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
 
         {weakest && typeof weakest.last === 'number' && (
           <div className="rounded-lg border-l-3 border-amber-400 bg-amber-50/70 p-3 text-xs text-amber-900">
-            <strong>Trục cần tập trung cải thiện:</strong> {labels[weakest.axis]} ({weakest.last.toFixed(0)}%).
+            <strong>Trục cần xem lại:</strong> {labels[weakest.axis]} ({weakest.last.toFixed(0)}%).
             Hãy xem lại góp ý của giáo viên và đối chiếu ngữ liệu để hoàn thiện thêm ở bài sau.
           </div>
         )}
 
         {peerSubmissions.length > 0 && (
           <div className="text-xs text-slate-500 pt-1">
-            Có {peerSubmissions.length} đánh giá đồng đẳng tham khảo; không tính vào quỹ đạo điểm chính thức.
+            Có {peerSubmissions.length} đánh giá của bạn học để tham khảo; không tính vào điểm chính thức.
           </div>
         )}
       </section>
@@ -253,7 +253,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
       <section className="space-y-4 rounded-xl border border-slate-200 bg-white shadow-xs p-5">
         <div className="border-b border-slate-100 pb-3">
           <h2 className="text-base font-bold text-slate-900">Lịch sử các phiên bản</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Các bước phát triển bài làm từ dự đoán ban đầu đến bản hoàn thiện</p>
+          <p className="mt-0.5 text-xs text-slate-500">Từ V0 đến các bản sửa</p>
         </div>
 
         {!portfolio.versions.length ? (
@@ -292,7 +292,7 @@ export const StudentAnalyticsView: React.FC<StudentAnalyticsViewProps> = ({ stud
 
                   {linked.length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-slate-200">
-                      <span className="font-semibold text-slate-700 block">Góp ý gắn với phiên bản này:</span>
+                      <span className="font-semibold text-slate-700 block">Góp ý cho bản này:</span>
                       {linked.map(item => (
                         <div key={item.id} className="rounded border-l-2 border-slate-300 bg-white p-2.5 text-slate-700 shadow-2xs">
                           <strong className="text-slate-900">

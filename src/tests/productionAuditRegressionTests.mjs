@@ -75,7 +75,7 @@ await test('PA07: three-tier view hierarchy is role-derived and mutation routes 
   assert(!access.includes("'/student/editor'"));
   assert(!access.includes("'/teacher/assignment-builder'"));
   assert(app.includes('canAccessRoute(currentUser.role, routeConfig)'));
-  assert(desktop.includes("label: 'Xem tầng dưới'"));
+  assert(desktop.includes("label: 'Xem dữ liệu'"));
   assert(mobile.includes("label: 'Xem học sinh'"));
 });
 
@@ -134,4 +134,68 @@ await test('PA11: core UI copy avoids obvious AI-generated jargon', () => {
   ]) assert(!source.includes(phrase), phrase);
 });
 
-console.log(`Production audit regressions: ${passed}/11 passed`);
+await test('PA12: closed assignments are hidden from students and reject writes server-side', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const workflow = read('api/_lib/academic-workflow-v4.js');
+  const action = read('api/academic/action.ts');
+  assert(academic.includes("WHERE p.student_id=$1 AND a.status='published'"));
+  assert(academic.match(/assignment_status !== 'published'/g)?.length >= 2);
+  assert(workflow.includes("row.assignment_status !== 'published'"));
+  assert(action.includes('ASSIGNMENT_CLOSED'));
+  assert(action.includes('status = 409'));
+});
+
+await test('PA13: V0 hides assigned reading content until prediction is submitted', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const editor = read('src/views/PortfolioEditorView.tsx');
+  assert(academic.includes("v.stage='prediction'"));
+  assert(academic.includes("synopsis: locked ? '' : row.synopsis"));
+  assert(academic.includes("fullContent: locked ? '' : row.full_content"));
+  assert(editor.includes('Ngữ liệu sẽ mở sau khi em nộp V0.'));
+  assert(editor.includes("literatureText?.fullContent || literatureText?.excerpt"));
+});
+
+await test('PA14: student cannot open the literature catalog and research catalogs are read-only', () => {
+  const routes = read('src/app/router/routes.tsx');
+  const palette = read('src/components/layout/CommandPalette.tsx');
+  const literature = read('src/views/LiteratureTextsView.tsx');
+  const rubric = read('src/views/RubricManagementView.tsx');
+  assert(routes.includes("allowedRoles:['teacher','admin','researcher']"));
+  assert(!routes.includes("allowedRoles:['teacher','admin','student','researcher']"));
+  assert(palette.includes("roles: ['teacher', 'researcher', 'admin']"));
+  assert(literature.includes("const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin'"));
+  assert(rubric.includes("const canEdit = currentUser.role === 'teacher' || currentUser.role === 'admin'"));
+});
+
+await test('PA15: 403 and 404 pages return users to the correct role home', () => {
+  const forbidden = read('src/views/ForbiddenView.tsx');
+  const missing = read('src/views/NotFoundView.tsx');
+  for (const source of [forbidden, missing]) {
+    assert(source.includes("role === 'ai' ? 'ai-workspace'"));
+    assert(source.includes("role === 'teacher' ? 'teacher-dashboard'"));
+    assert(source.includes("role === 'researcher' ? 'researcher-view'"));
+    assert(source.includes("role === 'admin' ? 'admin-view'"));
+  }
+});
+
+await test('PA16: remaining user-facing copy avoids internal product jargon', () => {
+  const files = [
+    'src/views/LiteratureTextsView.tsx',
+    'src/views/ResearcherJudgeView.tsx',
+    'src/views/ForbiddenView.tsx',
+    'src/views/NotFoundView.tsx',
+    'src/components/layout/AppSidebar.tsx',
+    'src/components/layout/MobileDrawer.tsx'
+  ];
+  const source = files.map(read).join('\n');
+  for (const phrase of [
+    'AI Workspace',
+    'Tạo revision mới',
+    'Lưu revision mới',
+    'pseudonym server-side',
+    'UUID định danh thật',
+    'Xem tầng dưới'
+  ]) assert(!source.includes(phrase), phrase);
+});
+
+console.log(`Production audit regressions: ${passed}/16 passed`);

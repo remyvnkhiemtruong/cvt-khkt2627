@@ -90,9 +90,9 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
               Quay lại bàn giáo viên
             </Button>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Ma trận Rubric học thuật</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Rubric</h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Tiêu chí chuẩn hóa đánh giá năng lực đọc hiểu theo 6 trục thi pháp (thang 4 mức độ: 1 đến 4).
+            Tiêu chí chấm theo 6 trục thi pháp, gồm 4 mức.
           </p>
         </div>
 
@@ -217,7 +217,7 @@ export const RubricManagementView: React.FC<RubricManagementViewProps> = ({ onNa
       {/* Action Footer */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
         <p className="text-xs text-slate-500">
-          * Các bài nộp đã được chấm bằng phiên bản trước sẽ giữ nguyên kết quả đánh giá cũ (bảo toàn tính bất biến học thuật).
+          * Bài đã chấm bằng Rubric cũ vẫn giữ nguyên kết quả.
         </p>
         <Button
           variant="primary"

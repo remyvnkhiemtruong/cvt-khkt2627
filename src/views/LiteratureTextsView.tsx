@@ -220,7 +220,7 @@ export const LiteratureTextsView: React.FC<LiteratureTextsViewProps> = ({ onNavi
         <div className="grid gap-3 sm:grid-cols-2 text-xs">
           {editing && (
             <div className="sm:col-span-2 rounded-lg border border-primary-200 bg-primary-50/60 p-3 text-xs text-primary-950">
-              Revision hiện tại: <strong>R{editing.revisionNo || 1}</strong>. Thao tác này sẽ tạo một phiên bản bất biến mới. Các nhiệm vụ đã giao trước đó vẫn tham chiếu đúng bản gốc.
+              Bản hiện tại: <strong>R{editing.revisionNo || 1}</strong>. Khi lưu, hệ thống tạo bản mới. Nhiệm vụ cũ vẫn dùng bản đã gắn trước đó.
             </div>
           )}
           <Input label="Tên tác phẩm" value={title} onChange={e => setTitle(e.target.value)} />

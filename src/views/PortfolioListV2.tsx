@@ -29,14 +29,16 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
       <div className="mx-auto max-w-6xl space-y-5 pb-16">
         <div className="border-b border-slate-200 pb-4">
           <h1 className="text-2xl font-semibold text-slate-950">
-            {user.role === 'peer' ? 'Hồ sơ phản biện' : user.role === 'researcher' ? 'Hồ sơ nghiên cứu' : 'Hồ sơ học sinh'}
+            {user.role === 'peer' ? 'Hồ sơ phản biện' : user.role === 'researcher' ? 'Hồ sơ nghiên cứu' : user.role === 'ai' ? 'Hồ sơ cần phản hồi' : 'Hồ sơ học sinh'}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {user.role === 'researcher'
               ? 'Chỉ hiển thị dữ liệu ẩn danh trong phạm vi nghiên cứu.'
               : user.role === 'peer'
                 ? 'Chỉ hiển thị các bài được phân công cho bạn.'
-                : 'Xem bài nộp và trạng thái của từng hồ sơ.'}
+                : user.role === 'ai'
+                  ? 'Chỉ hiển thị các bài đang nằm trong hàng phản hồi của bạn.'
+                  : 'Xem bài nộp và trạng thái của từng hồ sơ.'}
           </p>
         </div>
 
@@ -51,6 +53,7 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
               const versions = academicVersionsOf(portfolio);
               const latest = versions[versions.length - 1];
               const canReview = user.role === 'teacher' || user.role === 'peer' || user.role === 'admin';
+              const canOpenAi = user.role === 'ai';
               return (
                 <article key={portfolio.id} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -68,18 +71,20 @@ export const PortfolioListV2: React.FC<{ onNavigate: (view: string, params?: any
                     {portfolio.versions.some(version => version.stage === 'prediction') ? ' · Có V0' : ''}
                     {latest ? ` · Mới nhất: ${latest.versionNumber}` : ''}
                   </div>
-                  {canReview && versions.length > 0 && (
+                  {(canReview || canOpenAi) && versions.length > 0 && (
                     <div className="mt-4 flex justify-end">
                       <Button
                         size="sm"
                         variant="primary"
-                        onClick={() => onNavigate('teacher-review', {
-                          studentId: portfolio.studentId,
-                          assignmentId: portfolio.assignmentId,
-                          isPeerMode: user.role === 'peer'
-                        })}
+                        onClick={() => canOpenAi
+                          ? onNavigate('ai-workspace')
+                          : onNavigate('teacher-review', {
+                              studentId: portfolio.studentId,
+                              assignmentId: portfolio.assignmentId,
+                              isPeerMode: user.role === 'peer'
+                            })}
                       >
-                        {user.role === 'teacher' ? 'Chấm bài' : user.role === 'peer' ? 'Đánh giá' : 'Xem bài'}
+                        {user.role === 'teacher' ? 'Chấm bài' : user.role === 'peer' ? 'Đánh giá' : user.role === 'ai' ? 'Nhập phản hồi' : 'Xem bài'}
                       </Button>
                     </div>
                   )}

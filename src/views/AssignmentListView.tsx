@@ -21,7 +21,7 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
   const portfolioValues = Object.values(portfolios);
 
   if (user.role !== 'student') {
-    const reviewLabel = user.role === 'teacher' ? 'Chấm bài' : user.role === 'peer' ? 'Đánh giá' : 'Xem hồ sơ';
+    const reviewLabel = user.role === 'teacher' ? 'Chấm bài' : user.role === 'peer' ? 'Đánh giá' : user.role === 'ai' ? 'Nhập phản hồi' : 'Xem hồ sơ';
     return (
       <div className="mx-auto max-w-6xl space-y-5 pb-16">
         <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -32,7 +32,9 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
                 ? 'Danh sách nhiệm vụ trong phạm vi dữ liệu nghiên cứu.'
                 : user.role === 'peer'
                   ? 'Các nhiệm vụ có bài được phân công cho bạn.'
-                  : 'Xem nhiệm vụ và số hồ sơ học sinh trong phạm vi được phép.'}
+                  : user.role === 'ai'
+                    ? 'Các nhiệm vụ có bài đang chờ phản hồi AI.'
+                    : 'Xem nhiệm vụ và số hồ sơ học sinh trong phạm vi được phép.'}
             </p>
           </div>
           <Button variant="outline" onClick={() => onNavigate(homeForRole(user.role))}>Trang chính</Button>
@@ -70,9 +72,11 @@ export const AssignmentListView: React.FC<AssignmentListViewProps> = ({ onNaviga
                     <Button
                       size="sm"
                       variant="primary"
-                      onClick={() => canOpenReview
-                        ? onNavigate('teacher-review', { assignmentId: assignment.id, isPeerMode: user.role === 'peer' })
-                        : onNavigate('portfolio-list')}
+                      onClick={() => user.role === 'ai'
+                        ? onNavigate('ai-workspace')
+                        : canOpenReview
+                          ? onNavigate('teacher-review', { assignmentId: assignment.id, isPeerMode: user.role === 'peer' })
+                          : onNavigate('portfolio-list')}
                     >
                       {reviewLabel}
                     </Button>

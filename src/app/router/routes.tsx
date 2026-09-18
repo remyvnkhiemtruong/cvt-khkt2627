@@ -11,15 +11,15 @@ export interface RouteDefinition {
 export const APP_ROUTES: Record<string, RouteDefinition> = {
   landing: { id:'landing', path:'/', title:'Trang chủ', isGuestOnly:true },
   login: { id:'login', path:'/login', title:'Đăng nhập', isGuestOnly:true },
-  dashboard: { id:'dashboard', path:'/dashboard', title:'Bàn học', allowedRoles:['student','teacher','peer','researcher','admin'] },
+  dashboard: { id:'dashboard', path:'/dashboard', title:'Bàn học', allowedRoles:['student'] },
   ...(import.meta.env?.DEV ? {
     'ui-kit': { id:'ui-kit', path:'/ui-kit', title:'Bản mẫu giao diện', allowedRoles:['admin'] }
   } : {}),
-  'assignment-list': { id:'assignment-list', path:'/assignments', title:'Nhiệm vụ Ngữ văn', allowedRoles:['student','teacher','peer','researcher','admin'] },
-  'student-dashboard': { id:'student-dashboard', path:'/student/assignments', title:'Nhiệm vụ của tôi', allowedRoles:['student','teacher'] },
-  'portfolio-list': { id:'portfolio-list', path:'/portfolios', title:'Hồ sơ học tập', allowedRoles:['student','teacher','peer','researcher','admin'] },
+  'assignment-list': { id:'assignment-list', path:'/assignments', title:'Nhiệm vụ', allowedRoles:['student','teacher','peer','researcher','admin','ai'] },
+  'student-dashboard': { id:'student-dashboard', path:'/student/assignments', title:'Nhiệm vụ của tôi', allowedRoles:['student'] },
+  'portfolio-list': { id:'portfolio-list', path:'/portfolios', title:'Hồ sơ học tập', allowedRoles:['student','teacher','peer','researcher','admin','ai'] },
   editor: { id:'editor', path:'/student/editor', title:'Bài viết', allowedRoles:['student'] },
-  'version-diff': { id:'version-diff', path:'/student/diff', title:'So sánh phiên bản', allowedRoles:['student','teacher','peer','researcher'] },
+  'version-diff': { id:'version-diff', path:'/student/diff', title:'So sánh phiên bản', allowedRoles:['student','teacher'] },
   'student-analytics': { id:'student-analytics', path:'/student/analytics', title:'Tiến độ', allowedRoles:['student','teacher'] },
   'teacher-dashboard': { id:'teacher-dashboard', path:'/teacher/overview', title:'Giảng dạy', allowedRoles:['teacher','admin'] },
   'teacher-review': { id:'teacher-review', path:'/teacher/review', title:'Chấm bài & Phản hồi', allowedRoles:['teacher','peer','admin'] },

@@ -91,7 +91,7 @@ await test('P31: SPA rewrite excludes API and remains in Singapore', () => { con
 await test('P32: no global browser MutationObserver disables editor input behavior', () => { const s=read('index.html'); assert(!s.includes('MutationObserver')); assert(!s.includes("spellcheck', 'false")); });
 await test('P33: AI workspace is a manual ChatGPT-response paste flow visible to students', () => {
   const s=read('src/views/AiWorkspaceView.tsx');
-  for (const token of ['Dán response ChatGPT', 'Không gọi API trả phí', "action: 'ai_complete_review'", 'Gửi góp ý AI cho học sinh', 'Học sinh thấy ngay']) assert(s.includes(token), token);
+  for (const token of ['Dán góp ý từ ChatGPT', "action: 'ai_complete_review'", 'Gửi góp ý AI cho học sinh', 'Học sinh thấy ngay sau khi gửi']) assert(s.includes(token), token);
 });
 await test('P34: teacher workspace preserves the AI feedback and can add a distinct teacher revision', () => {
   const s=read('src/views/TeacherReviewView.tsx');
@@ -111,7 +111,7 @@ await test('P36: REF1 is immutable and required before official teacher rubric',
 });
 await test('P37: student editor counts V0 separately and exposes REF1 after a revision', () => {
   const s=read('src/views/PortfolioEditorView.tsx');
-  for (const token of ["stage !== 'prediction'", 'Nộp V0 (dự đoán)', 'REF1 – Tự phản tư', 'saveReflection']) assert(s.includes(token), token);
+  for (const token of ["stage !== 'prediction'", 'Nộp V0 (dự đoán)', 'Nhìn lại bài', 'saveReflection']) assert(s.includes(token), token);
 });
 
 const failed=results.filter(result=>!result.ok);

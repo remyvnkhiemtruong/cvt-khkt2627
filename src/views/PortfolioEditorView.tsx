@@ -337,7 +337,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         )}
 
         {/* Mobile Tab Switcher */}
-        <div className="mt-2.5 flex border-t border-slate-100 pt-2 lg:hidden" role="tablist" aria-label="Phân hệ bài làm di động">
+        <div className="mt-2.5 flex border-t border-slate-100 pt-2 lg:hidden" role="tablist" aria-label="Khu vực bài làm trên di động">
           <button
             type="button"
             role="tab"

@@ -160,7 +160,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
     });
     if (!ok) throw new Error('CREATE_VERSION_FAILED');
     await refreshAcademicData();
-    addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'V0 đã được khóa làm mốc dự đoán trước đọc.' : 'Bài viết đã được gửi vào hàng đợi phản hồi AI.' });
+    addToast({ type: 'success', title: `Đã nộp ${nextVersion}`, message: isPredictionMode ? 'Đã nộp V0. Em không thể sửa bản này sau khi nộp.' : 'Đã nộp bài và gửi yêu cầu góp ý AI.' });
   };
 
   const submitReflection = async () => {
@@ -337,7 +337,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
         )}
 
         {/* Mobile Tab Switcher */}
-        <div className="mt-2.5 flex border-t border-slate-100 pt-2 lg:hidden" role="tablist" aria-label="Phân hệ bài làm di động">
+        <div className="mt-2.5 flex border-t border-slate-100 pt-2 lg:hidden" role="tablist" aria-label="Các phần của bài làm">
           <button
             type="button"
             role="tab"
@@ -564,8 +564,8 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
             <section className="workspace-prose mx-auto space-y-3 border-t border-slate-200 pt-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">Lịch sử phiên bản bất biến</h2>
-                  <p className="mt-0.5 text-xs text-slate-500">Mỗi lần nộp tạo một mốc mới, không ghi đè bản cũ.</p>
+                  <h2 className="text-sm font-bold text-slate-800">Các bản đã nộp</h2>
+                  <p className="mt-0.5 text-xs text-slate-500">Mỗi lần nộp tạo một bản mới; bản cũ vẫn được giữ.</p>
                 </div>
                 {versions.length >= 2 && (
                   <Button size="sm" variant="ghost" onClick={() => onNavigate('version-diff', { assignmentId: assignment.id })}>
@@ -605,14 +605,14 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
           {latestRevision && !isFocusMode && (
             <section className="workspace-prose mx-auto space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-primary-700">Tự phản tư</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary-700">Nhìn lại bài</span>
                 <h2 className="mt-1 text-base font-bold text-slate-900">REF1 – Sau {latestRevision.versionNumber}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Lưu dấu vết em đã thay đổi cách đọc như thế nào trước khi giáo viên chấm Rubric chính thức.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Trả lời 5 câu để ghi lại em đã sửa bài và thay đổi cách hiểu như thế nào.</p>
               </div>
 
               {latestReflection ? (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
-                  <strong>Đã nộp REF1.</strong> Giáo viên có thể xem tự phản tư này và chấm Rubric chính thức cho {latestRevision.versionNumber}.
+                  <strong>Đã nộp REF1.</strong> Giáo viên có thể xem phần này trước khi chấm Rubric cho {latestRevision.versionNumber}.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -639,7 +639,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                     isLoading={isSavingReflection}
                     onClick={submitReflection}
                   >
-                    Nộp REF1 – Tự phản tư
+                    Nộp REF1
                   </Button>
                 </div>
               )}
@@ -748,7 +748,7 @@ export const PortfolioEditorView: React.FC<PortfolioEditorViewProps> = ({ assign
                   className="w-full rounded-lg border border-slate-300 bg-white p-3 text-xs leading-5 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
                 />
                 <p className="text-xs text-slate-400">
-                  Dẫn chứng này sẽ được lưu kèm với phân tích của trục <strong>{currentAxisMeta.shortName}</strong>.
+                  Dẫn chứng sẽ được lưu cùng trục <strong>{currentAxisMeta.shortName}</strong>.
                 </p>
               </div>
             )}

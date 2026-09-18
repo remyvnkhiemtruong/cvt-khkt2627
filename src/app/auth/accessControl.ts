@@ -18,8 +18,7 @@ const INHERITABLE_VIEW_PATHS = new Set([
   '/assignments',
   '/portfolios',
   '/student/diff',
-  '/student/analytics',
-  '/teacher/literature-texts'
+  '/student/analytics'
 ]);
 
 export function accessTierForRole(role: UserRole): AccessTier | null {

@@ -409,7 +409,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 rows={12}
                 value={response}
                 onChange={e => setResponse(e.target.value)}
-                placeholder="Dán góp ý từ ChatGPT tại đây. Khi bấm gửi, học sinh sẽ thấy nội dung này."
+                placeholder="Dán góp ý từ ChatGPT tại đây. Học sinh sẽ thấy nội dung sau khi gửi."
                 className="w-full resize-y rounded-xl border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               />
             </div>

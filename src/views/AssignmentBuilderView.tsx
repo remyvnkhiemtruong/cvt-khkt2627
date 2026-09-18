@@ -32,7 +32,7 @@ const STEPS = [
 ];
 
 export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
-  const { literatureTexts, rubric, rubrics, refreshAcademicData } = usePortfolio();
+  const { literatureTexts, rubric, rubrics, assignments, refreshAcademicData } = usePortfolio();
   const texts = useMemo(() => literatureTexts.filter(t => t.isLatest !== false), [literatureTexts]);
   const rubricOptions = useMemo(() => Object.values(rubrics || {}), [rubrics]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
@@ -48,6 +48,8 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   });
   const [axes, setAxes] = useState<PoeticAxisId[]>(POETIC_AXES.map(a => a.id));
   const [predictionEnabled, setPredictionEnabled] = useState(true);
+  const [predictionPrompt, setPredictionPrompt] = useState('Hoàn thành V0 trước khi đọc; nêu dự đoán, căn cứ và mức tự tin. V0 được khóa sau khi nộp.');
+  const [predictionQuestionsText, setPredictionQuestionsText] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -66,6 +68,15 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
       });
   }, [texts, rubricOptions]);
 
+  useEffect(() => {
+    if (!form.textId) return;
+    const source = assignments.find(item =>
+      item.textId === form.textId && (item.predictionTemplate?.questions?.length || 0) > 0
+    );
+    setPredictionPrompt(source?.predictionTemplate?.prompt || 'Hoàn thành V0 trước khi đọc; nêu dự đoán, căn cứ và mức tự tin. V0 được khóa sau khi nộp.');
+    setPredictionQuestionsText((source?.predictionTemplate?.questions || []).join('\n'));
+  }, [form.textId, assignments]);
+
   const set = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
   const toggleAxis = (id: PoeticAxisId) =>
     setAxes(prev => (prev.includes(id) ? (prev.length > 1 ? prev.filter(x => x !== id) : prev) : [...prev, id]));
@@ -73,6 +84,11 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
   const selectedClass = classes.find(c => c.code === form.classId);
   const selectedText = texts.find(t => t.id === form.textId);
   const selectedRubric = rubricOptions.find(r => r.id === form.rubricId) || rubric;
+  const predictionQuestions = predictionQuestionsText
+    .split('\n')
+    .map(question => question.trim())
+    .filter(Boolean)
+    .slice(0, 30);
 
   const validateStep = (currentStep: number): boolean => {
     if (currentStep === 1) {
@@ -99,6 +115,10 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
         return false;
       }
     }
+    if (currentStep === 3 && predictionEnabled && predictionQuestions.length === 0) {
+      setMessage('Đã bật V0 nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi tiếp tục.');
+      return false;
+    }
     setMessage('');
     return true;
   };
@@ -116,6 +136,10 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
     }
     if (!rubricOptions.some(option => option.id === form.rubricId)) {
       setMessage('Rubric đã chọn không còn hợp lệ. Vui lòng chọn lại ma trận Rubric trước khi xuất bản.');
+      return;
+    }
+    if (predictionEnabled && predictionQuestions.length === 0) {
+      setMessage('Đã bật V0 nhưng chưa có câu hỏi dự đoán. Hãy nhập ít nhất 1 câu hỏi trước khi xuất bản.');
       return;
     }
     const textId = form.textId;
@@ -140,7 +164,12 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
           reflectionRequired: true,
           officialRubricRequired: true
         },
-        predictionTemplate: { enabled: predictionEnabled, requireConfidence: true },
+        predictionTemplate: {
+          enabled: predictionEnabled,
+          requireConfidence: true,
+          prompt: predictionEnabled ? predictionPrompt.trim() : '',
+          questions: predictionEnabled ? predictionQuestions : []
+        },
         guidingSteps: [
           ...(predictionEnabled ? ['Hoàn thành V0 trước đọc'] : []),
           'Nộp V1 để nhận góp ý AI/giáo viên',
@@ -404,6 +433,39 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
                 description="Điểm chính thức do giáo viên chấm theo ma trận Rubric của nhiệm vụ và được server tính toán bảo mật."
               />
             </div>
+
+            {predictionEnabled && (
+              <div className="space-y-4 rounded-lg border border-sky-200 bg-sky-50/60 p-4">
+                <div>
+                  <div className="text-sm font-bold text-sky-950">Bộ câu hỏi V0 hiển thị cho học sinh</div>
+                  <p className="mt-1 text-xs leading-5 text-sky-800">
+                    Mỗi dòng là một câu hỏi. Hệ thống tự nạp bộ câu hỏi gần nhất của cùng ngữ liệu nếu đã có; giáo viên có thể chỉnh sửa trước khi xuất bản.
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">Lời dẫn V0</label>
+                  <textarea
+                    rows={2}
+                    value={predictionPrompt}
+                    onChange={event => setPredictionPrompt(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white p-3 text-xs leading-5 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span>Câu hỏi dự đoán trước đọc</span>
+                    <span className="font-normal text-slate-500">{predictionQuestions.length}/30 câu</span>
+                  </label>
+                  <textarea
+                    rows={10}
+                    value={predictionQuestionsText}
+                    onChange={event => setPredictionQuestionsText(event.target.value)}
+                    placeholder="Nhập mỗi câu hỏi trên một dòng..."
+                    className="w-full rounded-lg border border-slate-300 bg-white p-3 text-xs leading-5 text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -456,6 +518,13 @@ export const AssignmentBuilderView: React.FC<Props> = ({ onNavigate }) => {
                   })}
                 </div>
               </div>
+
+              {predictionEnabled && (
+                <div className="border-t border-slate-200 pt-3">
+                  <span className="font-semibold text-slate-500 block mb-1">Bộ câu hỏi V0:</span>
+                  <span className="text-slate-800 font-medium">{predictionQuestions.length} câu hỏi sẽ hiển thị cho học sinh</span>
+                </div>
+              )}
 
               <div className="border-t border-slate-200 pt-3">
                 <span className="font-semibold text-slate-500 block mb-1">Luồng học thuật sẽ kích hoạt:</span>

@@ -319,4 +319,24 @@ await test('PA27: peer and AI queues use stable anonymous labels instead of iden
   assert(!academic.includes("peerOrAi ? 'Bài được phân công'"));
 });
 
-console.log(`Production audit regressions: ${passed}/27 passed`);
+await test('PA28: multiple AI accounts cannot complete the same review as if they owned it', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const workflow = read('api/_lib/academic-workflow-v4.js');
+  assert(academic.includes("(ar.reviewer_id IS NULL OR ar.reviewer_id=$1)"));
+  assert(workflow.includes("async function aiClaimReview"));
+  assert(workflow.includes("'AI_CLAIM_REVIEW'"));
+  assert(workflow.includes("row.reviewer_id && row.reviewer_id !== user.id"));
+  assert(workflow.includes("action === 'ai_claim_review'"));
+});
+
+await test('PA29: manual AI workspace claims work before copying and reports ownership conflicts', () => {
+  const workspace = read('src/views/AiWorkspaceView.tsx');
+  const action = read('api/academic/action.ts');
+  assert(workspace.includes("action: 'ai_claim_review'"));
+  assert(workspace.includes('Nhận xử lý & sao chép bài'));
+  assert(action.includes('AI_REVIEW_CLAIMED'));
+  assert(action.includes('AI_REVIEW_CLOSED'));
+  assert(action.includes('code === "AI_REVIEW_CLAIMED"'));
+});
+
+console.log(`Production audit regressions: ${passed}/29 passed`);

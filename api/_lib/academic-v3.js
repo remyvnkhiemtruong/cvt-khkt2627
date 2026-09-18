@@ -279,7 +279,8 @@ async function loadRoleScope(pool, user) {
       JOIN portfolios p ON p.id=ar.portfolio_id
       WHERE ar.status IN ('pending','in_progress','completed')
         AND ar.teacher_review_status='pending'
-    `);
+        AND (ar.reviewer_id IS NULL OR ar.reviewer_id=$1)
+    `, [user.id]);
     return {
       assignmentIds: [...new Set(rows.rows.map(r => r.assignment_id))],
       portfolioIds: [...new Set(rows.rows.map(r => r.portfolio_id))],
@@ -660,7 +661,8 @@ export async function getAcademicSnapshot(user) {
       params.push(user.id);
       where = "WHERE EXISTS(SELECT 1 FROM class_members cm WHERE cm.class_id=a.class_id AND cm.user_id=$1 AND cm.member_role='teacher')";
     } else if (role === 'ai') {
-      where = "WHERE ar.status IN ('pending','in_progress','completed') AND ar.teacher_review_status='pending'";
+      params.push(user.id);
+      where = "WHERE ar.status IN ('pending','in_progress','completed') AND ar.teacher_review_status='pending' AND (ar.reviewer_id IS NULL OR ar.reviewer_id=$1)";
     }
     const rows = await pool.query(`
       SELECT ar.*, a.public_id assignment_public_id, p.student_id, u.name student_name, v.version_number
@@ -867,6 +869,7 @@ async function aiCompleteReview(user, input, req) {
     `, [reviewId]);
     const row = result.rows[0];
     if (!row) throw new Error('AI_REVIEW_NOT_FOUND');
+    if (row.reviewer_id && row.reviewer_id !== user.id) throw new Error('AI_REVIEW_CLAIMED');
     if (row.status === 'completed') {
       await client.query('COMMIT');
       return { ok: true, isIdempotentRetry: true };

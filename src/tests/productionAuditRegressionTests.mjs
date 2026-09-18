@@ -75,8 +75,8 @@ await test('PA07: three-tier view hierarchy is role-derived and mutation routes 
   assert(!access.includes("'/student/editor'"));
   assert(!access.includes("'/teacher/assignment-builder'"));
   assert(app.includes('canAccessRoute(currentUser.role, routeConfig)'));
-  assert(desktop.includes("label: 'Xem tầng dưới'"));
-  assert(mobile.includes("label: 'Xem học sinh'"));
+  assert(desktop.includes("label: 'Học sinh'"));
+  assert(mobile.includes("label: 'Học sinh'"));
 });
 
 await test('PA08: assignment builder only keeps and submits a rubric from the hydrated catalog', () => {
@@ -105,4 +105,18 @@ await test('PA10: V0 question bank survives teacher creation and is rendered to 
   assert(editor.includes('Câu hỏi V0'));
 });
 
-console.log(`Production audit regressions: ${passed}/10 passed`);
+await test('PA11: production UI avoids AI-slop wording', () => {
+  const builder = read('src/views/AssignmentBuilderView.tsx');
+  const student = read('src/views/v2/StudentDashboardV2.tsx');
+  const sidebar = read('src/components/layout/AppSidebar.tsx');
+  const ai = read('src/views/AiWorkspaceView.tsx');
+  const landing = read('src/views/LandingView.tsx');
+  assert(!builder.includes('provenance'));
+  assert(!builder.includes('quy chuẩn học thuật khép kín'));
+  assert(!student.includes('trạng thái workflow'));
+  assert(!sidebar.includes('Xem tầng dưới'));
+  assert(!ai.includes('Không gọi API trả phí'));
+  assert(!landing.includes('trách nhiệm sư phạm cao nhất'));
+});
+
+console.log(`Production audit regressions: ${passed}/11 passed`);

@@ -42,7 +42,8 @@ const studentSections: NavSection[] = [{
   items: [
     { id: 'dashboard', label: 'Bàn học', icon: HomeIcon },
     { id: 'assignment-list', label: 'Nhiệm vụ', icon: BookOpenIcon },
-    { id: 'portfolio-list', label: 'Hồ sơ học tập', icon: FolderIcon }
+    { id: 'portfolio-list', label: 'Hồ sơ học tập', icon: FolderIcon },
+    { id: 'student-analytics', label: 'Tiến độ', icon: ChartBarIcon }
   ]
 }];
 

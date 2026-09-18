@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, PageHeader } from '../components/ui';
+import { useAuthStore } from '../app/store/useAuthStore';
 import type { AcademicSnapshot, AiReviewRequest, PoeticAxisId } from '../types';
 import {
   ArrowPathIcon,
@@ -34,6 +35,8 @@ async function postAction(payload: unknown) {
 }
 
 export const AiWorkspaceView: React.FC = () => {
+  const currentUser = useAuthStore(state => state.currentUser);
+  const canPublish = currentUser.role === 'ai';
   const [snapshot, setSnapshot] = useState<AcademicSnapshot | null>(null);
   const [selectedId, setSelectedId] = useState('');
   const [response, setResponse] = useState('');
@@ -113,7 +116,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
   };
 
   const publishAiFeedback = async () => {
-    if (!selected || !currentVersion || integrityError) return;
+    if (!canPublish || !selected || !currentVersion || integrityError) return;
     setLoading(true);
     setMessage(null);
     try {
@@ -134,8 +137,10 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
     <div className="v3-page space-y-5 pb-20">
       <PageHeader
         eyebrow="Phản hồi AI"
-        title="Nhập phản hồi AI"
-        description="Sao chép bài sang ChatGPT, dán phản hồi vào đây và gửi cho học sinh."
+        title={canPublish ? 'Nhập phản hồi AI' : 'Theo dõi phản hồi AI'}
+        description={canPublish
+          ? 'Sao chép bài sang ChatGPT, dán phản hồi vào đây và gửi cho học sinh.'
+          : 'Xem các phản hồi AI trong phạm vi tài khoản của bạn. Chỉ tài khoản nhập phản hồi AI mới có thể gửi nội dung.'}
         actions={
           <Button size="sm" variant="outline" onClick={() => void refresh()} leftIcon={<ArrowPathIcon className="h-4 w-4" />}>
             Tải lại
@@ -279,16 +284,18 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 </div>
 
                 {/* Copy Context Button for Operator */}
-                <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={copyFullStudentContextForChatGPT}
-                    leftIcon={copiedPrompt ? <CheckIcon className="h-4 w-4 text-emerald-600" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
-                  >
-                    {copiedPrompt ? 'Đã sao chép' : 'Sao chép bài để dán vào ChatGPT'}
-                  </Button>
-                </div>
+                {canPublish && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={copyFullStudentContextForChatGPT}
+                      leftIcon={copiedPrompt ? <CheckIcon className="h-4 w-4 text-emerald-600" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
+                    >
+                      {copiedPrompt ? 'Đã sao chép' : 'Sao chép bài để dán vào ChatGPT'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {selected.prompt && (
@@ -341,9 +348,9 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
           <div className="space-y-4">
             <div className="border-b border-slate-200 pb-3">
               <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Phản hồi</div>
-              <h2 className="mt-1 text-base font-bold text-slate-950">Dán phản hồi ChatGPT</h2>
+              <h2 className="mt-1 text-base font-bold text-slate-950">{canPublish ? 'Dán phản hồi ChatGPT' : 'Nội dung phản hồi AI'}</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Đối chiếu đúng học sinh, nhiệm vụ và phiên bản trước khi gửi.
+                {canPublish ? 'Đối chiếu đúng học sinh, nhiệm vụ và phiên bản trước khi gửi.' : 'Chế độ chỉ xem.'}
               </p>
             </div>
 
@@ -388,7 +395,8 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
               <select
                 value={axisId}
                 onChange={e => setAxisId(e.target.value as PoeticAxisId)}
-                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs font-medium text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
+                disabled={!canPublish}
+                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs font-medium text-slate-800 outline-none disabled:bg-slate-50 disabled:text-slate-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               >
                 {axes.map(a => (
                   <option key={a.id} value={a.id}>{a.label}</option>
@@ -409,25 +417,34 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
                 rows={12}
                 value={response}
                 onChange={e => setResponse(e.target.value)}
-                placeholder="Dán phản hồi ChatGPT tại đây."
-                className="w-full resize-y rounded-xl border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
+                disabled={!canPublish}
+                placeholder={canPublish ? 'Dán phản hồi ChatGPT tại đây.' : 'Chưa có phản hồi AI.'}
+                className="w-full resize-y rounded-xl border border-slate-300 p-3 text-xs leading-relaxed text-slate-800 outline-none disabled:bg-slate-50 disabled:text-slate-600 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               />
             </div>
           </div>
 
           <div className="mt-auto border-t border-slate-200 pt-4">
-            <Button
-              variant="primary"
-              className="w-full"
-              isLoading={loading}
-              disabled={!selected || !currentVersion || integrityError || !response.trim() || selected?.status === 'completed'}
-              onClick={publishAiFeedback}
-            >
-              Gửi góp ý AI cho học sinh
-            </Button>
-            <p className="mt-2 text-center text-xs leading-5 text-slate-400">
-              Học sinh nhận góp ý ngay sau khi gửi.
-            </p>
+            {canPublish ? (
+              <>
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  isLoading={loading}
+                  disabled={!selected || !currentVersion || integrityError || !response.trim() || selected?.status === 'completed'}
+                  onClick={publishAiFeedback}
+                >
+                  Gửi góp ý AI cho học sinh
+                </Button>
+                <p className="mt-2 text-center text-xs leading-5 text-slate-400">
+                  Học sinh nhận góp ý ngay sau khi gửi.
+                </p>
+              </>
+            ) : (
+              <p className="text-center text-xs leading-5 text-slate-500">
+                Giáo viên xử lý tiếp trong mục Chấm bài. Quản trị viên chỉ xem tại đây.
+              </p>
+            )}
           </div>
         </aside>
       </div>

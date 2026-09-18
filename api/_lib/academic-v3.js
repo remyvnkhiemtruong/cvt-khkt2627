@@ -491,17 +491,18 @@ export async function getAcademicSnapshot(user) {
         ? pseudonym('SUB', row.student_id)
         : row.student_id;
     const id = `port-${studentId}-${row.assignment_public_id}`;
+    const versions = versionsByPortfolio.get(row.id) || [];
     portfolios[id] = {
       id,
       dbId: researcher || peerOrAi ? '' : row.id,
       assignmentId: row.assignment_public_id,
       studentId,
-      studentName: researcher ? studentId : peerOrAi ? 'Bài được phân công' : row.student_name,
+      studentName: researcher || peerOrAi ? studentId : row.student_name,
       className: researcher ? pseudonym('COHORT', row.class_code) : peerOrAi ? '' : row.class_code,
       currentDraft: role === 'student' ? (row.content_json || emptyDraft()) : emptyDraft(),
       lastAutosavedAt: role === 'student' ? (row.draft_updated_at || row.updated_at) : row.updated_at,
-      versions: versionsByPortfolio.get(row.id) || [],
-      currentActiveVersion: row.active_version,
+      versions,
+      currentActiveVersion: versions.length ? row.active_version : 'Bản nháp',
       status: row.status
     };
   }
@@ -675,7 +676,7 @@ export async function getAcademicSnapshot(user) {
       id: row.id,
       assignment_id: row.assignment_public_id,
       student_id: role === 'ai' ? pseudonym('SUB', row.student_id) : row.student_id,
-      student_name: role === 'ai' ? 'Bài được phân công' : row.student_name,
+      student_name: role === 'ai' ? pseudonym('SUB', row.student_id) : row.student_name,
       version_number: row.version_number,
       version_id: row.version_id,
       portfolio_id: role === 'ai' ? '' : row.portfolio_id,
@@ -893,7 +894,7 @@ async function aiCompleteReview(user, input, req) {
 }
 
 async function teacherReviewAi(user, input, req) {
-  if (!['teacher','admin'].includes(user.role)) throw new Error('FORBIDDEN');
+  if (user.role !== 'teacher') throw new Error('FORBIDDEN');
   const reviewId = cleanTrimmed(input.reviewId, 80);
   if (!isUuid(reviewId)) throw new Error('AI_REVIEW_NOT_FOUND');
   const decision = cleanTrimmed(input.decision || input.status, 20);
@@ -913,7 +914,7 @@ async function teacherReviewAi(user, input, req) {
     const row = result.rows[0];
     if (!row) throw new Error('AI_REVIEW_NOT_FOUND');
     if (row.status !== 'completed') throw new Error('AI_REVIEW_NOT_COMPLETED');
-    if (user.role !== 'admin' && !(await teacherCanAccessClass(client, row.class_id, user.id))) throw new Error('TEACHER_CLASS_FORBIDDEN');
+    if (!(await teacherCanAccessClass(client, row.class_id, user.id))) throw new Error('TEACHER_CLASS_FORBIDDEN');
     if (row.teacher_review_status !== 'pending') {
       const existing = await client.query('SELECT id FROM feedbacks WHERE source_ai_review_id=$1 LIMIT 1', [reviewId]);
       await client.query('COMMIT');
@@ -959,7 +960,7 @@ async function teacherReviewAi(user, input, req) {
 }
 
 async function addFeedback(user, input, req) {
-  if (!['teacher','peer','admin'].includes(user.role)) throw new Error('FORBIDDEN');
+  if (!['teacher','peer'].includes(user.role)) throw new Error('FORBIDDEN');
   const versionId = cleanTrimmed(input.versionId, 80);
   if (!isUuid(versionId)) throw new Error('VERSION_REQUIRED');
   const axisId = cleanTrimmed(input.axisId, 50);
@@ -986,7 +987,7 @@ async function addFeedback(user, input, req) {
       const exact = await client.query('SELECT 1 FROM portfolio_versions WHERE id=$1 AND portfolio_id=$2 LIMIT 1', [versionId, portfolio.id]);
       if (!exact.rows.length) throw new Error('VERSION_NOT_FOUND');
     }
-    const authorRole = user.role === 'admin' ? 'teacher' : user.role;
+    const authorRole = user.role;
     const inserted = await client.query(`
       INSERT INTO feedbacks(portfolio_id,version_id,axis_id,selected_snippet,comment,author_id,author_role)
       VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id,created_at
@@ -1003,7 +1004,7 @@ async function addFeedback(user, input, req) {
 }
 
 async function resolveFeedback(user, input, req) {
-  if (!['student','admin'].includes(user.role)) throw new Error('FORBIDDEN');
+  if (user.role !== 'student') throw new Error('FORBIDDEN');
   const feedbackId = cleanTrimmed(input.feedbackId, 80);
   if (!isUuid(feedbackId)) throw new Error('FEEDBACK_NOT_FOUND');
   const pool = await getPool();
@@ -1016,7 +1017,7 @@ async function resolveFeedback(user, input, req) {
     `, [feedbackId]);
     const row = result.rows[0];
     if (!row) throw new Error('FEEDBACK_NOT_FOUND');
-    if (user.role !== 'admin' && row.student_id !== user.id) throw new Error('FORBIDDEN');
+    if (row.student_id !== user.id) throw new Error('FORBIDDEN');
     await client.query(`UPDATE feedbacks SET resolved=true,resolved_at=COALESCE(resolved_at,now()) WHERE id=$1`, [feedbackId]);
     await audit(client, user, 'RESOLVE_FEEDBACK', 'feedback', feedbackId, { resolved: true }, req);
     await client.query('COMMIT');
@@ -1033,7 +1034,7 @@ function normalizeCriterionInput(value) {
 }
 
 async function submitRubric(user, input, req) {
-  if (!['student','teacher','peer','admin'].includes(user.role)) throw new Error('FORBIDDEN');
+  if (!['student','teacher','peer'].includes(user.role)) throw new Error('FORBIDDEN');
   const versionId = cleanTrimmed(input.versionId, 80);
   if (!isUuid(versionId)) throw new Error('VERSION_REQUIRED');
   const pool = await getPool();
@@ -1080,7 +1081,7 @@ async function submitRubric(user, input, req) {
       maxScore += maximum * weight;
       normalized[criterion.public_id] = { level: supplied.level, score, note: supplied.note };
     }
-    const evaluatorRole = user.role === 'admin' ? 'teacher' : user.role;
+    const evaluatorRole = user.role;
     const inserted = await client.query(`
       INSERT INTO rubric_submissions(portfolio_id,version_id,evaluator_id,evaluator_role,criterion_scores,overall_feedback,total_score,max_score)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
@@ -1189,8 +1190,8 @@ async function createAssignment(user, input, req) {
         JSON.stringify(input.workflowConfig && typeof input.workflowConfig === 'object' ? input.workflowConfig : {}), user.id]);
     const assignmentDbId = inserted.rows[0].id;
     await client.query(`
-      INSERT INTO portfolios(assignment_id,student_id)
-      SELECT $1,cm.user_id FROM class_members cm
+      INSERT INTO portfolios(assignment_id,student_id,active_version)
+      SELECT $1,cm.user_id,'Bản nháp' FROM class_members cm
       JOIN app_users u ON u.id=cm.user_id AND u.role='student' AND u.account_status='active'
       WHERE cm.class_id=$2 AND cm.member_role='student'
       ON CONFLICT(assignment_id,student_id) DO NOTHING

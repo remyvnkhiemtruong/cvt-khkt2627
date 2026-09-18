@@ -71,7 +71,8 @@ await test('PA07: three-tier view hierarchy is role-derived and mutation routes 
   assert(access.includes('teacher: 2'));
   assert(access.includes('ai: 2'));
   assert(access.includes('student: 3'));
-  assert(access.includes("'/student/analytics'"));
+  assert(!access.includes("'/student/analytics'"));
+  assert(!access.includes("'/student/diff'"));
   assert(!access.includes("'/student/editor'"));
   assert(!access.includes("'/teacher/assignment-builder'"));
   assert(app.includes('canAccessRoute(currentUser.role, routeConfig)'));
@@ -270,4 +271,52 @@ await test('PA22: AI role gets scoped list navigation instead of dead 403 links'
   assert(!palette.includes('Mở không gian viết'));
 });
 
-console.log(`Production audit regressions: ${passed}/22 passed`);
+await test('PA23: student progress has a real assignment selector and excludes V0 from essay counts', () => {
+  const analytics = read('src/views/StudentAnalyticsView.tsx');
+  const desktop = read('src/components/layout/AppSidebar.tsx');
+  const palette = read('src/components/layout/CommandPalette.tsx');
+  assert(analytics.includes("if (!assignmentId)"));
+  assert(analytics.includes('const academicVersions = academicVersionsOf(portfolio)'));
+  assert(analytics.includes('{academicVersions.length}'));
+  assert(analytics.includes('{academicVersions.map(version => {'));
+  assert(desktop.includes("{ id: 'student-analytics', label: 'Tiến độ'"));
+  assert(palette.includes("currentUser.role === 'student' ? 'student-analytics' : 'class-analytics'"));
+});
+
+await test('PA24: AI workspace is writable only by the dedicated AI role', () => {
+  const workspace = read('src/views/AiWorkspaceView.tsx');
+  const academic = read('api/_lib/academic-v3.js');
+  assert(workspace.includes("const canPublish = currentUser.role === 'ai'"));
+  assert(workspace.includes('disabled={!canPublish}'));
+  assert(workspace.includes('{canPublish ? ('));
+  assert(academic.includes("async function aiCompleteReview"));
+  assert(academic.includes("if (user.role !== 'ai') throw new Error('FORBIDDEN')"));
+});
+
+await test('PA25: admin cannot mutate student assessment state through academic actions', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const review = read('src/views/TeacherReviewView.tsx');
+  assert(academic.includes("if (!['teacher','peer'].includes(user.role)) throw new Error('FORBIDDEN')"));
+  assert(academic.includes("if (user.role !== 'student') throw new Error('FORBIDDEN')"));
+  assert(academic.includes("if (!['student','teacher','peer'].includes(user.role)) throw new Error('FORBIDDEN')"));
+  assert(academic.includes("async function teacherReviewAi(user, input, req) {\n  if (user.role !== 'teacher')"));
+  assert(review.includes("const isAdminReadOnly = currentUser.role === 'admin'"));
+});
+
+await test('PA26: empty portfolios never surface a fake active submission version', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  const admin = read('api/admin/manage.ts');
+  assert(academic.includes("currentActiveVersion: versions.length ? row.active_version : 'Bản nháp'"));
+  assert(academic.includes("INSERT INTO portfolios(assignment_id,student_id,active_version)"));
+  assert(academic.includes("SELECT $1,cm.user_id,'Bản nháp'"));
+  assert(admin.match(/INSERT INTO portfolios\(assignment_id,student_id,active_version\)/g)?.length >= 2);
+});
+
+await test('PA27: peer and AI queues use stable anonymous labels instead of identical placeholders', () => {
+  const academic = read('api/_lib/academic-v3.js');
+  assert(academic.includes("studentName: researcher || peerOrAi ? studentId : row.student_name"));
+  assert(academic.includes("student_name: role === 'ai' ? pseudonym('SUB', row.student_id) : row.student_name"));
+  assert(!academic.includes("peerOrAi ? 'Bài được phân công'"));
+});
+
+console.log(`Production audit regressions: ${passed}/27 passed`);

@@ -16,9 +16,7 @@ export const ROLE_ACCESS_TIER: Partial<Record<UserRole, AccessTier>> = {
 
 const INHERITABLE_VIEW_PATHS = new Set([
   '/assignments',
-  '/portfolios',
-  '/student/diff',
-  '/student/analytics'
+  '/portfolios'
 ]);
 
 export function accessTierForRole(role: UserRole): AccessTier | null {

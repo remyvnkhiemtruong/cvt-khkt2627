@@ -134,8 +134,8 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
     <div className="v3-page space-y-5 pb-20">
       <PageHeader
         eyebrow="AI Workspace"
-        title="Nhập phản hồi AI"
-        description="Không gọi API trả phí. Sao chép response từ ChatGPT, dán vào đúng phiên bản bất biến và gửi để học sinh nhận phản hồi ngay."
+        title="Nhập góp ý AI"
+        description="Sao chép góp ý từ ChatGPT, dán vào đúng bản học sinh đã nộp rồi gửi."
         actions={
           <Button size="sm" variant="outline" onClick={() => void refresh()} leftIcon={<ArrowPathIcon className="h-4 w-4" />}>
             Tải lại
@@ -256,7 +256,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
             </div>
           ) : integrityError ? (
             <div className="flex min-h-[420px] items-center justify-center text-center text-sm text-rose-500">
-              Không thể hiển thị bài vì phiên bản bất biến không khớp yêu cầu AI.
+              Không thể mở bài vì bản nộp không khớp yêu cầu AI.
             </div>
           ) : (
             <>
@@ -398,7 +398,7 @@ Hãy đưa ra nhận xét sư phạm mang tính gợi mở, phân tích cụ th�
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-700">Response từ ChatGPT</label>
+                <label className="block text-xs font-semibold text-slate-700">Góp ý từ ChatGPT</label>
                 {response.trim() && (
                   <span className="text-xs text-slate-400 font-mono">
                     {response.trim().split(/\s+/).length} từ

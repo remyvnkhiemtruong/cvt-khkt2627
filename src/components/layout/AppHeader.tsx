@@ -240,13 +240,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Hướng dẫn sử dụng" footer={<Button variant="primary" onClick={() => setHelpOpen(false)}>Đóng</Button>}>
         <div className="space-y-4 text-sm text-slate-700">
-          <p className="text-slate-600">Quy trình học tập trên hệ thống:</p>
+          <p className="text-slate-600">Cách làm bài:</p>
           <ol className="list-inside list-decimal space-y-1.5 pl-1 text-slate-700">
             <li>Nếu nhiệm vụ yêu cầu dự đoán trước đọc, hoàn thành và nộp V0.</li>
             <li>Đọc ngữ liệu, viết theo các trục thi pháp và nộp V1.</li>
-            <li>Tài khoản AI dán response từ ChatGPT và gửi; học sinh thấy phản hồi ngay.</li>
-            <li>Giáo viên xem lịch sử phản hồi và có thể bổ sung nhận xét riêng.</li>
-            <li>Học sinh chỉnh sửa, nộp V2 hoặc phiên bản tiếp theo và ghi rõ lí do thay đổi.</li>
+            <li>Người phụ trách AI dán góp ý từ ChatGPT; học sinh thấy ngay sau khi gửi.</li>
+            <li>Giáo viên đọc góp ý AI và có thể thêm nhận xét riêng.</li>
+            <li>Học sinh sửa bài, nộp V2 hoặc bản tiếp theo và ghi lí do thay đổi.</li>
             <li>Sau bản chỉnh sửa, học sinh hoàn thành REF1; giáo viên chấm Rubric chính thức.</li>
           </ol>
           <div className="border-t border-slate-100 pt-2 text-xs text-slate-500">Phím tắt: <strong>Ctrl + K</strong> để tìm nhanh; <strong>Esc</strong> để đóng hộp thoại.</div>
